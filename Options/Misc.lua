@@ -205,16 +205,20 @@ addon.RegisterOptionBuilder("misc", function(parent, y)
 		_, h = Widgets:Toggle(parent, "Confirm Summon", y,
 			DBGet(auto, "confirmSummon"), DBSet(auto, "confirmSummon"),
 			"Confirm summon from other player automatically."); y = y - h
-		_, h = Widgets:Toggle(parent, "Exit Phase Diving", y,
-			DBGet(db.exitPhaseDiving, "enable"), DBSet(db.exitPhaseDiving, "enable")); y = y - h
-		if db.exitPhaseDiving.enable then
+	end
+
+	_, h = Widgets:SectionHeader(parent, "EXIT PHASE DIVING", y); y = y - h
+	do
+		local epd = db.exitPhaseDiving
+		_, h = Widgets:Toggle(parent, "Enable", y,
+			DBGet(epd, "enable"), DBSet(epd, "enable"),
+			"Add a button to exit phase diving."); y = y - h
+		if epd.enable then
 			_, h = Widgets:DualRow(parent, y,
 				{ type = "slider", text = "Width", min = 5, max = 1000, step = 1,
-				  getValue = DBGet(db.exitPhaseDiving, "width"),
-				  setValue = DBSet(db.exitPhaseDiving, "width") },
+				  getValue = DBGet(epd, "width"), setValue = DBSet(epd, "width") },
 				{ type = "slider", text = "Height", min = 5, max = 1000, step = 1,
-				  getValue = DBGet(db.exitPhaseDiving, "height"),
-				  setValue = DBSet(db.exitPhaseDiving, "height") }
+				  getValue = DBGet(epd, "height"), setValue = DBSet(epd, "height") }
 			); y = y - h
 		end
 	end
