@@ -3,11 +3,5 @@
 	<Include file='Utilities\Load_Utilities.xml'/>
 	<Script file='Core.lua'/>
 	<Script file='Commands.lua'/>
-	<Script file='Compatibility.lua'/>
-	<Script file='Options.lua'/>
-	<Include file='UIError.xml'/>
-	<Script file='UIError.lua'/>
-	<Script file='Update.lua'/>
-	<Script file='KeystoneInfo.lua'/>
 	<Include file='Changelog\Load_Changelog.xml'/>
 </Ui>

@@ -49,11 +49,8 @@ end
 
 do
 	local AcceptableAddons = {
-		["ElvUI"] = true,
-		["ElvUI_Options"] = true,
-		["ElvUI_Libraries"] = true,
-		["ElvUI_CPU"] = true,
-		["ElvUI_WindTools"] = true,
+		["EllesmereUI"] = true,
+		["EllesmereUI_WindTools"] = true,
 		["!BugGrabber"] = true,
 		["BugSack"] = true,
 	}
@@ -65,7 +62,7 @@ do
 				local name = C_AddOns_GetAddOnInfo(i)
 				if not AcceptableAddons[name] and E:IsAddOnEnabled(name) then
 					C_AddOns_DisableAddOn(name, E.myname)
-					_G.ElvDB.WT.DisabledAddOns[name] = i
+					_G.WindToolsGlobalDB.WT.DisabledAddOns[name] = i
 				end
 			end
 
@@ -76,16 +73,12 @@ do
 			C_CVar_SetCVar("scriptErrors", 0)
 			E:Print("Lua errors off.")
 
-			if E:IsAddOnEnabled("ElvUI_CPU") then
-				C_AddOns_DisableAddOn("ElvUI_CPU")
-			end
-
-			if next(_G.ElvDB.WT.DisabledAddOns) then
-				for name in pairs(_G.ElvDB.WT.DisabledAddOns) do
+			if next(_G.WindToolsGlobalDB.WT.DisabledAddOns) then
+				for name in pairs(_G.WindToolsGlobalDB.WT.DisabledAddOns) do
 					C_AddOns_EnableAddOn(name, E.myname)
 				end
 
-				wipe(_G.ElvDB.WT.DisabledAddOns)
+				wipe(_G.WindToolsGlobalDB.WT.DisabledAddOns)
 				C_UI_Reload()
 			end
 		else

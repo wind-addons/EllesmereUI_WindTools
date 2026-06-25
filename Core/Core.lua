@@ -71,7 +71,7 @@ E.PopupDialogs.WINDTOOLS_BUTTON_FIX_RELOAD = {
 }
 
 -- Keybinds
-_G.BINDING_CATEGORY_ELVUI_WINDTOOLS = W.Title
+_G.BINDING_CATEGORY_ELLESMEREUI_WINDTOOLS = W.Title
 for i = 1, 5 do
 	_G["BINDING_HEADER_WTEXTRAITEMSBAR" .. i] =
 		C.StringWithRGB(L["Extra Items Bar"] .. " " .. i, E.db.general.valuecolor)
@@ -80,7 +80,7 @@ for i = 1, 5 do
 	end
 end
 
-_G.BINDING_CATEGORY_ELVUI_WINDTOOLS_EXTRA = W.Title .. " - " .. L["Extra"]
+_G.BINDING_CATEGORY_ELLESMEREUI_WINDTOOLS_EXTRA = W.Title .. " - " .. L["Extra"]
 _G.BINDING_HEADER_WTEXTRABUTTONS = L["Extra Buttons"]
 _G["BINDING_NAME_CLICK WTExtraBindingButtonLogout:LeftButton"] = L["Logout"]
 _G["BINDING_NAME_CLICK WTExtraBindingButtonLeaveGroup:LeftButton"] = L["Leave Party"]
@@ -164,6 +164,13 @@ end
 
 -- WindTools module initialization
 function W:InitializeModules()
+	for _, module in pairs(W.Modules) do
+		if module.OnInitialize and not module.__windtoolsInitialized then
+			module.__windtoolsInitialized = true
+			xpcall(module.OnInitialize, F.Developer.LogDebug, module)
+		end
+	end
+
 	for _, moduleName in pairs(W.RegisteredModules) do
 		local module = self:GetModule(moduleName)
 		if module.Initialize then
@@ -174,7 +181,9 @@ end
 
 -- WindTools module update after profile switch
 function W:UpdateModules()
-	self:UpdateScripts()
+	if self.UpdateScripts then
+		self:UpdateScripts()
+	end
 	for _, moduleName in pairs(self.RegisteredModules) do
 		local module = W:GetModule(moduleName)
 		if module.ProfileUpdate then
@@ -185,14 +194,6 @@ end
 
 -- Check ElvUI version, if not matched, show a popup to user
 function W:CheckElvUIVersion()
-	if W.SupportElvUIVersion > E.version then
-		if E.global.WT.core.elvUIVersionPopup then
-			E:StaticPopup_Show("WINDTOOLS_ELVUI_OUTDATED")
-		else
-			F.Print(E.PopupDialogs.WINDTOOLS_ELVUI_OUTDATED.text)
-		end
-		return false
-	end
 	return true
 end
 
