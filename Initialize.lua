@@ -45,6 +45,9 @@ addon[5] = V
 addon[6] = P
 addon[7] = G
 
+local F = addon[2]
+F.GetCompatibleFont = function(name) return name end
+
 _WindTools = addon
 _G.WindTools = addon
 
@@ -52,6 +55,7 @@ W.Title = "WindTools"
 W.DisplayVersion = C_AddOns.GetAddOnMetadata(addonName, "X-Version") or "4.18"
 W.Version = W.DisplayVersion
 W.Utilities = W.Utilities or {}
+W.CompatibleFont = false
 
 W.Modules.Misc = W:NewModule("Misc")
 W.Modules.Skins = W:NewModule("Skins")
