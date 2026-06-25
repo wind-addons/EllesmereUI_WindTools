@@ -108,3 +108,29 @@ local function GetLSMStatusbars()
 	return { ["Blizzard"] = "Blizzard" }
 end
 addon.GetLSMStatusbars = GetLSMStatusbars
+
+do
+	local GetLSMFonts2 = addon.GetLSMFonts
+	local FOV = addon.FONT_OUTLINE_VALUES
+	local FOO = addon.FONT_OUTLINE_ORDER
+
+	function addon.FontSection(Widgets, parent, y, dbTable)
+		local _, h
+		local fonts = GetLSMFonts2()
+		_, h = Widgets:Dropdown(parent, "Font", y, fonts, addon.DBGet(dbTable, "name"), addon.DBSet(dbTable, "name")); y = y - h
+		_, h = Widgets:Dropdown(parent, "Outline", y, FOV, FOO, addon.DBGet(dbTable, "style"), addon.DBSet(dbTable, "style")); y = y - h
+		_, h = Widgets:Slider(parent, "Size", y, 5, 60, 1, addon.DBGet(dbTable, "size"), addon.DBSet(dbTable, "size")); y = y - h
+		return y
+	end
+end
+
+do
+	local t = {}
+	function addon.MakeChannelValues(...)
+		for i = 1, select("#", ...) do
+			local v = select(i, ...)
+			t[v] = v
+		end
+		return t
+	end
+end
