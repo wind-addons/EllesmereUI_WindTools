@@ -23,7 +23,8 @@ local xpcall = xpcall
 local geterrorhandler = geterrorhandler
 local function SafeCall(func, ...)
 	if type(func) == "function" then
-		return xpcall(func, function(err) return geterrorhandler()(err) end, ...)
+		local args = { ... }
+		return xpcall(function() return func(unpack(args)) end, function(err) return geterrorhandler()(err) end)
 	end
 end
 
@@ -148,7 +149,7 @@ local function BuildPage(pageName, parent, yOffset)
 
 			local builder = addon.OptionBuilders and addon.OptionBuilders[category.key]
 			if builder then
-				local ok, newY = xpcall(builder, function(err) return geterrorhandler()(err) end, parent, y, category.title)
+				local ok, newY = xpcall(function() return builder(parent, y, category.title) end, function(err) return geterrorhandler()(err) end)
 				if ok and type(newY) == "number" then
 					y = newY
 				end

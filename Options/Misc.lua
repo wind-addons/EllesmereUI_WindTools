@@ -19,6 +19,7 @@ local GetLSMFonts = addon.GetLSMFonts
 local GetLSMStatusbars = addon.GetLSMStatusbars
 local FONT_OUTLINE_VALUES = addon.FONT_OUTLINE_VALUES
 local FONT_OUTLINE_ORDER = addon.FONT_OUTLINE_ORDER
+local KeybindAliasEditorButton = addon.KeybindAliasEditorButton
 
 local ANIMATION_EASE_VALUES = {
 	linear = "Linear Ease",
@@ -307,6 +308,20 @@ addon.RegisterOptionBuilder("misc", function(parent, y, cat)
 		_, h = Widgets:Toggle(parent, "Enable", y,
 			DBGet(mute, "enable"), DBSet(mute, "enable"),
 			"Disable some annoying sound effects."); y = y - h
+		if mute.mount then
+			_, h = Widgets:DualRow(parent, y,
+				{ type = "toggle", text = "Mount 63796", getValue = DBGet(mute.mount, 63796), setValue = DBSet(mute.mount, 63796) },
+				{ type = "toggle", text = "Mount 229385", getValue = DBGet(mute.mount, 229385), setValue = DBSet(mute.mount, 229385) }
+			); y = y - h
+			_, h = Widgets:DualRow(parent, y,
+				{ type = "toggle", text = "Mount 339588", getValue = DBGet(mute.mount, 339588), setValue = DBSet(mute.mount, 339588) },
+				{ type = "toggle", text = "Mount 312762", getValue = DBGet(mute.mount, 312762), setValue = DBSet(mute.mount, 312762) }
+			); y = y - h
+			_, h = Widgets:DualRow(parent, y,
+				{ type = "toggle", text = "Mount 40192", getValue = DBGet(mute.mount, 40192), setValue = DBSet(mute.mount, 40192) },
+				{ type = "toggle", text = "Obsidian Nightwing", getValue = DBGet(mute.mount, 121820), setValue = DBSet(mute.mount, 121820) }
+			); y = y - h
+		end
 		if mute.other then
 			_, h = Widgets:DualRow(parent, y,
 				{ type = "toggle", text = "Tortollan", getValue = DBGet(mute.other, "Tortollan"), setValue = DBSet(mute.other, "Tortollan") },
@@ -654,9 +669,20 @@ addon.RegisterOptionBuilder("misc", function(parent, y, cat)
 	_, h = Widgets:SectionHeader(parent, MH("Keybind Alias"), y); y = y - h
 	do
 		local ka = db.keybindAlias
+		local kaDis = function() return not ka.enable end
+		local updateKeybindText = function() SafeModuleCall(W.Modules.KeybindAlias, "UpdateAllKeybindText") end
 		_, h = Widgets:Toggle(parent, "Enable", y,
 			DBGet(ka, "enable"), DBSet(ka, "enable"),
 			"Custom hotkey alias for keybinding."); y = y - h
+		_, h = KeybindAliasEditorButton(Widgets, parent, y, {
+			label = "Manage Aliases",
+			title = "Keybind Alias",
+			map = ka.list,
+			invalidMessage = "Hot Key and Alias are required.",
+			notFoundMessage = "Alias not found.",
+			disabled = kaDis,
+			after = updateKeybindText,
+		}); y = y - h
 	end
 
 	return y

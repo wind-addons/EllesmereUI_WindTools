@@ -14,8 +14,9 @@ local ORIENTATION_ORDER = { "NOANCHOR", "HORIZONTAL", "VERTICAL" }
 local TEXT_ALIGN_VALUES = { LEFT = "Left", CENTER = "Center", RIGHT = "Right" }
 local TEXT_ALIGN_ORDER = { "LEFT", "CENTER", "RIGHT" }
 
-addon.RegisterOptionBuilder("maps", function(parent, y)
+addon.RegisterOptionBuilder("maps", function(parent, y, cat)
 	local Widgets = EllesmereUI.Widgets
+	local MH = function(mod, sub) return addon.MakeHeader(cat, mod, sub) end
 	local _, h
 	local db = E.db.WT.maps
 	local pdb = E.private.WT.maps

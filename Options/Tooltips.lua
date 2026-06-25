@@ -19,8 +19,9 @@ local HEADER_STYLE_ORDER = { "NONE", "TEXT", "TEXTURE" }
 local GROUP_INFO_MODE = { NORMAL = "Normal", COMPACT = "Compact" }
 local GROUP_INFO_MODE_ORDER = { "NORMAL", "COMPACT" }
 
-addon.RegisterOptionBuilder("tooltips", function(parent, y)
+addon.RegisterOptionBuilder("tooltips", function(parent, y, cat)
 	local Widgets = EllesmereUI.Widgets
+	local MH = function(mod, sub) return addon.MakeHeader(cat, mod, sub) end
 	local _, h
 	local db = E.db.WT.tooltips
 	local pdb = E.private.WT.tooltips

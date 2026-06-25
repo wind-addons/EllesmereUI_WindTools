@@ -38,8 +38,9 @@ local UTILITY_CATEGORIES = {
 	{ key = "spell", name = "Spell" },
 }
 
-addon.RegisterOptionBuilder("announcement", function(parent, y)
+addon.RegisterOptionBuilder("announcement", function(parent, y, cat)
 	local Widgets = EllesmereUI.Widgets
+	local MH = function(mod, sub) return addon.MakeHeader(cat, mod, sub) end
 	local _, h
 	local db = E.db.WT.announcement
 
@@ -110,7 +111,7 @@ addon.RegisterOptionBuilder("announcement", function(parent, y)
 		for _, cat in ipairs(UTILITY_CATEGORIES) do
 			local cd = u.general and u.general[cat.key]
 			if cd then
-				_, h = Widgets:SectionHeader(parent, cat.name, y); y = y - h
+				_, h = Widgets:SectionHeader(parent, MH("Utility", cat.name), y); y = y - h
 				_, h = Widgets:DualRow(parent, y,
 					{ type = "toggle", text = "Enable",
 					  getValue = DBGet(cd, "enable"), setValue = DBSet(cd, "enable") },

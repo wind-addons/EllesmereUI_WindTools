@@ -6,6 +6,7 @@ local DBSet = addon.DBSet
 local DBGet2 = addon.DBGet2
 local DBSet2 = addon.DBSet2
 local FontSection = addon.FontSection
+local KeyValueEditorButton = addon.KeyValueEditorButton
 
 local ORIENTATION_VALUES = { HORIZONTAL = "Horizontal", VERTICAL = "Vertical" }
 local ORIENTATION_ORDER = { "HORIZONTAL", "VERTICAL" }
@@ -29,8 +30,9 @@ local FRIEND_GAME_ICON_ORDER = { "BLIZZARD", "FACTION", "PATCH" }
 local TEXT_ALIGN_VALUES = { LEFT = "Left", CENTER = "Center", RIGHT = "Right" }
 local TEXT_ALIGN_ORDER = { "LEFT", "CENTER", "RIGHT" }
 
-addon.RegisterOptionBuilder("social", function(parent, y)
+addon.RegisterOptionBuilder("social", function(parent, y, cat)
 	local Widgets = EllesmereUI.Widgets
+	local MH = function(mod, sub) return addon.MakeHeader(cat, mod, sub) end
 	local _, h
 	local db = E.db.WT.social
 
@@ -148,6 +150,17 @@ addon.RegisterOptionBuilder("social", function(parent, y)
 			ABBR_VALUES, ABBR_ORDER,
 			DBGet(ct, "abbreviation"), DBSet(ct, "abbreviation"),
 			"Modify the style of abbreviation of channels.", ctDis); y = y - h
+		_, h = KeyValueEditorButton(Widgets, parent, y, {
+			label = "Custom Abbreviations",
+			title = "Custom Abbreviations",
+			map = ct.customAbbreviation,
+			keyLabel = "Channel Name",
+			valueLabel = "Abbreviation",
+			removeLabel = "Channel Name",
+			invalidMessage = "Channel Name and Abbreviation are required.",
+			notFoundMessage = "Custom abbreviation not found.",
+			disabled = ctDis,
+		}); y = y - h
 	end
 
 	_, h = Widgets:SectionHeader(parent, MH("Context Menu"), y); y = y - h

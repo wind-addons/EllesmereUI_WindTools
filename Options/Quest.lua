@@ -18,8 +18,9 @@ local TURNIN_MODIFIER = {
 }
 local TURNIN_MODIFIER_ORDER = { "ANY", "ALT", "CTRL", "SHIFT", "NONE" }
 
-addon.RegisterOptionBuilder("quest", function(parent, y)
+addon.RegisterOptionBuilder("quest", function(parent, y, cat)
 	local Widgets = EllesmereUI.Widgets
+	local MH = function(mod, sub) return addon.MakeHeader(cat, mod, sub) end
 	local _, h
 	local db = E.db.WT.quest
 	local pdb = E.private.WT.quest

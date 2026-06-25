@@ -23,8 +23,9 @@ local SOUND_CHANNEL_VALUES = {
 }
 local SOUND_CHANNEL_ORDER = { "Master", "Music", "SFX", "Ambience", "Dialog" }
 
-addon.RegisterOptionBuilder("combat", function(parent, y)
+addon.RegisterOptionBuilder("combat", function(parent, y, cat)
 	local Widgets = EllesmereUI.Widgets
+	local MH = function(mod, sub) return addon.MakeHeader(cat, mod, sub) end
 	local _, h
 	local db = E.db.WT.combat
 	local pdb = E.private.WT.combat

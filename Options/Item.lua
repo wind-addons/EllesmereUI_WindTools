@@ -8,6 +8,7 @@ local DBSet2 = addon.DBSet2
 local SafeModuleCall = addon.SafeModuleCall
 local FontSection = addon.FontSection
 local GetLSMFonts = addon.GetLSMFonts
+local ListEditorButton = addon.ListEditorButton
 
 local ANCHOR_CORNER_VALUES = {
 	TOPLEFT = "TOPLEFT", TOPRIGHT = "TOPRIGHT",
@@ -32,8 +33,9 @@ local CONTACTS_PAGE_VALUES = {
 }
 local CONTACTS_PAGE_ORDER = { "ALTS", "FRIENDS", "GUILD", "FAVORITE" }
 
-addon.RegisterOptionBuilder("item", function(parent, y)
+addon.RegisterOptionBuilder("item", function(parent, y, cat)
 	local Widgets = EllesmereUI.Widgets
+	local MH = function(mod, sub) return addon.MakeHeader(cat, mod, sub) end
 	local _, h
 	local db = E.db.WT.item
 	local pdb = E.private.WT.item
@@ -42,12 +44,43 @@ addon.RegisterOptionBuilder("item", function(parent, y)
 	do
 		local eb = db.extraItemsBar
 		local ebDis = function() return not eb.enable end
+		local updateBars = function() SafeModuleCall(W.Modules.ExtraItemsBar, "UpdateBars") end
+		local parseItemID = function(value)
+			local itemID = tonumber(value)
+			if itemID and itemID > 0 then return itemID end
+		end
 		_, h = Widgets:Toggle(parent, "Enable", y,
 			DBGet(eb, "enable"), DBSet(eb, "enable"),
 			"Add a bar to contain quest items and usable equipment."); y = y - h
 		_, h = Widgets:Toggle(parent, "No Quantum Items", y,
 			DBGet(eb, "noQuantumItems"), DBSet(eb, "noQuantumItems"),
 			"Automatically blacklist the quantum items to avoid accidentally using them."); y = y - h
+		_, h = ListEditorButton(Widgets, parent, y, {
+			label = "Custom Items",
+			title = "Custom Items",
+			list = eb.customList,
+			mode = "array",
+			parse = parseItemID,
+			addLabel = "New Item ID",
+			removeLabel = "Remove Item ID",
+			invalidMessage = "The item ID is invalid.",
+			notFoundMessage = "The item ID is not in the custom item list.",
+			disabled = ebDis,
+			after = updateBars,
+		}); y = y - h
+		_, h = ListEditorButton(Widgets, parent, y, {
+			label = "Blacklist",
+			title = "Blacklist",
+			list = eb.blackList,
+			mode = "map",
+			parse = parseItemID,
+			addLabel = "New Item ID",
+			removeLabel = "Remove Item ID",
+			invalidMessage = "The item ID is invalid.",
+			notFoundMessage = "The item ID is not in the blacklist.",
+			disabled = ebDis,
+			after = updateBars,
+		}); y = y - h
 
 		for i = 1, 5 do
 			local bar = eb["bar" .. i]
