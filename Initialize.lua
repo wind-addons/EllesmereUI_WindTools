@@ -295,7 +295,11 @@ end
 local function RenderCategoryPage(category, parent, y)
 	local builder = addon.OptionBuilders and addon.OptionBuilders[category.key]
 	if builder then
-		return builder(parent, y)
+		local ok, newY = xpcall(builder, function(err) return geterrorhandler()(err) end, parent, y)
+		if ok and type(newY) == "number" then
+			return newY
+		end
+		return RenderCategoryFallback(category, parent, y)
 	end
 	return RenderCategoryFallback(category, parent, y)
 end

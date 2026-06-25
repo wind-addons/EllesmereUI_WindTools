@@ -15,6 +15,6 @@ Libraries\Load_Libraries.xml
 Core\Load_Compat.xml
 Initialize.lua
 Core\Metadata.lua
+Core\Load_Core.xml
 Settings\Load_Settings.xml
 Options\Load_Options.xml
-Core\Load_Core.xml

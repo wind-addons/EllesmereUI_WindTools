@@ -30,22 +30,24 @@ end
 addon.SafeModuleCall = SafeModuleCall
 
 local function DBGet(t, k)
-	return function() return t[k] end
+	return function() return t and t[k] end
 end
 
 local function DBSet(t, k, after)
 	return function(v)
+		if not t then return end
 		t[k] = v
 		if after then SafeCall(after) end
 	end
 end
 
 local function DBGet2(t, k1, k2)
-	return function() return t[k1] and t[k1][k2] end
+	return function() return t and t[k1] and t[k1][k2] end
 end
 
 local function DBSet2(t, k1, k2, after)
 	return function(v)
+		if not t then return end
 		if not t[k1] then t[k1] = {} end
 		t[k1][k2] = v
 		if after then SafeCall(after) end
