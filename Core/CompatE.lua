@@ -169,6 +169,12 @@ local function CreateCompatE()
 				fontSize = 12,
 				valuecolor = { r = 0.05, g = 0.82, b = 0.62 },
 			},
+			unitframe = {
+				statusbar = "Blizzard",
+				font = GetFontName(),
+				fontSize = 12,
+				fontOutline = "OUTLINE",
+			},
 		},
 		global = {
 			general = {},
