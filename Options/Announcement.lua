@@ -47,12 +47,12 @@ addon.RegisterOptionBuilder("announcement", function(parent, y)
 		DBGet(db, "enable"), DBSet(db, "enable"),
 		"Announcement module is a tool to help you send messages."); y = y - h
 
-	_, h = Widgets:SectionHeader(parent, "GENERAL", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("General"), y); y = y - h
 	_, h = Widgets:Slider(parent, "Same Message Interval", y, 0, 3600, 1,
 		DBGet(db, "sameMessageInterval"), DBSet(db, "sameMessageInterval"),
 		"Time interval between sending same messages measured in seconds. Set to 0 to disable."); y = y - h
 
-	_, h = Widgets:SectionHeader(parent, "QUEST", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Quest"), y); y = y - h
 	do
 		local q = db.quest
 		_, h = Widgets:Toggle(parent, "Enable", y,
@@ -72,7 +72,6 @@ addon.RegisterOptionBuilder("announcement", function(parent, y)
 			  getValue = DBGet(q, "hideLevelIfSameAsPlayer"), setValue = DBSet(q, "hideLevelIfSameAsPlayer") }
 		); y = y - h
 
-		_, h = Widgets:SectionHeader(parent, "Channel", y); y = y - h
 		_, h = Widgets:Dropdown(parent, "In Party", y,
 			CHANNEL_PARTY, CHANNEL_PARTY_ORDER,
 			DBGet2(q, "channel", "party"), DBSet2(q, "channel", "party")); y = y - h
@@ -84,14 +83,13 @@ addon.RegisterOptionBuilder("announcement", function(parent, y)
 			DBGet2(q, "channel", "raid"), DBSet2(q, "channel", "raid")); y = y - h
 	end
 
-	_, h = Widgets:SectionHeader(parent, "UTILITY", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Utility"), y); y = y - h
 	do
 		local u = db.utility
 		_, h = Widgets:Toggle(parent, "Enable", y,
 			DBGet(u, "enable"), DBSet(u, "enable"),
 			"Send the use of portals, ritual of summoning, feasts, etc."); y = y - h
 
-		_, h = Widgets:SectionHeader(parent, "Channel", y); y = y - h
 		_, h = Widgets:Dropdown(parent, "Solo", y,
 			CHANNEL_SOLO, CHANNEL_SOLO_ORDER,
 			function() return u.channel and u.channel.solo end,
@@ -123,7 +121,7 @@ addon.RegisterOptionBuilder("announcement", function(parent, y)
 		end
 	end
 
-	_, h = Widgets:SectionHeader(parent, "GOODBYE", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Goodbye"), y); y = y - h
 	do
 		local gb = db.goodbye
 		_, h = Widgets:Toggle(parent, "Enable", y,
@@ -132,7 +130,6 @@ addon.RegisterOptionBuilder("announcement", function(parent, y)
 		_, h = Widgets:Slider(parent, "Delay (sec)", y, 0, 20, 1,
 			DBGet(gb, "delay"), DBSet(gb, "delay")); y = y - h
 
-		_, h = Widgets:SectionHeader(parent, "Channel", y); y = y - h
 		_, h = Widgets:DualRow(parent, y,
 			{ type = "dropdown", text = "In Party",
 			  values = { NONE = "None", EMOTE = "Emote", PARTY = "Party", YELL = "Yell", SAY = "Say" },
@@ -148,7 +145,7 @@ addon.RegisterOptionBuilder("announcement", function(parent, y)
 			DBGet2(gb, "channel", "raid"), DBSet2(gb, "channel", "raid")); y = y - h
 	end
 
-	_, h = Widgets:SectionHeader(parent, "RESET INSTANCE", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Reset Instance"), y); y = y - h
 	do
 		local ri = db.resetInstance
 		_, h = Widgets:Toggle(parent, "Enable", y,
@@ -158,7 +155,6 @@ addon.RegisterOptionBuilder("announcement", function(parent, y)
 			DBGet(ri, "difficultyChange"), DBSet(ri, "difficultyChange"),
 			"Also announce when you change the instance difficulty."); y = y - h
 
-		_, h = Widgets:SectionHeader(parent, "Channel", y); y = y - h
 		_, h = Widgets:Dropdown(parent, "In Party", y,
 			CHANNEL_PARTY, CHANNEL_PARTY_ORDER,
 			DBGet2(ri, "channel", "party"), DBSet2(ri, "channel", "party")); y = y - h
@@ -170,7 +166,7 @@ addon.RegisterOptionBuilder("announcement", function(parent, y)
 			DBGet2(ri, "channel", "raid"), DBSet2(ri, "channel", "raid")); y = y - h
 	end
 
-	_, h = Widgets:SectionHeader(parent, "KEYSTONE", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Keystone"), y); y = y - h
 	do
 		local ks = db.keystone
 		_, h = Widgets:Toggle(parent, "Enable", y,
@@ -180,7 +176,6 @@ addon.RegisterOptionBuilder("announcement", function(parent, y)
 			DBGet(ks, "command"), DBSet(ks, "command"),
 			"Send the keystone to party or guild chat when someone use !keys command."); y = y - h
 
-		_, h = Widgets:SectionHeader(parent, "Channel", y); y = y - h
 		_, h = Widgets:Dropdown(parent, "In Party", y,
 			CHANNEL_PARTY, CHANNEL_PARTY_ORDER,
 			DBGet2(ks, "channel", "party"), DBSet2(ks, "channel", "party")); y = y - h

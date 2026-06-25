@@ -25,14 +25,14 @@ addon.RegisterOptionBuilder("tooltips", function(parent, y)
 	local db = E.db.WT.tooltips
 	local pdb = E.private.WT.tooltips
 
-	_, h = Widgets:SectionHeader(parent, "GENERAL", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("General"), y); y = y - h
 	do
 		_, h = Widgets:Dropdown(parent, "General Modifier Key", y,
 			MODIFIER_VALUES, MODIFIER_ORDER,
 			DBGet(pdb, "modifier"), DBSet(pdb, "modifier"),
 			"The modifier key to show additional information from WindTools."); y = y - h
 
-		_, h = Widgets:SectionHeader(parent, "Title Icon", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("General", "Title Icon"), y); y = y - h
 		_, h = Widgets:Toggle(parent, "Enable", y,
 			DBGet2(pdb, "titleIcon", "enable"), DBSet2(pdb, "titleIcon", "enable"),
 			"Add an icon to the title of items, spells, achievements, and more."); y = y - h
@@ -57,11 +57,11 @@ addon.RegisterOptionBuilder("tooltips", function(parent, y)
 		); y = y - h
 	end
 
-	_, h = Widgets:SectionHeader(parent, "ELVUI TOOLTIP TWEAKS", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("ElvUI Tooltip Tweaks"), y); y = y - h
 	do
 		local et = db.elvUITweaks
 		if et then
-			_, h = Widgets:SectionHeader(parent, "Health Bar", y); y = y - h
+			_, h = Widgets:SectionHeader(parent, MH("ElvUI Tooltip Tweaks", "Health Bar"), y); y = y - h
 			if et.healthBar then
 				_, h = Widgets:DualRow(parent, y,
 					{ type = "slider", text = "Health Bar Y-Offset", min = -50, max = 50, step = 1,
@@ -71,7 +71,7 @@ addon.RegisterOptionBuilder("tooltips", function(parent, y)
 				); y = y - h
 			end
 
-			_, h = Widgets:SectionHeader(parent, "Spec Icon", y); y = y - h
+			_, h = Widgets:SectionHeader(parent, MH("ElvUI Tooltip Tweaks", "Spec Icon"), y); y = y - h
 			if et.specIcon then
 				_, h = Widgets:Toggle(parent, "Enable", y,
 					DBGet2(et, "specIcon", "enable"), DBSet2(et, "specIcon", "enable"),
@@ -84,7 +84,7 @@ addon.RegisterOptionBuilder("tooltips", function(parent, y)
 				); y = y - h
 			end
 
-			_, h = Widgets:SectionHeader(parent, "Miscellaneous", y); y = y - h
+			_, h = Widgets:SectionHeader(parent, MH("ElvUI Tooltip Tweaks", "Miscellaneous"), y); y = y - h
 			_, h = Widgets:Toggle(parent, "Force Item Level", y,
 				function() return et.forceItemLevel end,
 				function(v) et.forceItemLevel = v end,
@@ -92,7 +92,7 @@ addon.RegisterOptionBuilder("tooltips", function(parent, y)
 		end
 	end
 
-	_, h = Widgets:SectionHeader(parent, "PROGRESSION", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Progression"), y); y = y - h
 	do
 		local pg = pdb.progression
 		_, h = Widgets:Toggle(parent, "Enable", y,
@@ -117,7 +117,7 @@ addon.RegisterOptionBuilder("tooltips", function(parent, y)
 		end
 	end
 
-	_, h = Widgets:SectionHeader(parent, "KEYSTONE", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Keystone"), y); y = y - h
 	do
 		local ks = db.keystone
 		local ksDis = function() return not ks.enable end
@@ -129,7 +129,7 @@ addon.RegisterOptionBuilder("tooltips", function(parent, y)
 			"Use abbreviation for the keystone name.", ksDis); y = y - h
 	end
 
-	_, h = Widgets:SectionHeader(parent, "GROUP INFO", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Group Info"), y); y = y - h
 	do
 		local gi = db.groupInfo
 		_, h = Widgets:Toggle(parent, "Enable", y,
@@ -150,7 +150,7 @@ addon.RegisterOptionBuilder("tooltips", function(parent, y)
 		); y = y - h
 	end
 
-	_, h = Widgets:SectionHeader(parent, "OBJECTIVE PROGRESS", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Objective Progress"), y); y = y - h
 	do
 		local op = pdb.objectiveProgress
 		_, h = Widgets:Toggle(parent, "Enable", y,

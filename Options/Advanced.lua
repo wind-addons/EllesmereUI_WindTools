@@ -11,12 +11,13 @@ local LOG_LEVEL_VALUES = {
 }
 local LOG_LEVEL_ORDER = { 1, 2, 3, 4 }
 
-addon.RegisterOptionBuilder("advanced", function(parent, y)
+addon.RegisterOptionBuilder("advanced", function(parent, y, cat)
+	local MH = function(mod, sub) return addon.MakeHeader(cat, mod, sub) end
 	local Widgets = EllesmereUI.Widgets
 	local _, h
 	local gdb = E.global.WT
 
-	_, h = Widgets:SectionHeader(parent, "CORE", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Core"), y); y = y - h
 	do
 		_, h = Widgets:Toggle(parent, "Login Message", y,
 			function() return gdb.core and gdb.core.loginMessage end,
@@ -36,7 +37,7 @@ addon.RegisterOptionBuilder("advanced", function(parent, y)
 			"Help you to enable/disable the modules for a better experience with other plugins."); y = y - h
 	end
 
-	_, h = Widgets:SectionHeader(parent, "GAME FIX", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Game Fix"), y); y = y - h
 	do
 		_, h = Widgets:Toggle(parent, "CVar Alert", y,
 			function() return gdb.core and gdb.core.cvarAlert end,
@@ -48,7 +49,7 @@ addon.RegisterOptionBuilder("advanced", function(parent, y)
 			"Fix the issue that sometimes SetPassThroughButtons got tainted."); y = y - h
 	end
 
-	_, h = Widgets:SectionHeader(parent, "DEVELOPER", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Developer"), y); y = y - h
 	do
 		_, h = Widgets:Dropdown(parent, "Log Level", y,
 			LOG_LEVEL_VALUES, LOG_LEVEL_ORDER,

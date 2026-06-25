@@ -20,7 +20,7 @@ addon.RegisterOptionBuilder("maps", function(parent, y)
 	local db = E.db.WT.maps
 	local pdb = E.private.WT.maps
 
-	_, h = Widgets:SectionHeader(parent, "SUPER TRACKER", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Super Tracker"), y); y = y - h
 	do
 		local st = pdb.superTracker
 		local stDis = function() return not st.enable end
@@ -40,10 +40,10 @@ addon.RegisterOptionBuilder("maps", function(parent, y)
 			  getValue = DBGet(st, "noUnit"), setValue = DBSet(st, "noUnit"), disabled = stDis }
 		); y = y - h
 
-		_, h = Widgets:SectionHeader(parent, "Distance Text", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("Super Tracker", "Distance Text"), y); y = y - h
 		y = FontSection(Widgets, parent, y, st.distanceText)
 
-		_, h = Widgets:SectionHeader(parent, "Waypoint Parse", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("Super Tracker", "Waypoint Parse"), y); y = y - h
 		_, h = Widgets:Toggle(parent, "Enable", y,
 			DBGet2(st, "waypointParse", "enable"), DBSet2(st, "waypointParse", "enable")); y = y - h
 		_, h = Widgets:DualRow(parent, y,
@@ -56,7 +56,7 @@ addon.RegisterOptionBuilder("maps", function(parent, y)
 		); y = y - h
 	end
 
-	_, h = Widgets:SectionHeader(parent, "RECTANGLE MINIMAP", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Rectangle Minimap"), y); y = y - h
 	do
 		local rm = db.rectangleMinimap
 		_, h = Widgets:Toggle(parent, "Enable", y,
@@ -74,7 +74,7 @@ addon.RegisterOptionBuilder("maps", function(parent, y)
 		); y = y - h
 	end
 
-	_, h = Widgets:SectionHeader(parent, "MINIMAP BUTTONS", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Minimap Buttons"), y); y = y - h
 	do
 		local mb = pdb.minimapButtons
 		_, h = Widgets:Toggle(parent, "Enable", y,
@@ -84,7 +84,7 @@ addon.RegisterOptionBuilder("maps", function(parent, y)
 			DBGet(mb, "mouseOver"), DBSet(mb, "mouseOver"),
 			"Only show minimap buttons bar when you mouse over it."); y = y - h
 
-		_, h = Widgets:SectionHeader(parent, "Minimap Buttons Bar", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("Minimap Buttons", "Bar"), y); y = y - h
 		_, h = Widgets:DualRow(parent, y,
 			{ type = "toggle", text = "Bar Backdrop", tooltip = "Show a backdrop of the bar.",
 			  getValue = DBGet(mb, "backdrop"), setValue = DBSet(mb, "backdrop") },
@@ -103,14 +103,14 @@ addon.RegisterOptionBuilder("maps", function(parent, y)
 			"Arrangement direction of the bar."); y = y - h
 	end
 
-	_, h = Widgets:SectionHeader(parent, "WORLD MAP", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("World Map"), y); y = y - h
 	do
 		local wm = pdb.worldMap
 		_, h = Widgets:Toggle(parent, "Enable", y,
 			DBGet(wm, "enable"), DBSet(wm, "enable"),
 			"This module will help you to reveal and resize maps."); y = y - h
 
-		_, h = Widgets:SectionHeader(parent, "Reveal", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("World Map", "Reveal"), y); y = y - h
 		_, h = Widgets:Toggle(parent, "Enable", y,
 			DBGet2(wm, "reveal", "enable"), DBSet2(wm, "reveal", "enable"),
 			"Remove Fog of War from your world map."); y = y - h
@@ -118,7 +118,7 @@ addon.RegisterOptionBuilder("maps", function(parent, y)
 			DBGet2(wm, "reveal", "useColor"), DBSet2(wm, "reveal", "useColor"),
 			"Style Fog of War with special color."); y = y - h
 
-		_, h = Widgets:SectionHeader(parent, "Scale", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("World Map", "Scale"), y); y = y - h
 		_, h = Widgets:Toggle(parent, "Enable", y,
 			DBGet2(wm, "scale", "enable"), DBSet2(wm, "scale", "enable"),
 			"Resize world map."); y = y - h
@@ -126,7 +126,7 @@ addon.RegisterOptionBuilder("maps", function(parent, y)
 			DBGet2(wm, "scale", "size"), DBSet2(wm, "scale", "size")); y = y - h
 	end
 
-	_, h = Widgets:SectionHeader(parent, "INSTANCE DIFFICULTY", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Instance Difficulty"), y); y = y - h
 	do
 		local id = pdb.instanceDifficulty
 		_, h = Widgets:Toggle(parent, "Enable", y,
@@ -144,7 +144,7 @@ addon.RegisterOptionBuilder("maps", function(parent, y)
 			DBGet2(id, "difficulty", "custom"), DBSet2(id, "difficulty", "custom")); y = y - h
 	end
 
-	_, h = Widgets:SectionHeader(parent, "EVENT TRACKER", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Event Tracker"), y); y = y - h
 	do
 		local et = db.eventTracker
 		_, h = Widgets:Toggle(parent, "Enable", y,
@@ -152,7 +152,7 @@ addon.RegisterOptionBuilder("maps", function(parent, y)
 			function(v) et.enable = v end,
 			"Add trackers for world events in the bottom of world map."); y = y - h
 
-		_, h = Widgets:SectionHeader(parent, "Panel Style", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("Event Tracker", "Panel Style"), y); y = y - h
 		_, h = Widgets:DualRow(parent, y,
 			{ type = "toggle", text = "Backdrop", tooltip = "Show a backdrop of the trackers.",
 			  getValue = function() return et.panel and et.panel.backdrop end,

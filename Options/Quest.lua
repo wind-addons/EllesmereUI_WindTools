@@ -24,14 +24,14 @@ addon.RegisterOptionBuilder("quest", function(parent, y)
 	local db = E.db.WT.quest
 	local pdb = E.private.WT.quest
 
-	_, h = Widgets:SectionHeader(parent, "OBJECTIVE TRACKER", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Objective Tracker"), y); y = y - h
 	do
 		local ot = pdb.objectiveTracker
 		_, h = Widgets:Toggle(parent, "Enable", y,
 			DBGet(ot, "enable"), DBSet(ot, "enable"),
 			"Customize the font of Objective Tracker and add colorful progress text."); y = y - h
 
-		_, h = Widgets:SectionHeader(parent, "Progress", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("Objective Tracker", "Progress"), y); y = y - h
 		_, h = Widgets:DualRow(parent, y,
 			{ type = "toggle", text = "No Dash",
 			  getValue = DBGet(ot, "noDash"), setValue = DBSet(ot, "noDash") },
@@ -45,7 +45,7 @@ addon.RegisterOptionBuilder("quest", function(parent, y)
 			  getValue = DBGet(ot, "colorfulPercentage"), setValue = DBSet(ot, "colorfulPercentage") }
 		); y = y - h
 
-		_, h = Widgets:SectionHeader(parent, "Header", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("Objective Tracker", "Header"), y); y = y - h
 		y = FontSection(Widgets, parent, y, ot.header)
 		if ot.header then
 			_, h = Widgets:DualRow(parent, y,
@@ -57,7 +57,7 @@ addon.RegisterOptionBuilder("quest", function(parent, y)
 		end
 	end
 
-	_, h = Widgets:SectionHeader(parent, "AUTO COLLAPSE", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Auto Collapse"), y); y = y - h
 	do
 		local ac = db.autoCollapse
 		local acDis = function() return not ac.enable end
@@ -101,7 +101,7 @@ addon.RegisterOptionBuilder("quest", function(parent, y)
 		); y = y - h
 	end
 
-	_, h = Widgets:SectionHeader(parent, "SWITCH BUTTONS", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Switch Buttons"), y); y = y - h
 	do
 		local sb = db.switchButtons
 		local sbDis = function() return not sb.enable end
@@ -118,7 +118,7 @@ addon.RegisterOptionBuilder("quest", function(parent, y)
 			DBGet(sb, "backdrop"), DBSet(sb, "backdrop"), nil, sbDis); y = y - h
 	end
 
-	_, h = Widgets:SectionHeader(parent, "PROGRESS", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Progress"), y); y = y - h
 	do
 		local qp = db.progress
 		local qpDis = function() return not qp.enable end
@@ -136,7 +136,7 @@ addon.RegisterOptionBuilder("quest", function(parent, y)
 			"Disable the progress message if the required number of objectives is over this value.", qpDis); y = y - h
 	end
 
-	_, h = Widgets:SectionHeader(parent, "TURN IN", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Turn In"), y); y = y - h
 	do
 		local ti = db.turnIn
 		local tiDis = function() return not ti.enable end
@@ -151,7 +151,7 @@ addon.RegisterOptionBuilder("quest", function(parent, y)
 			  values = TURNIN_MODIFIER, order = TURNIN_MODIFIER_ORDER,
 			  getValue = DBGet(ti, "pauseModifier"), setValue = DBSet(ti, "pauseModifier"), disabled = tiDis }
 		); y = y - h
-		_, h = Widgets:SectionHeader(parent, "Automation Conditions", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("Turn In", "Automation Conditions"), y); y = y - h
 		local ec = ti.enableCondition
 		if ec then
 			_, h = Widgets:DualRow(parent, y,
@@ -169,7 +169,7 @@ addon.RegisterOptionBuilder("quest", function(parent, y)
 		end
 	end
 
-	_, h = Widgets:SectionHeader(parent, "PREY HUNT", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Prey Hunt"), y); y = y - h
 	do
 		local ph = db.preyHunt
 		_, h = Widgets:Toggle(parent, "Enable", y,
@@ -177,7 +177,7 @@ addon.RegisterOptionBuilder("quest", function(parent, y)
 			"Additional UI enhancements for Prey Hunt."); y = y - h
 	end
 
-	_, h = Widgets:SectionHeader(parent, "ACHIEVEMENT SCREENSHOT", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Achievement Screenshot"), y); y = y - h
 	do
 		local as = db.achievementScreenshot
 		_, h = Widgets:Toggle(parent, "Enable", y,
@@ -197,7 +197,7 @@ addon.RegisterOptionBuilder("quest", function(parent, y)
 		); y = y - h
 	end
 
-	_, h = Widgets:SectionHeader(parent, "ACHIEVEMENT TRACKER", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Achievement Tracker"), y); y = y - h
 	do
 		local at = db.achievementTracker
 		local atDis = function() return not at.enable end

@@ -121,13 +121,14 @@ local function FontSection(Widgets, parent, y, dbTable, prefix)
 	return y
 end
 
-addon.RegisterOptionBuilder("misc", function(parent, y)
+addon.RegisterOptionBuilder("misc", function(parent, y, cat)
 	local Widgets = EllesmereUI.Widgets
 	local _, h
 	local db = E.db.WT.misc
 	local pdb = E.private.WT.misc
+	local MH = function(mod, sub) return addon.MakeHeader(cat, mod, sub) end
 
-	_, h = Widgets:SectionHeader(parent, "GENERAL", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("General"), y); y = y - h
 
 	_, h = Widgets:DualRow(parent, y,
 		{ type = "toggle", text = "Pause to slash", tooltip = "Just for Chinese and Korean players",
@@ -181,7 +182,7 @@ addon.RegisterOptionBuilder("misc", function(parent, y)
 		  getValue = DBGet(pdb, "reshiiWrapsUpgrade"), setValue = DBSet(pdb, "reshiiWrapsUpgrade") }
 	); y = y - h
 
-	_, h = Widgets:SectionHeader(parent, "AUTOMATION", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Automation"), y); y = y - h
 	do
 		local auto = db.automation
 		local autoEnabled = function() return auto.enable end
@@ -207,7 +208,7 @@ addon.RegisterOptionBuilder("misc", function(parent, y)
 			"Confirm summon from other player automatically."); y = y - h
 	end
 
-	_, h = Widgets:SectionHeader(parent, "EXIT PHASE DIVING", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Exit Phase Diving"), y); y = y - h
 	do
 		local epd = db.exitPhaseDiving
 		_, h = Widgets:Toggle(parent, "Enable", y,
@@ -223,9 +224,9 @@ addon.RegisterOptionBuilder("misc", function(parent, y)
 		end
 	end
 
-	_, h = Widgets:SectionHeader(parent, "CVARS EDITOR", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("CVars Editor"), y); y = y - h
 	do
-		_, h = Widgets:SectionHeader(parent, "General", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("CVars Editor", "General"), y); y = y - h
 		_, h = Widgets:Toggle(parent, "Auto Compare", y,
 			CVarGetBool("alwaysCompareItems"), CVarSetBool("alwaysCompareItems"),
 			"Always compare items when hovering over them."); y = y - h
@@ -237,7 +238,7 @@ addon.RegisterOptionBuilder("misc", function(parent, y)
 			  getValue = CVarGetStr("screenshotFormat"), setValue = CVarSetStr("screenshotFormat") }
 		); y = y - h
 
-		_, h = Widgets:SectionHeader(parent, "Combat", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("CVars Editor", "Combat"), y); y = y - h
 		_, h = Widgets:DualRow(parent, y,
 			{ type = "toggle", text = "Floating Damage Text",
 			  getValue = CVarGetBool("floatingCombatTextCombatDamage_v2"),
@@ -256,7 +257,7 @@ addon.RegisterOptionBuilder("misc", function(parent, y)
 			  setValue = CVarSetNum("cameraDistanceMaxZoomFactor") }
 		); y = y - h
 
-		_, h = Widgets:SectionHeader(parent, "Visual Effect", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("CVars Editor", "Visual Effect"), y); y = y - h
 		_, h = Widgets:DualRow(parent, y,
 			{ type = "toggle", text = "Glow Effect", getValue = CVarGetBool("ffxGlow"), setValue = CVarSetBool("ffxGlow") },
 			{ type = "toggle", text = "Death Effect", getValue = CVarGetBool("ffxDeath"), setValue = CVarSetBool("ffxDeath") }
@@ -264,7 +265,7 @@ addon.RegisterOptionBuilder("misc", function(parent, y)
 		_, h = Widgets:Toggle(parent, "Nether Effect", y,
 			CVarGetBool("ffxNether"), CVarSetBool("ffxNether")); y = y - h
 
-		_, h = Widgets:SectionHeader(parent, "Control", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("CVars Editor", "Control"), y); y = y - h
 		_, h = Widgets:Toggle(parent, "Raw Mouse", y,
 			CVarGetBool("rawMouseEnable"), CVarSetBool("rawMouseEnable"),
 			"It will fix the problem if your cursor has abnormal movement."); y = y - h
@@ -276,7 +277,7 @@ addon.RegisterOptionBuilder("misc", function(parent, y)
 			"Trigger the action when pressing the key down rather than releasing it."); y = y - h
 	end
 
-	_, h = Widgets:SectionHeader(parent, "MOVE FRAMES", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Move Frames"), y); y = y - h
 	do
 		local mf = pdb.moveFrames
 		_, h = Widgets:Toggle(parent, "Enable", y,
@@ -300,7 +301,7 @@ addon.RegisterOptionBuilder("misc", function(parent, y)
 		end); y = y - h
 	end
 
-	_, h = Widgets:SectionHeader(parent, "MUTE", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Mute"), y); y = y - h
 	do
 		local mute = pdb.mute
 		_, h = Widgets:Toggle(parent, "Enable", y,
@@ -330,7 +331,7 @@ addon.RegisterOptionBuilder("misc", function(parent, y)
 		end
 	end
 
-	_, h = Widgets:SectionHeader(parent, "GAME BAR", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Game Bar"), y); y = y - h
 	do
 		local gb = db.gameBar
 		local gbDisabled = function() return not gb.enable end
@@ -338,7 +339,7 @@ addon.RegisterOptionBuilder("misc", function(parent, y)
 			DBGet(gb, "enable"), DBSet(gb, "enable"),
 			"Toggle the game bar."); y = y - h
 
-		_, h = Widgets:SectionHeader(parent, "General", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("Game Bar", "General"), y); y = y - h
 		_, h = Widgets:Toggle(parent, "Bar Backdrop", y,
 			DBGet(gb, "backdrop"), DBSet(gb, "backdrop"), "Show a backdrop of the bar."); y = y - h
 		_, h = Widgets:DualRow(parent, y,
@@ -359,7 +360,7 @@ addon.RegisterOptionBuilder("misc", function(parent, y)
 			DBGet(gb, "buttonSize"), DBSet(gb, "buttonSize"),
 			"The size of the buttons."); y = y - h
 
-		_, h = Widgets:SectionHeader(parent, "Display", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("Game Bar", "Display"), y); y = y - h
 		_, h = Widgets:DualRow(parent, y,
 			{ type = "toggle", text = "Mouse Over", tooltip = "Show the bar only when the mouse is hovered over the area.",
 			  getValue = DBGet(gb, "mouseOver"), setValue = DBSet(gb, "mouseOver"), disabled = gbDisabled },
@@ -375,7 +376,7 @@ addon.RegisterOptionBuilder("misc", function(parent, y)
 			  getValue = DBGet(gb, "tooltipsAnchor"), setValue = DBSet(gb, "tooltipsAnchor"), disabled = gbDisabled }
 		); y = y - h
 
-		_, h = Widgets:SectionHeader(parent, "Animation", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("Game Bar", "Animation"), y); y = y - h
 		_, h = Widgets:Slider(parent, "Duration", y, 0, 3, 0.01,
 			DBGet2(gb, "animation", "duration"), DBSet2(gb, "animation", "duration"),
 			"The duration of the animation in seconds."); y = y - h
@@ -390,7 +391,7 @@ addon.RegisterOptionBuilder("misc", function(parent, y)
 			  setValue = DBSet2(gb, "animation", "easeInvert") }
 		); y = y - h
 
-		_, h = Widgets:SectionHeader(parent, "Color - Normal", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("Game Bar", "Normal Color"), y); y = y - h
 		_, h = Widgets:Dropdown(parent, "Mode", y,
 			COLOR_MODE_VALUES, COLOR_MODE_ORDER,
 			DBGet(gb, "normalColor"), DBSet(gb, "normalColor")); y = y - h
@@ -407,7 +408,7 @@ addon.RegisterOptionBuilder("misc", function(parent, y)
 				end, true); y = y - h
 		end
 
-		_, h = Widgets:SectionHeader(parent, "Color - Hover", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("Game Bar", "Hover Color"), y); y = y - h
 		_, h = Widgets:Dropdown(parent, "Mode", y,
 			COLOR_MODE_VALUES, COLOR_MODE_ORDER,
 			DBGet(gb, "hoverColor"), DBSet(gb, "hoverColor")); y = y - h
@@ -424,7 +425,7 @@ addon.RegisterOptionBuilder("misc", function(parent, y)
 				end, true); y = y - h
 		end
 
-		_, h = Widgets:SectionHeader(parent, "Additional Text", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("Game Bar", "Additional Text"), y); y = y - h
 		do
 			local at = gb.additionalText
 			_, h = Widgets:DualRow(parent, y,
@@ -448,7 +449,7 @@ addon.RegisterOptionBuilder("misc", function(parent, y)
 			y = FontSection(Widgets, parent, y, at.font)
 		end
 
-		_, h = Widgets:SectionHeader(parent, "Time", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("Game Bar", "Time"), y); y = y - h
 		do
 			local tm = gb.time
 			_, h = Widgets:DualRow(parent, y,
@@ -471,11 +472,11 @@ addon.RegisterOptionBuilder("misc", function(parent, y)
 				  tooltip = "The interval of updating.", disabled = gbDisabled }
 			); y = y - h
 			y = FontSection(Widgets, parent, y, tm.font)
-			_, h = Widgets:SectionHeader(parent, "System Info Font", y); y = y - h
+			_, h = Widgets:SectionHeader(parent, MH("Game Bar", "System Info Font"), y); y = y - h
 			y = FontSection(Widgets, parent, y, tm.systemInfoFont)
 		end
 
-		_, h = Widgets:SectionHeader(parent, "Friends", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("Game Bar", "Friends"), y); y = y - h
 		do
 			local fr = gb.friends
 			_, h = Widgets:DualRow(parent, y,
@@ -486,13 +487,13 @@ addon.RegisterOptionBuilder("misc", function(parent, y)
 			); y = y - h
 		end
 
-		_, h = Widgets:SectionHeader(parent, "Group Finder", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("Game Bar", "Group Finder"), y); y = y - h
 		_, h = Widgets:Toggle(parent, "Prefer NetEase Meeting Stone", y,
 			DBGet2(gb, "groupFinder", "preferNetEaseMeetingStone"),
 			DBSet2(gb, "groupFinder", "preferNetEaseMeetingStone"),
 			"If Meeting Stone is installed, left click the Group Finder button to open NetEase Meeting Stone instead of the Blizzard one."); y = y - h
 
-		_, h = Widgets:SectionHeader(parent, "Left Panel", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("Game Bar", "Left Panel"), y); y = y - h
 		for i = 1, 7 do
 			_, h = Widgets:Dropdown(parent, ("Button #%d"):format(i), y,
 				AVAILABLE_BUTTON_VALUES, AVAILABLE_BUTTON_ORDER,
@@ -500,7 +501,7 @@ addon.RegisterOptionBuilder("misc", function(parent, y)
 				function(v) gb.left = gb.left or {}; gb.left[i] = v end,
 				nil, nil); y = y - h
 		end
-		_, h = Widgets:SectionHeader(parent, "Right Panel", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("Game Bar", "Right Panel"), y); y = y - h
 		for i = 1, 7 do
 			_, h = Widgets:Dropdown(parent, ("Button #%d"):format(i), y,
 				AVAILABLE_BUTTON_VALUES, AVAILABLE_BUTTON_ORDER,
@@ -510,13 +511,13 @@ addon.RegisterOptionBuilder("misc", function(parent, y)
 		end
 	end
 
-	_, h = Widgets:SectionHeader(parent, "LFG LIST", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("LFG List"), y); y = y - h
 	do
 		local ll = pdb.lfgList
 		_, h = Widgets:Toggle(parent, "Enable", y,
 			DBGet(ll, "enable"), DBSet(ll, "enable")); y = y - h
 
-		_, h = Widgets:SectionHeader(parent, "Icon", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("LFG List", "Icon"), y); y = y - h
 		do
 			local ic = ll.icon
 			local icDis = function() return not ll.enable end
@@ -548,7 +549,7 @@ addon.RegisterOptionBuilder("misc", function(parent, y)
 				"Disable the default class-colored background circle in LFG Lists, leaving only the skinned icons from preferences"); y = y - h
 		end
 
-		_, h = Widgets:SectionHeader(parent, "Class Line", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("LFG List", "Class Line"), y); y = y - h
 		do
 			local ln = ll.line
 			local lnDis = function() return not ll.enable end
@@ -574,7 +575,7 @@ addon.RegisterOptionBuilder("misc", function(parent, y)
 				DBGet(ln, "alpha"), DBSet(ln, "alpha"), nil, lnDis); y = y - h
 		end
 
-		_, h = Widgets:SectionHeader(parent, "Additional Text", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("LFG List", "Additional Text"), y); y = y - h
 		do
 			local at = ll.additionalText
 			local atDis = function() return not ll.enable end
@@ -590,7 +591,7 @@ addon.RegisterOptionBuilder("misc", function(parent, y)
 			); y = y - h
 		end
 
-		_, h = Widgets:SectionHeader(parent, "Party Keystone", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("LFG List", "Party Keystone"), y); y = y - h
 		do
 			local pk = ll.partyKeystone
 			_, h = Widgets:Toggle(parent, "Enable", y,
@@ -599,7 +600,7 @@ addon.RegisterOptionBuilder("misc", function(parent, y)
 			y = FontSection(Widgets, parent, y, pk.font)
 		end
 
-		_, h = Widgets:SectionHeader(parent, "Right Panel", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("LFG List", "Right Panel"), y); y = y - h
 		do
 			local rp = ll.rightPanel
 			local rpDis = function() return not ll.enable end
@@ -630,7 +631,7 @@ addon.RegisterOptionBuilder("misc", function(parent, y)
 		end
 	end
 
-	_, h = Widgets:SectionHeader(parent, "SPELL ACTIVATION ALERT", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Spell Activation Alert"), y); y = y - h
 	do
 		local sa = db.spellActivationAlert
 		local saDis = function() return not sa.enable end
@@ -650,7 +651,7 @@ addon.RegisterOptionBuilder("misc", function(parent, y)
 		); y = y - h
 	end
 
-	_, h = Widgets:SectionHeader(parent, "KEYBIND ALIAS", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Keybind Alias"), y); y = y - h
 	do
 		local ka = db.keybindAlias
 		_, h = Widgets:Toggle(parent, "Enable", y,

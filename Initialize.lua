@@ -143,14 +143,12 @@ local function BuildPage(pageName, parent, yOffset)
 		local category = CATEGORY_BY_KEY[categoryKey]
 		if category then
 			if index > 1 then
-				local sep, sh
-				sep, sh = Widgets:SectionHeader(parent, "", y); y = y - sh - 6
-				sep, sh = Widgets:SectionHeader(parent, L(category.title), y); y = y - sh
+				local _, sh = Widgets:Spacer(parent, y, 8); y = y - sh
 			end
 
 			local builder = addon.OptionBuilders and addon.OptionBuilders[category.key]
 			if builder then
-				local ok, newY = xpcall(builder, function(err) return geterrorhandler()(err) end, parent, y)
+				local ok, newY = xpcall(builder, function(err) return geterrorhandler()(err) end, parent, y, category.title)
 				if ok and type(newY) == "number" then
 					y = newY
 				end

@@ -22,13 +22,14 @@ local MARK_VALUES = {
 }
 local MARK_ORDER = { 1, 2, 3, 4, 5, 6, 7, 8 }
 
-addon.RegisterOptionBuilder("unitFrames", function(parent, y)
+addon.RegisterOptionBuilder("unitFrames", function(parent, y, cat)
+	local MH = function(mod, sub) return addon.MakeHeader(cat, mod, sub) end
 	local Widgets = EllesmereUI.Widgets
 	local _, h
 	local db = E.db.WT.unitFrames
 	local pdb = E.private.WT.unitFrames
 
-	_, h = Widgets:SectionHeader(parent, "QUICK FOCUS", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Quick Focus"), y); y = y - h
 	do
 		local qf = pdb.quickFocus
 		local qfDis = function() return not qf.enable end
@@ -52,7 +53,7 @@ addon.RegisterOptionBuilder("unitFrames", function(parent, y)
 		); y = y - h
 	end
 
-	_, h = Widgets:SectionHeader(parent, "ABSORB", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Absorb"), y); y = y - h
 	do
 		local ab = db.absorb
 		_, h = Widgets:Toggle(parent, "Enable", y,
@@ -69,7 +70,7 @@ addon.RegisterOptionBuilder("unitFrames", function(parent, y)
 		end
 	end
 
-	_, h = Widgets:SectionHeader(parent, "ROLE ICON", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Role Icon"), y); y = y - h
 	do
 		local ri = db.roleIcon
 		if ri then
@@ -79,7 +80,7 @@ addon.RegisterOptionBuilder("unitFrames", function(parent, y)
 		end
 	end
 
-	_, h = Widgets:SectionHeader(parent, "NAME CLIP", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Name Clip"), y); y = y - h
 	do
 		local nc = pdb.nameClip
 		if nc then

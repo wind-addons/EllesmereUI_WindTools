@@ -34,7 +34,7 @@ addon.RegisterOptionBuilder("social", function(parent, y)
 	local _, h
 	local db = E.db.WT.social
 
-	_, h = Widgets:SectionHeader(parent, "CHAT BAR", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Chat Bar"), y); y = y - h
 	do
 		local cb = db.chatBar
 		local cbDis = function() return not cb.enable end
@@ -76,7 +76,7 @@ addon.RegisterOptionBuilder("social", function(parent, y)
 		end
 	end
 
-	_, h = Widgets:SectionHeader(parent, "CHAT LINK", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Chat Link"), y); y = y - h
 	do
 		local cl = db.chatLink
 		local clDis = function() return not cl.enable end
@@ -113,7 +113,7 @@ addon.RegisterOptionBuilder("social", function(parent, y)
 		end
 	end
 
-	_, h = Widgets:SectionHeader(parent, "CHAT TEXT", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Chat Text"), y); y = y - h
 	do
 		local ct = db.chatText
 		local ctDis = function() return not ct.enable end
@@ -130,14 +130,14 @@ addon.RegisterOptionBuilder("social", function(parent, y)
 			  getValue = DBGet(ct, "factionIcon"), setValue = DBSet(ct, "factionIcon"), disabled = ctDis },
 			{ type = "spacer" }
 		); y = y - h
-		_, h = Widgets:SectionHeader(parent, "Enhancements", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("Chat Text", "Enhancements"), y); y = y - h
 		_, h = Widgets:DualRow(parent, y,
 			{ type = "toggle", text = "Guild Member Status", tooltip = "Enhance the message when a guild member comes online or goes offline.",
 			  getValue = DBGet(ct, "guildMemberStatus"), setValue = DBSet(ct, "guildMemberStatus"), disabled = ctDis },
 			{ type = "toggle", text = "Merge Achievement", tooltip = "Merge the achievement message into one line.",
 			  getValue = DBGet(ct, "mergeAchievement"), setValue = DBSet(ct, "mergeAchievement"), disabled = ctDis }
 		); y = y - h
-		_, h = Widgets:SectionHeader(parent, "Character Name", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("Chat Text", "Character Name"), y); y = y - h
 		_, h = Widgets:DualRow(parent, y,
 			{ type = "toggle", text = "Remove Realm",
 			  getValue = DBGet(ct, "removeRealm"), setValue = DBSet(ct, "removeRealm"), disabled = ctDis },
@@ -150,7 +150,7 @@ addon.RegisterOptionBuilder("social", function(parent, y)
 			"Modify the style of abbreviation of channels.", ctDis); y = y - h
 	end
 
-	_, h = Widgets:SectionHeader(parent, "CONTEXT MENU", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Context Menu"), y); y = y - h
 	do
 		local cm = db.contextMenu
 		_, h = Widgets:Toggle(parent, "Enable", y,
@@ -169,7 +169,7 @@ addon.RegisterOptionBuilder("social", function(parent, y)
 			DBGet(cm, "reportStats"), DBSet(cm, "reportStats")); y = y - h
 	end
 
-	_, h = Widgets:SectionHeader(parent, "EMOTE", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Emote"), y); y = y - h
 	do
 		local we = db.emote
 		local weDis = function() return not we.enable end
@@ -186,7 +186,7 @@ addon.RegisterOptionBuilder("social", function(parent, y)
 		); y = y - h
 	end
 
-	_, h = Widgets:SectionHeader(parent, "FRIEND LIST", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Friend List"), y); y = y - h
 	do
 		local fl = db.friendList
 		local flDis = function() return not fl.enable end
@@ -194,7 +194,7 @@ addon.RegisterOptionBuilder("social", function(parent, y)
 			DBGet(fl, "enable"), DBSet(fl, "enable"),
 			"Add additional information to the friend frame."); y = y - h
 
-		_, h = Widgets:SectionHeader(parent, "Texture Replacement", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("Friend List", "Texture Replacement"), y); y = y - h
 		_, h = Widgets:DualRow(parent, y,
 			{ type = "dropdown", text = "Status Icon Pack",
 			  values = FRIEND_STATUS_VALUES, order = FRIEND_STATUS_ORDER,
@@ -204,7 +204,7 @@ addon.RegisterOptionBuilder("social", function(parent, y)
 			  getValue = DBGet2(fl, "textures", "gameIcon"), setValue = DBSet2(fl, "textures", "gameIcon"), disabled = flDis }
 		); y = y - h
 
-		_, h = Widgets:SectionHeader(parent, "Name", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("Friend List", "Name"), y); y = y - h
 		_, h = Widgets:DualRow(parent, y,
 			{ type = "toggle", text = "Level",
 			  getValue = DBGet(fl, "level"), setValue = DBSet(fl, "level"), disabled = flDis },
@@ -219,14 +219,14 @@ addon.RegisterOptionBuilder("social", function(parent, y)
 		); y = y - h
 		y = FontSection(Widgets, parent, y, fl.nameFont)
 
-		_, h = Widgets:SectionHeader(parent, "Information", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("Friend List", "Information"), y); y = y - h
 		_, h = Widgets:Toggle(parent, "Hide Realm", y,
 			DBGet(fl, "hideRealm"), DBSet(fl, "hideRealm"),
 			"Hide the realm name of friends.", flDis); y = y - h
 		y = FontSection(Widgets, parent, y, fl.infoFont)
 	end
 
-	_, h = Widgets:SectionHeader(parent, "SMART TAB", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Smart Tab"), y); y = y - h
 	do
 		local st = db.smartTab
 		local stDis = function() return not st.enable end
@@ -234,7 +234,7 @@ addon.RegisterOptionBuilder("social", function(parent, y)
 			DBGet(st, "enable"), DBSet(st, "enable"),
 			"This module will change the channel when Tab has been pressed."); y = y - h
 
-		_, h = Widgets:SectionHeader(parent, "Channel", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("Smart Tab", "Channel"), y); y = y - h
 		_, h = Widgets:DualRow(parent, y,
 			{ type = "toggle", text = "Yell",
 			  getValue = DBGet(st, "yell"), setValue = DBSet(st, "yell"), disabled = stDis },
@@ -248,7 +248,7 @@ addon.RegisterOptionBuilder("social", function(parent, y)
 			  getValue = DBGet(st, "officer"), setValue = DBSet(st, "officer"), disabled = stDis }
 		); y = y - h
 
-		_, h = Widgets:SectionHeader(parent, "Whisper", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("Smart Tab", "Whisper"), y); y = y - h
 		_, h = Widgets:DualRow(parent, y,
 			{ type = "toggle", text = "Whisper Cycle",
 			  getValue = DBGet(st, "whisperCycle"), setValue = DBSet(st, "whisperCycle"), disabled = stDis },

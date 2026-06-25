@@ -15,6 +15,14 @@ function addon.RegisterOptionBuilder(categoryKey, fn)
 	addon.OptionBuilders[categoryKey] = fn
 end
 
+function addon.MakeHeader(cat, module, sub)
+	local L = EllesmereUI.L or function(s) return s end
+	if sub then
+		return L(cat) .. " · " .. L(module) .. " · " .. L(sub)
+	end
+	return L(cat) .. " · " .. L(module)
+end
+
 local function SafeCall(func, ...)
 	if type(func) ~= "function" then return end
 	return xpcall(func, function(err) return geterrorhandler()(err) end, ...)

@@ -38,7 +38,7 @@ addon.RegisterOptionBuilder("item", function(parent, y)
 	local db = E.db.WT.item
 	local pdb = E.private.WT.item
 
-	_, h = Widgets:SectionHeader(parent, "EXTRA ITEMS BAR", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Extra Items Bar"), y); y = y - h
 	do
 		local eb = db.extraItemsBar
 		local ebDis = function() return not eb.enable end
@@ -52,7 +52,7 @@ addon.RegisterOptionBuilder("item", function(parent, y)
 		for i = 1, 5 do
 			local bar = eb["bar" .. i]
 			if not bar then break end
-			_, h = Widgets:SectionHeader(parent, "Bar " .. i, y); y = y - h
+			_, h = Widgets:SectionHeader(parent, MH("Extra Items Bar", "Bar " .. i), y); y = y - h
 			_, h = Widgets:Toggle(parent, "Enable", y,
 				DBGet(bar, "enable"), DBSet(bar, "enable"), nil, ebDis); y = y - h
 			_, h = Widgets:Toggle(parent, "Bar Backdrop", y,
@@ -82,7 +82,7 @@ addon.RegisterOptionBuilder("item", function(parent, y)
 				ANCHOR_CORNER_VALUES, ANCHOR_CORNER_ORDER,
 				DBGet(bar, "anchor"), DBSet(bar, "anchor"),
 				"The first button anchors itself to this point on the bar.", ebDis); y = y - h
-			_, h = Widgets:SectionHeader(parent, "Visibility", y); y = y - h
+			_, h = Widgets:SectionHeader(parent, MH("Extra Items Bar", "Visibility"), y); y = y - h
 			_, h = Widgets:DualRow(parent, y,
 				{ type = "toggle", text = "Inherit Global Fade",
 				  getValue = DBGet(bar, "globalFade"), setValue = DBSet(bar, "globalFade"), disabled = ebDis },
@@ -104,7 +104,7 @@ addon.RegisterOptionBuilder("item", function(parent, y)
 		end
 	end
 
-	_, h = Widgets:SectionHeader(parent, "DELETE ITEM", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Delete Item"), y); y = y - h
 	do
 		local dl = db.delete
 		_, h = Widgets:Toggle(parent, "Enable", y,
@@ -119,7 +119,7 @@ addon.RegisterOptionBuilder("item", function(parent, y)
 		); y = y - h
 	end
 
-	_, h = Widgets:SectionHeader(parent, "ALREADY KNOWN", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Already Known"), y); y = y - h
 	do
 		local ak = db.alreadyKnown
 		_, h = Widgets:Toggle(parent, "Enable", y,
@@ -141,7 +141,7 @@ addon.RegisterOptionBuilder("item", function(parent, y)
 		end
 	end
 
-	_, h = Widgets:SectionHeader(parent, "FAST LOOT", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Fast Loot"), y); y = y - h
 	do
 		local fl = db.fastLoot
 		_, h = Widgets:Toggle(parent, "Enable", y,
@@ -152,7 +152,7 @@ addon.RegisterOptionBuilder("item", function(parent, y)
 			"The time delay between every loot operations. (Default is 0.3)"); y = y - h
 	end
 
-	_, h = Widgets:SectionHeader(parent, "TRADE", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Trade"), y); y = y - h
 	do
 		local td = db.trade
 		_, h = Widgets:Toggle(parent, "Enable", y,
@@ -162,7 +162,7 @@ addon.RegisterOptionBuilder("item", function(parent, y)
 			DBGet(td, "thanksButton"), DBSet(td, "thanksButton")); y = y - h
 	end
 
-	_, h = Widgets:SectionHeader(parent, "CONTACTS", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Contacts"), y); y = y - h
 	do
 		local ct = db.contacts
 		_, h = Widgets:Toggle(parent, "Enable", y,
@@ -178,14 +178,14 @@ addon.RegisterOptionBuilder("item", function(parent, y)
 		); y = y - h
 	end
 
-	_, h = Widgets:SectionHeader(parent, "INSPECT", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Inspect"), y); y = y - h
 	do
 		local is = db.inspect
 		local isDis = function() return not is.enable end
 		_, h = Widgets:Toggle(parent, "Enable", y,
 			DBGet(is, "enable"), DBSet(is, "enable"),
 			"This module will add an equipment list beside the character panel and inspect frame."); y = y - h
-		_, h = Widgets:SectionHeader(parent, "Lists", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("Inspect", "Lists"), y); y = y - h
 		_, h = Widgets:DualRow(parent, y,
 			{ type = "toggle", text = "Player", tooltip = "Add a frame to your character panel.",
 			  getValue = DBGet(is, "player"), setValue = DBSet(is, "player"), disabled = isDis },
@@ -193,16 +193,16 @@ addon.RegisterOptionBuilder("item", function(parent, y)
 			  getValue = DBGet(is, "inspect"), setValue = DBSet(is, "inspect"), disabled = isDis }
 		); y = y - h
 		if is.inspect then
-			_, h = Widgets:SectionHeader(parent, "Additional Information", y); y = y - h
+			_, h = Widgets:SectionHeader(parent, MH("Inspect", "Additional Information"), y); y = y - h
 			_, h = Widgets:Toggle(parent, "Always Show Mine", y,
 				DBGet(is, "playerOnInspect"), DBSet(is, "playerOnInspect"),
 				"Display character equipments list when you inspect someone."); y = y - h
 		end
-		_, h = Widgets:SectionHeader(parent, "Slot", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("Inspect", "Slot"), y); y = y - h
 		y = FontSection(Widgets, parent, y, is.slotText)
-		_, h = Widgets:SectionHeader(parent, "Item Level", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("Inspect", "Item Level"), y); y = y - h
 		y = FontSection(Widgets, parent, y, is.levelText)
-		_, h = Widgets:SectionHeader(parent, "Item Icon", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("Inspect", "Item Icon"), y); y = y - h
 		do
 			local ii = is.itemIcon
 			_, h = Widgets:DualRow(parent, y,
@@ -221,9 +221,9 @@ addon.RegisterOptionBuilder("item", function(parent, y)
 				DBGet(ii, "indicator"), DBSet(ii, "indicator"),
 				"Show the special mark on the icon to indicate the crafting quality, tier set, etc."); y = y - h
 		end
-		_, h = Widgets:SectionHeader(parent, "Item Name", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("Inspect", "Item Name"), y); y = y - h
 		y = FontSection(Widgets, parent, y, is.itemNameText)
-		_, h = Widgets:SectionHeader(parent, "Enchant Icon", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("Inspect", "Enchant Icon"), y); y = y - h
 		do
 			local ei = is.enchantIcon
 			_, h = Widgets:DualRow(parent, y,
@@ -233,7 +233,7 @@ addon.RegisterOptionBuilder("item", function(parent, y)
 				  getValue = DBGet(ei, "size"), setValue = DBSet(ei, "size"), disabled = isDis }
 			); y = y - h
 		end
-		_, h = Widgets:SectionHeader(parent, "Gem Icon", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("Inspect", "Gem Icon"), y); y = y - h
 		do
 			local gi = is.gemIcon
 			_, h = Widgets:DualRow(parent, y,
@@ -247,7 +247,7 @@ addon.RegisterOptionBuilder("item", function(parent, y)
 		end
 	end
 
-	_, h = Widgets:SectionHeader(parent, "ITEM LEVEL", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Item Level"), y); y = y - h
 	do
 		local il = db.itemLevel
 		local ilDis = function() return not il.enable end
@@ -255,7 +255,7 @@ addon.RegisterOptionBuilder("item", function(parent, y)
 			DBGet(il, "enable"), DBSet(il, "enable"),
 			"Add an extra item level text to some equipment buttons."); y = y - h
 
-		_, h = Widgets:SectionHeader(parent, "Flyout Button", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("Item Level", "Flyout Button"), y); y = y - h
 		do
 			local fo = il.flyout
 			_, h = Widgets:Toggle(parent, "Enable", y,
@@ -268,7 +268,7 @@ addon.RegisterOptionBuilder("item", function(parent, y)
 			end
 		end
 
-		_, h = Widgets:SectionHeader(parent, "Scrapping Machine", y); y = y - h
+		_, h = Widgets:SectionHeader(parent, MH("Item Level", "Scrapping Machine"), y); y = y - h
 		do
 			local sm = il.scrappingMachine
 			_, h = Widgets:Toggle(parent, "Enable", y,
@@ -282,7 +282,7 @@ addon.RegisterOptionBuilder("item", function(parent, y)
 		end
 	end
 
-	_, h = Widgets:SectionHeader(parent, "EXTEND MERCHANT PAGES", y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Extend Merchant Pages"), y); y = y - h
 	do
 		local emp = pdb.extendMerchantPages
 		_, h = Widgets:Toggle(parent, "Enable", y,
