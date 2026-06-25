@@ -100,7 +100,7 @@ local function ReplaceEmote(value)
 	for _, v in ipairs(emotes) do
 		if emote == v.key or emote == v.zhCN or emote == v.zhTW then
 			return "|T"
-				.. ((v.texture or "Interface\\AddOns\\ElvUI_WindTools\\Media\\Emotes\\") .. v.key)
+				.. ((v.texture or "Interface\\AddOns\\EllesmereUI_WindTools\\Media\\Emotes\\") .. v.key)
 				.. ":"
 				.. CE.db.size
 				.. "|t"
@@ -188,7 +188,7 @@ function CE:CreateInterface()
 		if v.texture then
 			button:SetNormalTexture(v.texture)
 		else
-			button:SetNormalTexture("Interface\\Addons\\ElvUI_WindTools\\Media\\Emotes\\" .. v.key)
+			button:SetNormalTexture("Interface\\Addons\\EllesmereUI_WindTools\\Media\\Emotes\\" .. v.key)
 		end
 		button:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight", "ADD")
 		button:Point("TOPLEFT", 16 + (index % column) * (width + space), -36 - floor(index / column) * (height + space))

@@ -1,5 +1,5 @@
 name: 🐛 Bug Report
-description: Report a bug in ElvUI_WindTools.
+description: Report a bug in EllesmereUI_WindTools.
 title: "bug: "
 labels: ["🐛 Bug"]
 type: bug
@@ -9,9 +9,9 @@ body:
       label: Did you check these before submitting?
       description: Make sure you checked all of the below before submitting an issue
       options:
-        - label: I have updated `ElvUI` to the latest version before submitting this issue
+        - label: I have updated `EllesmereUI` to the latest version before submitting this issue
           required: true
-        - label: I have updated `ElvUI_WindTools` to the latest version before submitting this issue
+        - label: I have updated `EllesmereUI_WindTools` to the latest version before submitting this issue
           required: true
         - label: I have not read any of these steps, please close my issue when you see it.
           required: false
@@ -19,15 +19,15 @@ body:
           required: true
   - type: input
     attributes:
-      label: "ElvUI Version"
-      description: You can find the version in the [ElvUI Option] - [WindTools] - [Information]
+      label: "EllesmereUI Version"
+      description: You can find the version in the [EllesmereUI Option] - [WindTools] - [Information]
       placeholder: "13.97"
     validations:
       required: true
   - type: input
     attributes:
-      label: "ElvUI_WindTools Version"
-      description: You can find the version in the [ElvUI Option] - [WindTools] - [Information]
+      label: "EllesmereUI_WindTools Version"
+      description: You can find the version in the [EllesmereUI Option] - [WindTools] - [Information]
       placeholder: "3.96"
     validations:
       required: true

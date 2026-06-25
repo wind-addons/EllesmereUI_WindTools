@@ -175,7 +175,7 @@ options.help = {
 							"WINDTOOLS_EDITBOX",
 							nil,
 							nil,
-							"https://github.com/wind-addons/ElvUI_WindTools/issues"
+							"https://github.com/wind-addons/EllesmereUI_WindTools/issues"
 						)
 					end,
 					width = 0.7,

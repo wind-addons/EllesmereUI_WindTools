@@ -35,7 +35,7 @@ local WOW_PROJECT_WRATH_CLASSIC = 11
 local WOW_PROJECT_CATACLYSM_CLASSIC = 14
 local WOW_PROJECT_MISTS_CLASSIC = 19
 
-local MediaPath = "Interface\\Addons\\ElvUI_WindTools\\Media\\FriendList\\"
+local MediaPath = "Interface\\Addons\\EllesmereUI_WindTools\\Media\\FriendList\\"
 
 local cache = {}
 

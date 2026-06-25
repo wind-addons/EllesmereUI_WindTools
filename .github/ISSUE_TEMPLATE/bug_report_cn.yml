@@ -1,5 +1,5 @@
 name: 🐛 Bug 反馈
-description: 反馈 ElvUI_WindTools 中的错误。
+description: 反馈 EllesmereUI_WindTools 中的错误。
 title: "bug: "
 labels: ["🐛 Bug"]
 type: bug
@@ -9,9 +9,9 @@ body:
       label: 提交前请检查以下项目
       description: 在提交问题前请确保已检查以下所有项目
       options:
-        - label: 我已在提交此问题前将 `ElvUI` 更新至最新版本
+        - label: 我已在提交此问题前将 `EllesmereUI` 更新至最新版本
           required: true
-        - label: 我已在提交此问题前将 `ElvUI_WindTools` 更新至最新版本
+        - label: 我已在提交此问题前将 `EllesmereUI_WindTools` 更新至最新版本
           required: true
         - label: 我根本没看这些确认步骤，请直接关闭我的问题
           required: false
@@ -19,15 +19,15 @@ body:
           required: true
   - type: input
     attributes:
-      label: "ElvUI 版本"
-      description: 你可以在 [ElvUI 选项] - [Wind 工具箱] - [信息] 中找到版本号
+      label: "EllesmereUI 版本"
+      description: 你可以在 [EllesmereUI 选项] - [Wind 工具箱] - [信息] 中找到版本号
       placeholder: "13.97"
     validations:
       required: true
   - type: input
     attributes:
-      label: "ElvUI_WindTools 版本"
-      description: 你可以在 [ElvUI 选项] - [Wind 工具箱] - [信息] 中找到版本号
+      label: "EllesmereUI_WindTools 版本"
+      description: 你可以在 [EllesmereUI 选项] - [Wind 工具箱] - [信息] 中找到版本号
       placeholder: "3.96"
     validations:
       required: true

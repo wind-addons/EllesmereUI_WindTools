@@ -90,9 +90,9 @@ local lfgRoles = {}
 local initRecord = {}
 
 local factionTextures = {
-	["Neutral"] = [[Interface\Addons\ElvUI_WindTools\Media\FriendList\GameIcons\Classic]],
-	["Alliance"] = [[Interface\Addons\ElvUI_WindTools\Media\FriendList\GameIcons\Alliance]],
-	["Horde"] = [[Interface\Addons\ElvUI_WindTools\Media\FriendList\GameIcons\Horde]],
+	["Neutral"] = [[Interface\Addons\EllesmereUI_WindTools\Media\FriendList\GameIcons\Classic]],
+	["Alliance"] = [[Interface\Addons\EllesmereUI_WindTools\Media\FriendList\GameIcons\Alliance]],
+	["Horde"] = [[Interface\Addons\EllesmereUI_WindTools\Media\FriendList\GameIcons\Horde]],
 }
 
 local offlineMessageTemplate = "%s" .. _G.ERR_FRIEND_OFFLINE_S

@@ -773,14 +773,14 @@ options.groupInfo = {
 						"WINDTOOLS_EDITBOX",
 						nil,
 						nil,
-						"https://github.com/wind-addons/ElvUI_WindTools/wiki/预组建队伍玩家信息"
+						"https://github.com/wind-addons/EllesmereUI_WindTools/wiki/预组建队伍玩家信息"
 					)
 				else
 					E:StaticPopup_Show(
 						"WINDTOOLS_EDITBOX",
 						nil,
 						nil,
-						"https://github.com/wind-addons/ElvUI_WindTools/wiki/LFG-Player-Info"
+						"https://github.com/wind-addons/EllesmereUI_WindTools/wiki/LFG-Player-Info"
 					)
 				end
 			end,

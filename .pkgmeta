@@ -1,4 +1,4 @@
-package-as: ElvUI_WindTools
+package-as: EllesmereUI_WindTools
 
 manual-changelog:
   filename: CHANGELOG.md

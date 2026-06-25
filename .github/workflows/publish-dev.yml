@@ -32,7 +32,7 @@ jobs:
       - name: Upload to Github Actions
         uses: actions/upload-artifact@v4
         with:
-          name: ElvUI_WindTools
+          name: EllesmereUI_WindTools
           path: .release/*.zip
       - name: Send a message to Discord if meets a failure
         uses: nebularg/actions-discord-webhook@v1
