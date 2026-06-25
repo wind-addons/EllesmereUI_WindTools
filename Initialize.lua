@@ -249,7 +249,6 @@ local CATEGORIES = {
 }
 
 local PAGE_GROUPS = {
-	{ page = "Status" },
 	{ page = "Items & Combat", categories = { "item", "combat", "announcement" } },
 	{ page = "World & Quest", categories = { "maps", "quest", "misc" } },
 	{ page = "Interface", categories = { "tooltips", "unitFrames", "skins" } },
@@ -268,42 +267,7 @@ for _, category in ipairs(CATEGORIES) do
 	CATEGORY_BY_KEY[category.key] = category
 end
 
-local function RenderStatusPage(parent, y)
-	local W = EllesmereUI.Widgets
-	local dummy, h
-
-	dummy, h = W:SectionHeader(parent, "WindTools", y); y = y - h
-
-	if W.Button then
-		dummy, h = W:Button(parent, L["Version"] .. ": " .. tostring(addon[1].Version), y, function() end); y = y - h
-	end
-
-	dummy, h = W:SectionHeader(parent, L["Migration Status"], y); y = y - h
-
-	local loadedLibs = {}
-	if E.Libs.Keystone then loadedLibs[#loadedLibs + 1] = "LibKeystone" end
-	if E.Libs.OpenRaid then loadedLibs[#loadedLibs + 1] = "LibOpenRaid" end
-	if E.Libs.RangeCheck then loadedLibs[#loadedLibs + 1] = "LibRangeCheck-3.0" end
-	if E.Libs.WTItemEnchant then loadedLibs[#loadedLibs + 1] = "LibItemEnchant-WT" end
-	if E.Libs.ObjectiveProgressWT then loadedLibs[#loadedLibs + 1] = "LibObjectiveProgress-WT" end
-
-	local libText = #loadedLibs > 0 and table.concat(loadedLibs, ", ") or L["None"]
-	if W.Button then
-		dummy, h = W:Button(parent, L["Libraries"] .. ": " .. libText, y, function() end); y = y - h
-	end
-
-	local moduleCount = 0
-	if addon[1].Modules then
-		for _ in pairs(addon[1].Modules) do moduleCount = moduleCount + 1 end
-	end
-	if W.Button then
-		dummy, h = W:Button(parent, L["Registered Modules"] .. ": " .. moduleCount, y, function() end); y = y - h
-	end
-
-	return y
-end
-
-local function RenderCategoryPage(category, parent, y)
+local function RenderCategoryFallback(category, parent, y)
 	local Widgets = EllesmereUI.Widgets
 	local dummy, h
 
@@ -311,7 +275,7 @@ local function RenderCategoryPage(category, parent, y)
 
 	for _, module in ipairs(category.modules) do
 		local label = L(module.label)
-		local tooltip = L(module.note) .. "\n" .. L("Settings are saved to DB but the feature module is not yet active.")
+		local tooltip = L(module.note)
 
 		local dbPath = E.db.WT and E.db.WT[category.key] and E.db.WT[category.key][module.key]
 		local getValue = type(dbPath) == "table" and function()
@@ -328,21 +292,25 @@ local function RenderCategoryPage(category, parent, y)
 	return y
 end
 
+local function RenderCategoryPage(category, parent, y)
+	local builder = addon.OptionBuilders and addon.OptionBuilders[category.key]
+	if builder then
+		return builder(parent, y)
+	end
+	return RenderCategoryFallback(category, parent, y)
+end
+
 local function BuildPage(pageName, parent, yOffset)
 	local y = yOffset or -6
-	if pageName == "Status" then
-		y = RenderStatusPage(parent, y)
-	else
-		local group = GROUP_BY_PAGE[pageName]
-		if group and group.categories then
-			for index, categoryKey in ipairs(group.categories) do
-				local category = CATEGORY_BY_KEY[categoryKey]
-				if category then
-					if index > 1 then
-						y = y - 10
-					end
-					y = RenderCategoryPage(category, parent, y)
+	local group = GROUP_BY_PAGE[pageName]
+	if group and group.categories then
+		for index, categoryKey in ipairs(group.categories) do
+			local category = CATEGORY_BY_KEY[categoryKey]
+			if category then
+				if index > 1 then
+					y = y - 10
 				end
+				y = RenderCategoryPage(category, parent, y)
 			end
 		end
 	end
