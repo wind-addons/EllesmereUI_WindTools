@@ -773,9 +773,9 @@ P.social = {
 		orientation = "HORIZONTAL",
 		tex = "WindTools Glow",
 		font = {
-			name = E.db.general.font,
+			name = "__global",
 			size = 12,
-			style = "OUTLINE",
+			style = "outline",
 		},
 		color = true,
 		channels = {

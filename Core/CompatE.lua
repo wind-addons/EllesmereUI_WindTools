@@ -78,6 +78,39 @@ local function SplitString(text, separator)
 	return first, second
 end
 
+-- ElvUI-compatible global table utilities (missing from EllesmereUI).
+-- SmartTab and other WindTools modules reference these as bare globals.
+local function TableShallowCopy(src)
+	if type(src) ~= "table" then
+		return src
+	end
+	local dest = {}
+	for k, v in pairs(src) do
+		dest[k] = v
+	end
+	return dest
+end
+
+local function TableAppendAll(dest, src)
+	if type(dest) ~= "table" or type(src) ~= "table" then
+		return
+	end
+	for i = 1, #src do
+		dest[#dest + 1] = src[i]
+	end
+end
+
+local function TableInvert(tbl)
+	if type(tbl) ~= "table" then
+		return {}
+	end
+	local result = {}
+	for k, v in pairs(tbl) do
+		result[v] = k
+	end
+	return result
+end
+
 local function GetFontPath()
 	return EUI.GetFontPath and EUI.GetFontPath(FONT_KEY) or _G.STANDARD_TEXT_FONT or "Fonts\\FRIZQT__.TTF"
 end
@@ -86,8 +119,16 @@ local function GetFontName()
 	return EUI.GetFontName and EUI.GetFontName(FONT_KEY) or "Expressway"
 end
 
+-- Resolve the outline flag: if a specific style is explicitly passed (and it's
+-- not "NONE", which WindTools uses as the "use default" sentinel), apply it
+-- directly with slug gating. Otherwise fall back to EllesmereUI's global or
+-- per-module outline setting.
 local function GetFontOutlineFlag(fallback)
-	if fallback and fallback ~= "NONE" then
+	if fallback and fallback ~= "NONE" and fallback ~= "" then
+		-- Specific flag like "OUTLINE", "THICKOUTLINE", "MONOCHROME", etc.
+		if EUI.SlugFlag then
+			return EUI.SlugFlag(fallback)
+		end
 		return fallback
 	end
 	return EUI.GetFontOutlineFlag and EUI.GetFontOutlineFlag(FONT_KEY) or ""
@@ -98,6 +139,13 @@ local function PrimeAndSetFont(fontString, font, size, flags)
 		return
 	end
 
+	-- Resolve font path: if a font name/path is given, pass through; otherwise
+	-- use the EllesmereUI global/module font.  Inline paths or LSM-registered
+	-- names both work: EUI.GetFontPath handles the full resolution chain.
+	if font and not strfind(font, "\\") and not strfind(font, "/") then
+		-- Looks like a font name, not a path — resolve via EllesmereUI.
+		font = (EUI.ResolveFontName and EUI.ResolveFontName(font)) or font
+	end
 	font = font or GetFontPath()
 	size = size or select(2, fontString:GetFont()) or 12
 	flags = GetFontOutlineFlag(flags)
@@ -159,6 +207,10 @@ local function CreateCompatE()
 		media = {
 			normFont = GetFontPath(),
 			rgbvaluecolor = { r = 0.05, g = 0.82, b = 0.62 },
+			-- EllesmereUI uses Blizzard's built-in white pixel texture as
+			-- the universal base texture (equivalent to ElvUI's normTex).
+			normTex = "Interface\\Buttons\\WHITE8x8",
+			glossTex = "Interface\\Buttons\\WHITE8x8",
 		},
 		Media = {
 			Textures = {},

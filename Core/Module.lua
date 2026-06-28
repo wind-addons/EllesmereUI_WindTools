@@ -59,6 +59,12 @@ local function AddCommonMethods(target)
 	end
 
 	function target:SecureHook(object, method, handler)
+		if type(object) == "string" then
+			handler = method
+			method = object
+			object = _G
+		end
+
 		if not object or not method then
 			return
 		end

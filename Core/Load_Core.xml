@@ -3,5 +3,4 @@
 	<Include file='Utilities\Load_Utilities.xml'/>
 	<Script file='Core.lua'/>
 	<Script file='Commands.lua'/>
-	<Include file='Changelog\Load_Changelog.xml'/>
 </Ui>

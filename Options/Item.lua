@@ -5,19 +5,7 @@ local DBGet = addon.DBGet
 local DBSet = addon.DBSet
 local DBGet2 = addon.DBGet2
 local DBSet2 = addon.DBSet2
-local SafeModuleCall = addon.SafeModuleCall
 local FontSection = addon.FontSection
-local GetLSMFonts = addon.GetLSMFonts
-local ListEditorButton = addon.ListEditorButton
-
-local ANCHOR_CORNER_VALUES = {
-	TOPLEFT = "TOPLEFT", TOPRIGHT = "TOPRIGHT",
-	BOTTOMLEFT = "BOTTOMLEFT", BOTTOMRIGHT = "BOTTOMRIGHT",
-}
-local ANCHOR_CORNER_ORDER = { "TOPLEFT", "TOPRIGHT", "BOTTOMLEFT", "BOTTOMRIGHT" }
-
-local ORIENTATION_VALUES = { HORIZONTAL = "Horizontal", VERTICAL = "Vertical" }
-local ORIENTATION_ORDER = { "HORIZONTAL", "VERTICAL" }
 
 local ALREADY_KNOWN_MODE = { COLOR = "Custom Color", MONOCHROME = "Monochrome" }
 local ALREADY_KNOWN_MODE_ORDER = { "COLOR", "MONOCHROME" }
@@ -39,103 +27,6 @@ addon.RegisterOptionBuilder("item", function(parent, y, cat)
 	local _, h
 	local db = E.db.WT.item
 	local pdb = E.private.WT.item
-
-	_, h = Widgets:SectionHeader(parent, MH("Extra Items Bar"), y); y = y - h
-	do
-		local eb = db.extraItemsBar
-		local ebDis = function() return not eb.enable end
-		local updateBars = function() SafeModuleCall(W.Modules.ExtraItemsBar, "UpdateBars") end
-		local parseItemID = function(value)
-			local itemID = tonumber(value)
-			if itemID and itemID > 0 then return itemID end
-		end
-		_, h = Widgets:Toggle(parent, "Enable", y,
-			DBGet(eb, "enable"), DBSet(eb, "enable"),
-			"Add a bar to contain quest items and usable equipment."); y = y - h
-		_, h = Widgets:Toggle(parent, "No Quantum Items", y,
-			DBGet(eb, "noQuantumItems"), DBSet(eb, "noQuantumItems"),
-			"Automatically blacklist the quantum items to avoid accidentally using them."); y = y - h
-		_, h = ListEditorButton(Widgets, parent, y, {
-			label = "Custom Items",
-			title = "Custom Items",
-			list = eb.customList,
-			mode = "array",
-			parse = parseItemID,
-			addLabel = "New Item ID",
-			removeLabel = "Remove Item ID",
-			invalidMessage = "The item ID is invalid.",
-			notFoundMessage = "The item ID is not in the custom item list.",
-			disabled = ebDis,
-			after = updateBars,
-		}); y = y - h
-		_, h = ListEditorButton(Widgets, parent, y, {
-			label = "Blacklist",
-			title = "Blacklist",
-			list = eb.blackList,
-			mode = "map",
-			parse = parseItemID,
-			addLabel = "New Item ID",
-			removeLabel = "Remove Item ID",
-			invalidMessage = "The item ID is invalid.",
-			notFoundMessage = "The item ID is not in the blacklist.",
-			disabled = ebDis,
-			after = updateBars,
-		}); y = y - h
-
-		for i = 1, 5 do
-			local bar = eb["bar" .. i]
-			if not bar then break end
-			_, h = Widgets:SectionHeader(parent, MH("Extra Items Bar", "Bar " .. i), y); y = y - h
-			_, h = Widgets:Toggle(parent, "Enable", y,
-				DBGet(bar, "enable"), DBSet(bar, "enable"), nil, ebDis); y = y - h
-			_, h = Widgets:Toggle(parent, "Bar Backdrop", y,
-				DBGet(bar, "backdrop"), DBSet(bar, "backdrop"),
-				"Show a backdrop of the bar.", ebDis); y = y - h
-			_, h = Widgets:DualRow(parent, y,
-				{ type = "slider", text = "Backdrop Spacing", min = 1, max = 30, step = 1,
-				  getValue = DBGet(bar, "backdropSpacing"), setValue = DBSet(bar, "backdropSpacing"),
-				  tooltip = "The spacing between the backdrop and the buttons.", disabled = ebDis },
-				{ type = "slider", text = "Button Spacing", min = 1, max = 30, step = 1,
-				  getValue = DBGet(bar, "spacing"), setValue = DBSet(bar, "spacing"),
-				  tooltip = "The spacing between buttons.", disabled = ebDis }
-			); y = y - h
-			_, h = Widgets:DualRow(parent, y,
-				{ type = "slider", text = "Buttons", min = 1, max = 12, step = 1,
-				  getValue = DBGet(bar, "numButtons"), setValue = DBSet(bar, "numButtons"), disabled = ebDis },
-				{ type = "slider", text = "Buttons Per Row", min = 1, max = 12, step = 1,
-				  getValue = DBGet(bar, "buttonsPerRow"), setValue = DBSet(bar, "buttonsPerRow"), disabled = ebDis }
-			); y = y - h
-			_, h = Widgets:DualRow(parent, y,
-				{ type = "slider", text = "Button Width", min = 2, max = 80, step = 1,
-				  getValue = DBGet(bar, "buttonWidth"), setValue = DBSet(bar, "buttonWidth"), disabled = ebDis },
-				{ type = "slider", text = "Button Height", min = 2, max = 60, step = 1,
-				  getValue = DBGet(bar, "buttonHeight"), setValue = DBSet(bar, "buttonHeight"), disabled = ebDis }
-			); y = y - h
-			_, h = Widgets:Dropdown(parent, "Anchor Point", y,
-				ANCHOR_CORNER_VALUES, ANCHOR_CORNER_ORDER,
-				DBGet(bar, "anchor"), DBSet(bar, "anchor"),
-				"The first button anchors itself to this point on the bar.", ebDis); y = y - h
-			_, h = Widgets:SectionHeader(parent, MH("Extra Items Bar", "Visibility"), y); y = y - h
-			_, h = Widgets:DualRow(parent, y,
-				{ type = "toggle", text = "Inherit Global Fade",
-				  getValue = DBGet(bar, "globalFade"), setValue = DBSet(bar, "globalFade"), disabled = ebDis },
-				{ type = "toggle", text = "Mouse Over", tooltip = "Only show the bar when you mouse over it.",
-				  getValue = DBGet(bar, "mouseOver"), setValue = DBSet(bar, "mouseOver"), disabled = ebDis }
-			); y = y - h
-			_, h = Widgets:DualRow(parent, y,
-				{ type = "slider", text = "Fade Time", min = 0, max = 2, step = 0.01,
-				  getValue = DBGet(bar, "fadeTime"), setValue = DBSet(bar, "fadeTime"), disabled = ebDis },
-				{ type = "slider", text = "Alpha Min", min = 0, max = 1, step = 0.01,
-				  getValue = DBGet(bar, "alphaMin"), setValue = DBSet(bar, "alphaMin"), disabled = ebDis }
-			); y = y - h
-			_, h = Widgets:DualRow(parent, y,
-				{ type = "slider", text = "Alpha Max", min = 0, max = 1, step = 0.01,
-				  getValue = DBGet(bar, "alphaMax"), setValue = DBSet(bar, "alphaMax"), disabled = ebDis },
-				{ type = "toggle", text = "Tooltip",
-				  getValue = DBGet(bar, "tooltip"), setValue = DBSet(bar, "tooltip"), disabled = ebDis }
-			); y = y - h
-		end
-	end
 
 	_, h = Widgets:SectionHeader(parent, MH("Delete Item"), y); y = y - h
 	do
@@ -159,8 +50,9 @@ addon.RegisterOptionBuilder("item", function(parent, y, cat)
 			DBGet(ak, "enable"), DBSet(ak, "enable"),
 			"Puts a overlay on already known learnable items on vendors and AH."); y = y - h
 		_, h = Widgets:Dropdown(parent, "Mode", y,
-			ALREADY_KNOWN_MODE, ALREADY_KNOWN_MODE_ORDER,
-			DBGet(ak, "mode"), DBSet(ak, "mode")); y = y - h
+			ALREADY_KNOWN_MODE,
+			DBGet(ak, "mode"), DBSet(ak, "mode"),
+			ALREADY_KNOWN_MODE_ORDER); y = y - h
 		if ak.mode == "COLOR" then
 			_, h = Widgets:ColorPicker(parent, "Color", y,
 				function()

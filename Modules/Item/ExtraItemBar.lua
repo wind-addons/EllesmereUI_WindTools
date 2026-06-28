@@ -1,8 +1,9 @@
 local W, F, E, L = unpack((select(2, ...))) ---@type WindTools, Functions, ElvUI, LocaleTable
-local EB = W:NewModule("ExtraItemsBar", "AceEvent-3.0") ---@class ExtraItemsBar : AceModule, AceEvent-3.0
+local EB = W:NewModule("ExtraItemsBar")
 local async = W.Utilities.Async
-local S = W.Modules.Skins ---@type Skins
-local AB = E.ActionBars
+
+local EUI = _G.EllesmereUI
+local PP = EUI and EUI.PP
 
 local _G = _G
 local ceil = ceil
@@ -30,6 +31,8 @@ local GetTime = GetTime
 local InCombatLockdown = InCombatLockdown
 local RegisterStateDriver = RegisterStateDriver
 local UnregisterStateDriver = UnregisterStateDriver
+local UIFrameFadeIn = UIFrameFadeIn
+local UIFrameFadeOut = UIFrameFadeOut
 
 local C_Item_GetItemCooldown = C_Item.GetItemCooldown
 local C_Item_GetItemCount = C_Item.GetItemCount
@@ -41,6 +44,8 @@ local C_QuestLog_GetNumQuestLogEntries = C_QuestLog.GetNumQuestLogEntries
 local C_QuestLog_GetQuestIDForLogIndex = C_QuestLog.GetQuestIDForLogIndex
 local C_Timer_NewTicker = C_Timer.NewTicker
 local C_TradeSkillUI_GetItemReagentQualityInfo = C_TradeSkillUI.GetItemReagentQualityInfo
+
+local NORM_TEX = "Interface\\Buttons\\WHITE8x8"
 
 local questItemList = {}
 local function UpdateQuestItemList()
@@ -62,8 +67,8 @@ local function UpdateQuestItemList()
 end
 
 local forceUsableItems = {
-	[193634] = true, -- 茂發種子
-	[206448] = true, --『夢境裂斧』菲拉雷斯
+	[193634] = true,
+	[206448] = true,
 }
 
 local equipmentList = {}
@@ -108,78 +113,84 @@ local UpdateAfterCombat = {
 	[1] = false,
 	[2] = false,
 	[3] = false,
+	[4] = false,
+	[5] = false,
 }
+
+local function ApplyFontToDB(fontString, db, defaultSize)
+	if not fontString or not db then return end
+	local path
+	if db.name == "__global" or not db.name then
+		path = EUI and EUI.GetFontPath and EUI.GetFontPath("WindTools")
+			or "Fonts\\FRIZQT__.TTF"
+	else
+		path = db.name
+	end
+	local flag = ""
+	if db.style == "outline" then
+		flag = EUI and EUI.GetFontOutlineFlag and EUI.GetFontOutlineFlag("WindTools") or "OUTLINE"
+	elseif db.style == "thick" then
+		flag = "THICKOUTLINE"
+	end
+	fontString:SetFont(path, db.size or defaultSize or 12, flag)
+end
 
 do
 	local fakeButton = {
 		HotKey = {
 			text = "",
-			SetText = function(self, text)
-				self.text = text
-			end,
-			GetText = function(self)
-				return self.text
-			end,
+			SetText = function(self, text) self.text = text end,
+			GetText = function(self) return self.text end,
 		},
 	}
 
 	function EB:GetBindingKeyWithElvUI(key)
-		local keybind = GetBindingKey(key)
-
-		if not keybind or keybind == "" then
-			return ""
-		end
-
-		fakeButton.HotKey:SetText(keybind)
-		AB:FixKeybindText(fakeButton)
-		return fakeButton.HotKey:GetText()
+		return GetBindingKey(key) or ""
 	end
 end
 
 function EB:CreateButton(name, barDB)
-	local button = CreateFrame("Button", name, E.UIParent, "SecureActionButtonTemplate, BackdropTemplate") --[[@as Button]]
-	button:Size(barDB.buttonWidth, barDB.buttonHeight)
-	button:SetTemplate("Default")
+	local button = CreateFrame("Button", name, E.UIParent, "SecureActionButtonTemplate, BackdropTemplate")
+	button:SetSize(barDB.buttonWidth, barDB.buttonHeight)
 	button:SetClampedToScreen(true)
 	button:SetAttribute("type", "item")
 	button:EnableMouse(false)
-	button:RegisterForClicks(W.UseKeyDown and "AnyDown" or "AnyUp")
+	button:RegisterForClicks("AnyDown")
 
 	local tex = button:CreateTexture(nil, "OVERLAY", nil)
-	tex:Point("TOPLEFT", button, "TOPLEFT", 1, -1)
-	tex:Point("BOTTOMRIGHT", button, "BOTTOMRIGHT", -1, 1)
-	tex:SetTexCoords()
+	tex:SetPoint("TOPLEFT", button, "TOPLEFT", 1, -1)
+	tex:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", -1, 1)
+	tex:SetTexCoord(0.08, 0.92, 0.08, 0.92)
 
 	local qualityTier = button:CreateFontString(nil, "OVERLAY")
 	qualityTier:SetTextColor(1, 1, 1, 1)
-	qualityTier:Point("TOPLEFT", button, "TOPLEFT")
+	qualityTier:SetPoint("TOPLEFT", button, "TOPLEFT")
 	qualityTier:SetJustifyH("CENTER")
-	F.SetFontWithDB(qualityTier, {
-		size = barDB.qualityTier.size,
-		name = E.db.general.font,
-		style = "OUTLINE",
-	})
+	qualityTier:SetFont("Fonts\\FRIZQT__.TTF", barDB.qualityTier.size or 12, "OUTLINE")
 
 	local count = button:CreateFontString(nil, "OVERLAY")
 	count:SetTextColor(1, 1, 1, 1)
-	count:Point("BOTTOMRIGHT", button, "BOTTOMRIGHT")
+	count:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT")
 	count:SetJustifyH("CENTER")
-	F.SetFontWithDB(count, barDB.countFont)
+	ApplyFontToDB(count, barDB.countFont, 12)
 
 	local bind = button:CreateFontString(nil, "OVERLAY")
 	bind:SetTextColor(0.6, 0.6, 0.6)
-	bind:Point("TOPRIGHT", button, "TOPRIGHT")
+	bind:SetPoint("TOPRIGHT", button, "TOPRIGHT")
 	bind:SetJustifyH("CENTER")
-	F.SetFontWithDB(bind, barDB.bindFont)
+	ApplyFontToDB(bind, barDB.bindFont, 12)
 
 	local cooldown = CreateFrame("Cooldown", name .. "Cooldown", button, "CooldownFrameTemplate")
-	E:RegisterCooldown(cooldown)
 
 	button.tex = tex
 	button.qualityTier = qualityTier
 	button.count = count
 	button.bind = bind
 	button.cooldown = cooldown
+
+	if PP then
+		PP.CreateBorder(button, 0, 0, 0, 1, 1, "BORDER", 0)
+	end
 
 	button.SetTier = function(_, itemIDOrLink)
 		local qualityInfo = C_TradeSkillUI_GetItemReagentQualityInfo(itemIDOrLink)
@@ -192,11 +203,6 @@ function EB:CreateButton(name, barDB)
 			button.qualityTier:Show()
 		end
 	end
-
-	button:StyleButton()
-
-	S:CreateShadowModule(button)
-	S:BindShadowColorWithBorder(button)
 
 	return button
 end
@@ -212,7 +218,6 @@ function EB:SetUpButton(button, itemData, slotID, waitGroup)
 		button.itemID = itemData.itemID
 		button.countText = C_Item_GetItemCount(itemData.itemID, nil, true)
 		button.questLogIndex = itemData.questLogIndex
-		button:SetBackdropBorderColor(0, 0, 0)
 
 		waitGroup.count = waitGroup.count + 1
 		async.WithItemID(itemData.itemID, function(item)
@@ -220,7 +225,6 @@ function EB:SetUpButton(button, itemData, slotID, waitGroup)
 			button.tex:SetTexture(item:GetItemIcon())
 			button:SetTier(itemData.itemID)
 			E:Delay(0.1, function()
-				-- delay for quality tier fetching and text changing
 				waitGroup.count = waitGroup.count - 1
 			end)
 		end)
@@ -234,27 +238,24 @@ function EB:SetUpButton(button, itemData, slotID, waitGroup)
 
 			local color = item:GetItemQualityColor()
 
-			if color then
-				button:SetBackdropBorderColor(color.r, color.g, color.b)
+			if PP and PP.SetBorderColor and color then
+				PP.SetBorderColor(button, color.r, color.g, color.b)
 			end
 
 			button:SetTier(item:GetItemID())
 
 			E:Delay(0.1, function()
-				-- delay for quality tier fetching and text changing
 				waitGroup.count = waitGroup.count - 1
 			end)
 		end)
 	end
 
-	-- Count
 	if button.countText and button.countText > 1 then
 		button.count:SetText(button.countText)
 	else
 		button.count:SetText()
 	end
 
-	-- OnUpdate
 	local OnUpdateFunction
 	if button.itemID then
 		OnUpdateFunction = function(_)
@@ -281,7 +282,6 @@ function EB:SetUpButton(button, itemData, slotID, waitGroup)
 	end
 	button:SetScript("OnUpdate", OnUpdateFunction)
 
-	-- Tooltips
 	button:SetScript("OnEnter", function(_)
 		local bar = button:GetParent()
 		local barDB = EB.db["bar" .. bar.id]
@@ -289,13 +289,9 @@ function EB:SetUpButton(button, itemData, slotID, waitGroup)
 			return
 		end
 
-		if barDB.globalFade then
-			if AB.fadeParent and not AB.fadeParent.mouseLock then
-				E:UIFrameFadeIn(AB.fadeParent, 0.2, AB.fadeParent:GetAlpha(), 1)
-			end
-		elseif barDB.mouseOver then
+		if barDB.mouseOver and not barDB.globalFade then
 			local alphaCurrent = bar:GetAlpha()
-			E:UIFrameFadeIn(
+			UIFrameFadeIn(
 				bar,
 				barDB.fadeTime * (barDB.alphaMax - alphaCurrent) / (barDB.alphaMax - barDB.alphaMin),
 				alphaCurrent,
@@ -324,13 +320,9 @@ function EB:SetUpButton(button, itemData, slotID, waitGroup)
 			return
 		end
 
-		if barDB.globalFade then
-			if AB.fadeParent and not AB.fadeParent.mouseLock then
-				E:UIFrameFadeOut(AB.fadeParent, 0.2, AB.fadeParent:GetAlpha(), 1 - AB.db.globalFadeAlpha)
-			end
-		elseif barDB.mouseOver then
+		if barDB.mouseOver and not barDB.globalFade then
 			local alphaCurrent = bar:GetAlpha()
-			E:UIFrameFadeOut(
+			UIFrameFadeOut(
 				bar,
 				barDB.fadeTime * (alphaCurrent - barDB.alphaMin) / (barDB.alphaMax - barDB.alphaMin),
 				alphaCurrent,
@@ -341,7 +333,6 @@ function EB:SetUpButton(button, itemData, slotID, waitGroup)
 		GameTooltip:Hide()
 	end)
 
-	-- Attributes
 	if not InCombatLockdown() then
 		button:EnableMouse(true)
 		button:Show()
@@ -364,20 +355,8 @@ function EB:SetUpButton(button, itemData, slotID, waitGroup)
 end
 
 function EB:UpdateButtonSize(button, barDB)
-	button:Size(barDB.buttonWidth, barDB.buttonHeight)
-	local left, right, top, bottom = unpack(E.TexCoords)
-
-	if barDB.buttonWidth > barDB.buttonHeight then
-		local offset = (bottom - top) * (1 - barDB.buttonHeight / barDB.buttonWidth) / 2
-		top = top + offset
-		bottom = bottom - offset
-	elseif barDB.buttonWidth < barDB.buttonHeight then
-		local offset = (right - left) * (1 - barDB.buttonWidth / barDB.buttonHeight) / 2
-		left = left + offset
-		right = right - offset
-	end
-
-	button.tex:SetTexCoord(left, right, top, bottom)
+	button:SetSize(barDB.buttonWidth, barDB.buttonHeight)
+	button.tex:SetTexCoord(0.08, 0.92, 0.08, 0.92)
 end
 
 function EB:PLAYER_REGEN_ENABLED()
@@ -410,54 +389,43 @@ function EB:CreateBar(id)
 
 	local barDB = self.db["bar" .. id]
 
-	local anchor = CreateFrame("Frame", "WTExtraItemsBar" .. id .. "Anchor", E.UIParent)
-	anchor:SetClampedToScreen(true)
-	anchor:Point("BOTTOMLEFT", _G.RightChatPanel or _G.LeftChatPanel, "TOPLEFT", 0, (id - 1) * 45)
-	anchor:Size(200, 40)
-	E:CreateMover(
-		anchor,
-		"WTExtraItemsBar" .. id .. "Mover",
-		L["Extra Items Bar"] .. " " .. id,
-		nil,
-		nil,
-		nil,
-		"ALL,WINDTOOLS",
-		function()
-			return EB.db.enable and barDB.enable
-		end,
-		"WindTools,item,extraItemBar"
-	)
-
-	-- Bar
 	local bar = CreateFrame("Frame", "WTExtraItemsBar" .. id, E.UIParent, "SecureHandlerStateTemplate")
 	bar.id = id
-	bar:ClearAllPoints()
-	bar:SetParent(anchor)
-	bar:Point("CENTER", anchor, "CENTER", 0, 0)
-	bar:Size(200, 40)
-	bar:CreateBackdrop("Transparent")
+	bar:SetClampedToScreen(true)
 	bar:SetFrameStrata("LOW")
+	bar:SetFrameLevel(5)
 
-	-- Buttons
+	local bg = bar:CreateTexture(nil, "BACKGROUND")
+	bg:SetTexture(NORM_TEX)
+	bg:SetVertexColor(0, 0, 0, 0.5)
+	bg:SetAllPoints()
+	if bg.SetSnapToPixelGrid then
+		bg:SetSnapToPixelGrid(false)
+		bg:SetTexelSnappingBias(0)
+	end
+	bar.bg = bg
+	bar.backdrop = bg
+
+	if PP then
+		PP.CreateBorder(bar, 0, 0, 0, 1, 1, "BORDER", 0)
+	end
+
 	bar.buttons = {}
 	for i = 1, 12 do
 		bar.buttons[i] = self:CreateButton(bar:GetName() .. "Button" .. i, barDB)
 		bar.buttons[i]:SetParent(bar)
 		if i == 1 then
-			bar.buttons[i]:Point("LEFT", bar, "LEFT", 5, 0)
+			bar.buttons[i]:SetPoint("LEFT", bar, "LEFT", 5, 0)
 		else
-			bar.buttons[i]:Point("LEFT", bar.buttons[i - 1], "RIGHT", 5, 0)
+			bar.buttons[i]:SetPoint("LEFT", bar.buttons[i - 1], "RIGHT", 5, 0)
 		end
 	end
 
 	bar:SetScript("OnEnter", function(_)
-		if not barDB then
-			return
-		end
-
-		if not barDB.globalFade and barDB.mouseOver and barDB.alphaMax and barDB.alphaMin then
+		if not barDB then return end
+		if barDB.mouseOver and not barDB.globalFade then
 			local alphaCurrent = bar:GetAlpha()
-			E:UIFrameFadeIn(
+			UIFrameFadeIn(
 				bar,
 				barDB.fadeTime * (barDB.alphaMax - alphaCurrent) / (barDB.alphaMax - barDB.alphaMin),
 				alphaCurrent,
@@ -467,13 +435,10 @@ function EB:CreateBar(id)
 	end)
 
 	bar:SetScript("OnLeave", function(_)
-		if not barDB then
-			return
-		end
-
-		if not barDB.globalFade and barDB.mouseOver and barDB.alphaMax and barDB.alphaMin then
+		if not barDB then return end
+		if barDB.mouseOver and not barDB.globalFade then
 			local alphaCurrent = bar:GetAlpha()
-			E:UIFrameFadeOut(
+			UIFrameFadeOut(
 				bar,
 				barDB.fadeTime * (alphaCurrent - barDB.alphaMin) / (barDB.alphaMax - barDB.alphaMin),
 				alphaCurrent,
@@ -567,15 +532,15 @@ function EB:UpdateBar(id)
 		if buttonID <= barDB.numButtons then
 			if self.ModuleList[module] then
 				addNormalButtons(self.ModuleList[module])
-			elseif module == "QUEST" then -- Quest Items
+			elseif module == "QUEST" then
 				for _, data in ipairs(questItemList) do
 					addNormalButton(data.itemID)
 				end
-			elseif module == "EQUIP" then -- Equipments
+			elseif module == "EQUIP" then
 				for _, slotID in pairs(equipmentList) do
 					addSlotButton(slotID)
 				end
-			elseif strmatch(module, "^SLOT:") then -- Equipments filtered by slot ID
+			elseif strmatch(module, "^SLOT:") then
 				local slotFilter = strmatch(module, "^SLOT:(.+)$")
 				local allowedSlots = ParseSlotFilter(slotFilter)
 				if allowedSlots then
@@ -585,34 +550,18 @@ function EB:UpdateBar(id)
 						end
 					end
 				end
-			elseif module == "CUSTOM" then -- Custom Items
+			elseif module == "CUSTOM" then
 				addNormalButtons(self.db.customList)
 			end
 		end
 	end
 
-	-- Resize bar
 	local numRows = ceil((buttonID - 1) / barDB.buttonsPerRow)
 	local numCols = buttonID > barDB.buttonsPerRow and barDB.buttonsPerRow or (buttonID - 1)
 	local newBarWidth = 2 * barDB.backdropSpacing + numCols * barDB.buttonWidth + (numCols - 1) * barDB.spacing
 	local newBarHeight = 2 * barDB.backdropSpacing + numRows * barDB.buttonHeight + (numRows - 1) * barDB.spacing
-	bar:Size(newBarWidth, newBarHeight)
+	bar:SetSize(newBarWidth, newBarHeight)
 
-	-- Update anchor size
-	local numMoverRows = ceil(barDB.numButtons / barDB.buttonsPerRow)
-	local numMoverCols = barDB.buttonsPerRow
-	local newMoverWidth = 2 * barDB.backdropSpacing
-		+ numMoverCols * barDB.buttonWidth
-		+ (numMoverCols - 1) * barDB.spacing
-	local newMoverHeight = 2 * barDB.backdropSpacing
-		+ numMoverRows * barDB.buttonHeight
-		+ (numMoverRows - 1) * barDB.spacing
-	bar:GetParent():Size(newMoverWidth, newMoverHeight)
-
-	bar:ClearAllPoints()
-	bar:Point(barDB.anchor)
-
-	-- Hide buttons not in use
 	if buttonID == 1 then
 		if bar.register then
 			UnregisterStateDriver(bar, "visibility")
@@ -630,7 +579,6 @@ function EB:UpdateBar(id)
 	end
 
 	for i = 1, buttonID - 1 do
-		-- Reposition icons
 		local anchor = barDB.anchor
 		local button = bar.buttons[i]
 
@@ -638,50 +586,54 @@ function EB:UpdateBar(id)
 
 		if i == 1 then
 			if anchor == "TOPLEFT" then
-				button:Point(anchor, bar, anchor, barDB.backdropSpacing, -barDB.backdropSpacing)
+				button:SetPoint(anchor, bar, anchor, barDB.backdropSpacing, -barDB.backdropSpacing)
 			elseif anchor == "TOPRIGHT" then
-				button:Point(anchor, bar, anchor, -barDB.backdropSpacing, -barDB.backdropSpacing)
+				button:SetPoint(anchor, bar, anchor, -barDB.backdropSpacing, -barDB.backdropSpacing)
 			elseif anchor == "BOTTOMLEFT" then
-				button:Point(anchor, bar, anchor, barDB.backdropSpacing, barDB.backdropSpacing)
+				button:SetPoint(anchor, bar, anchor, barDB.backdropSpacing, barDB.backdropSpacing)
 			elseif anchor == "BOTTOMRIGHT" then
-				button:Point(anchor, bar, anchor, -barDB.backdropSpacing, barDB.backdropSpacing)
+				button:SetPoint(anchor, bar, anchor, -barDB.backdropSpacing, barDB.backdropSpacing)
 			end
 		elseif i <= barDB.buttonsPerRow then
 			local nearest = bar.buttons[i - 1]
 			if anchor == "TOPLEFT" or anchor == "BOTTOMLEFT" then
-				button:Point("LEFT", nearest, "RIGHT", barDB.spacing, 0)
+				button:SetPoint("LEFT", nearest, "RIGHT", barDB.spacing, 0)
 			else
-				button:Point("RIGHT", nearest, "LEFT", -barDB.spacing, 0)
+				button:SetPoint("RIGHT", nearest, "LEFT", -barDB.spacing, 0)
 			end
 		else
 			local nearest = bar.buttons[i - barDB.buttonsPerRow]
 			if anchor == "TOPLEFT" or anchor == "TOPRIGHT" then
-				button:Point("TOP", nearest, "BOTTOM", 0, -barDB.spacing)
+				button:SetPoint("TOP", nearest, "BOTTOM", 0, -barDB.spacing)
 			else
-				button:Point("BOTTOM", nearest, "TOP", 0, barDB.spacing)
+				button:SetPoint("BOTTOM", nearest, "TOP", 0, barDB.spacing)
 			end
 		end
 
-		F.SetFontWithDB(button.qualityTier, {
-			size = barDB.qualityTier.size,
-			name = E.db.general.font,
-			style = "OUTLINE",
-		})
+		button.qualityTier:SetFont("Fonts\\FRIZQT__.TTF", barDB.qualityTier.size or 12, "OUTLINE")
 
-		F.SetFontWithDB(button.count, barDB.countFont)
-		F.SetFontWithDB(button.bind, barDB.bindFont)
+		ApplyFontToDB(button.count, barDB.countFont, 12)
 
-		F.SetFontColorWithDB(button.count, barDB.countFont.color)
-		F.SetFontColorWithDB(button.bind, barDB.bindFont.color)
+		if barDB.countFont and barDB.countFont.color then
+			local c = barDB.countFont.color
+			button.count:SetTextColor(c.r or 1, c.g or 1, c.b or 1)
+		end
+
+		ApplyFontToDB(button.bind, barDB.bindFont, 12)
+
+		if barDB.bindFont and barDB.bindFont.color then
+			local c = barDB.bindFont.color
+			button.bind:SetTextColor(c.r or 1, c.g or 1, c.b or 1)
+		end
 
 		button.qualityTier:ClearAllPoints()
-		button.qualityTier:Point("TOPLEFT", button, "TOPLEFT", barDB.qualityTier.xOffset, barDB.qualityTier.yOffset)
+		button.qualityTier:SetPoint("TOPLEFT", button, "TOPLEFT", barDB.qualityTier.xOffset or 0, barDB.qualityTier.yOffset or 0)
 
 		button.count:ClearAllPoints()
-		button.count:Point("BOTTOMRIGHT", button, "BOTTOMRIGHT", barDB.countFont.xOffset, barDB.countFont.yOffset)
+		button.count:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", barDB.countFont.xOffset or 0, barDB.countFont.yOffset or 0)
 
 		button.bind:ClearAllPoints()
-		button.bind:Point("TOPRIGHT", button, "TOPRIGHT", barDB.bindFont.xOffset, barDB.bindFont.yOffset)
+		button.bind:SetPoint("TOPRIGHT", button, "TOPRIGHT", barDB.bindFont.xOffset or 0, barDB.bindFont.yOffset or 0)
 	end
 
 	if bar.registeredVisibility ~= barDB.visibility and bar.register then
@@ -696,25 +648,10 @@ function EB:UpdateBar(id)
 		bar.registeredVisibility = barDB.visibility
 	end
 
-	-- Toggle shadow
 	if barDB.backdrop then
-		bar.backdrop:Show()
-		if E.private.WT.skins.enable and E.private.WT.skins.windtools and E.private.WT.skins.shadow then
-			for i = 1, 12 do
-				if bar.buttons[i].shadow then
-					bar.buttons[i].shadow:Hide()
-				end
-			end
-		end
+		bar.bg:Show()
 	else
-		bar.backdrop:Hide()
-		if E.private.WT.skins.enable and E.private.WT.skins.windtools and E.private.WT.skins.shadow then
-			for i = 1, 12 do
-				if bar.buttons[i].shadow then
-					bar.buttons[i].shadow:Show()
-				end
-			end
-		end
+		bar.bg:Hide()
 	end
 
 	bar.waitGroup.ticker = C_Timer_NewTicker(0.1, function()
@@ -729,13 +666,6 @@ function EB:UpdateBar(id)
 				bar:SetAlpha(1)
 			else
 				bar:SetAlpha(barDB.mouseOver and barDB.alphaMin or barDB.alphaMax)
-			end
-
-			local anchor = bar:GetParent()
-			local alphaParent = barDB.globalFade and AB.fadeParent or E.UIParent
-
-			if anchor and anchor:GetParent() ~= alphaParent then
-				F.TaskManager:OutOfCombat(anchor.SetParent, anchor, alphaParent)
 			end
 
 			bar.waitGroup = nil
@@ -796,9 +726,74 @@ function EB:CreateAll()
 
 	for i = 1, 5 do
 		self:CreateBar(i)
-		S:CreateShadowModule(self.bars[i].backdrop)
-		S:MerathilisUISkin(self.bars[i].backdrop)
 	end
+end
+
+function EB:RegisterMover(id)
+	if not EUI or not EUI.RegisterUnlockElements or not EUI.MakeUnlockElement then
+		return
+	end
+
+	local MK = EUI.MakeUnlockElement
+	local key = "WTExtraItemsBar" .. id
+
+	local elements = {
+		MK({
+			key = key,
+			label = L["Extra Items Bar"] .. " " .. id,
+			group = "WindTools",
+			order = 900 + id,
+			getFrame = function()
+				return EB.bars[id]
+			end,
+			getSize = function()
+				if not EB.bars[id] then return 1, 1 end
+				return EB.bars[id]:GetWidth(), EB.bars[id]:GetHeight()
+			end,
+			savePos = function(_, point, relPoint, x, y)
+				if point and x and y then
+					E.global.WT.item.extraItemsBar["bar" .. id].position = {
+						point = point,
+						relPoint = relPoint or point,
+						x = x,
+						y = y,
+					}
+				end
+			end,
+			loadPos = function()
+				local pos = E.global.WT.item.extraItemsBar["bar" .. id].position
+				if not pos then return nil end
+				return {
+					point = pos.point,
+					relPoint = pos.relPoint or pos.point,
+					x = pos.x,
+					y = pos.y,
+				}
+			end,
+			clearPos = function()
+				E.global.WT.item.extraItemsBar["bar" .. id].position = nil
+			end,
+			applyPos = function()
+				local bar = EB.bars[id]
+				if not bar then return end
+				local pos = E.global.WT.item.extraItemsBar["bar" .. id].position
+				bar:ClearAllPoints()
+				if pos and pos.point and pos.x and pos.y then
+					bar:SetPoint(pos.point, E.UIParent, pos.relPoint or pos.point, pos.x, pos.y)
+				else
+					bar:SetPoint("BOTTOMLEFT", _G.RightChatPanel or _G.UIParent, "TOPLEFT", 0, (id - 1) * 45)
+				end
+			end,
+			isHidden = function()
+				local db = EB.db
+				if not db or not db.enable then return true end
+				local bd = db["bar" .. id]
+				return not bd or not bd.enable
+			end,
+		}),
+	}
+
+	EUI:RegisterUnlockElements(elements, "EllesmereUI_WindTools")
 end
 
 function EB:UpdateBinding()
@@ -807,11 +802,14 @@ function EB:UpdateBinding()
 	end
 
 	for i = 1, 5 do
-		for j = 1, 12 do
-			local button = self.bars[i].buttons[j]
-			if button then
-				local bindingName = format("CLICK WTExtraItemsBar%dButton%d:LeftButton", i, j)
-				button.bind:SetText(self:GetBindingKeyWithElvUI(bindingName))
+		local bar = self.bars[i]
+		if bar then
+			for j = 1, 12 do
+				local button = bar.buttons[j]
+				if button then
+					local bindingName = format("CLICK WTExtraItemsBar%dButton%d:LeftButton", i, j)
+					button.bind:SetText(GetBindingKey(bindingName) or "")
+				end
 			end
 		end
 	end
@@ -830,6 +828,11 @@ function EB:Initialize()
 	self:UpdateBars()
 	self:UpdateBinding()
 
+	for i = 1, 5 do
+		self:RegisterMover(i)
+		self:ApplyDefaultPosition(i)
+	end
+
 	self:RegisterEvent("BAG_UPDATE_DELAYED", "UpdateBars")
 	self:RegisterEvent("ITEM_LOCKED")
 	self:RegisterEvent("PLAYER_ALIVE", "UpdateBars")
@@ -845,6 +848,19 @@ function EB:Initialize()
 	self:RegisterEvent("ZONE_CHANGED_NEW_AREA", "UpdateBars")
 
 	self.initialized = true
+end
+
+function EB:ApplyDefaultPosition(id)
+	local bar = self.bars[id]
+	if not bar then return end
+
+	local pos = E.global.WT.item.extraItemsBar["bar" .. id].position
+	bar:ClearAllPoints()
+	if pos and pos.point and pos.x and pos.y then
+		bar:SetPoint(pos.point, E.UIParent, pos.relPoint or pos.point, pos.x, pos.y)
+	else
+		bar:SetPoint("BOTTOMLEFT", _G.RightChatPanel or _G.UIParent, "TOPLEFT", 0, (id - 1) * 45)
+	end
 end
 
 function EB:ProfileUpdate()

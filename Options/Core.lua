@@ -22,6 +22,10 @@ function addon.RegisterOptionBuilder(categoryKey, fn)
 	addon.OptionBuilders[categoryKey] = fn
 end
 
+function addon.L(text)
+	return EllesmereUI.L and EllesmereUI.L(text) or text
+end
+
 function addon.MakeHeader(cat, module, sub)
 	local L = EllesmereUI.L or function(s) return s end
 	if sub then
@@ -98,29 +102,54 @@ local function CountTable(tbl, isArray)
 	return count
 end
 
-function addon.ListEditorButton(Widgets, parent, y, opts)
-	local addValue, removeValue = "", ""
-	local _, showPopup
-	local frame, h
-	local function disabled()
-		return opts.disabled and opts.disabled()
+addon._activeListDropdown = nil
+addon._activeListDropdownBtn = nil
+
+function addon.OpenListDropdown(opts, anchorBtn)
+	if opts.disabled and opts.disabled() then return end
+	if addon._activeListDropdown then
+		local same = (addon._activeListDropdownBtn == anchorBtn)
+		addon._activeListDropdown()
+		if same then return end
 	end
+
+	local EUI = EllesmereUI
+	local PP = EUI and EUI.PP
+	local EG = EUI and EUI.ELLESMERE_GREEN or { r = 0.05, g = 0.82, b = 0.62 }
+	local MakeFont = EUI and EUI.MakeFont
+	local MakeBorder = EUI and EUI.MakeBorder
+	local SolidTex = EUI and EUI.SolidTex
+	local CreateFrame = _G.CreateFrame
+
+	local DD_BG_R = EUI and EUI.DD_BG_R or 0.075
+	local DD_BG_G = EUI and EUI.DD_BG_G or 0.113
+	local DD_BG_B = EUI and EUI.DD_BG_B or 0.141
+	local DD_BG_HA = EUI and (EUI.DD_BG_HA or 0.98) or 0.98
+	local DD_BRD_A = EUI and (EUI.DD_BRD_A or 0.20) or 0.20
+	local DD_ITEM_HL_A = EUI and (EUI.DD_ITEM_HL_A or 0.08) or 0.08
+
+	local MENU_W = opts.width or 260
+	local ITEM_H = 28
+	local ICON_SZ = 22
+	local MAX_LIST_H = 200
+	local INPUT_H = 34
+	local EMPTY_H = 28
+
+	local addValue = ""
+	local menu, scrollFrame, scrollChild, inputBox, emptyLabel
+	local rebuildRows
+
 	local function parse(raw)
 		if opts.parse then return opts.parse(raw) end
 		return raw and raw ~= "" and raw or nil
-	end
-	local function label()
-		local count = CountTable(opts.list, opts.mode == "array")
-		return (opts.label or opts.title or "Manage List") .. " (" .. count .. ")"
 	end
 	local function after()
 		MarkSettingsChanged()
 		if opts.after then opts.after() end
 	end
-	local function add(raw)
-		if disabled() then return end
+	local function addValueToList(raw)
 		local value = parse(raw)
-		if value == nil then Print(opts.invalidMessage or "Invalid value."); return end
+		if value == nil then Print(opts.invalidMessage or "Invalid value."); return false end
 		if opts.mode == "array" then
 			table_insert(opts.list, value)
 		else
@@ -128,42 +157,326 @@ function addon.ListEditorButton(Widgets, parent, y, opts)
 		end
 		addValue = ""
 		after()
+		return true
 	end
-	local function remove(raw)
-		if disabled() then return end
-		local value = parse(raw)
-		if value == nil then Print(opts.invalidMessage or "Invalid value."); return end
+	local function removeByKey(key)
 		if opts.mode == "array" then
 			for index = #opts.list, 1, -1 do
-				if opts.list[index] == value then
+				if opts.list[index] == key then
 					table_remove(opts.list, index)
 					after()
 					return
 				end
 			end
 		else
-			if opts.list[value] ~= nil then
-				opts.list[value] = nil
+			if opts.list[key] ~= nil then
+				opts.list[key] = nil
 				after()
 				return
 			end
 		end
-		Print(opts.notFoundMessage or "Value not found.")
+	end
+	local function getEntries()
+		local entries = {}
+		if opts.mode == "array" then
+			for _, key in ipairs(opts.list) do entries[#entries + 1] = key end
+		else
+			for key in pairs(opts.list) do entries[#entries + 1] = key end
+			table.sort(entries, function(a, b) return (tonumber(a) or 0) < (tonumber(b) or 0) end)
+		end
+		return entries
 	end
 
-	frame, h = Widgets:Button(parent, label(), y, function()
-		if not showPopup then
-			_, showPopup = EllesmereUI.BuildCogPopup({
-				title = opts.title or opts.label or "Manage List",
-				rows = {
-					{ type = "input", label = opts.addLabel or "Add", get = function() return addValue end, set = function(v) addValue = v or "" end, disabled = disabled },
-					{ type = "button", label = opts.addButton or "Add", action = function() add(addValue) end, disabled = disabled },
-					{ type = "input", label = opts.removeLabel or "Remove", get = function() return removeValue end, set = function(v) removeValue = v or "" end, disabled = disabled },
-					{ type = "button", label = opts.removeButton or "Remove", action = function() remove(removeValue); removeValue = "" end, disabled = disabled },
-				},
-			})
+	local function closeDropdown()
+		if menu then
+			menu:SetScript("OnUpdate", nil)
+			menu:Hide()
+			menu = nil
 		end
-		showPopup(frame)
+		addon._activeListDropdown = nil
+		addon._activeListDropdownBtn = nil
+	end
+
+	menu = CreateFrame("Frame", nil, _G.UIParent)
+	menu:SetFrameStrata("FULLSCREEN_DIALOG")
+	menu:SetFrameLevel(200)
+	menu:SetClampedToScreen(true)
+	menu:EnableMouse(true)
+	menu:SetSize(MENU_W, 10)
+	menu:SetPoint("TOPLEFT", anchorBtn, "BOTTOMLEFT", 0, -2)
+	menu:Hide()
+
+	if SolidTex then
+		SolidTex(menu, "BACKGROUND", DD_BG_R, DD_BG_G, DD_BG_B, DD_BG_HA):SetAllPoints()
+	end
+	if MakeBorder and PP then MakeBorder(menu, 1, 1, 1, DD_BRD_A, PP) end
+
+	local inputContainer = CreateFrame("Frame", nil, menu)
+	inputContainer:SetHeight(INPUT_H)
+	inputContainer:SetPoint("TOPLEFT", menu, "TOPLEFT", 0, 0)
+	inputContainer:SetPoint("TOPRIGHT", menu, "TOPRIGHT", 0, 0)
+
+	local inputFrame = CreateFrame("Frame", nil, inputContainer)
+	inputFrame:SetHeight(26)
+	inputFrame:SetPoint("LEFT", inputContainer, "LEFT", 6, 0)
+	inputFrame:SetPoint("RIGHT", inputContainer, "RIGHT", -(6 + 52 + 4), 0)
+	inputBox = CreateFrame("EditBox", nil, inputFrame)
+	inputBox:SetFont("Fonts\\FRIZQT__.TTF", 12, "")
+	inputBox:SetTextColor(1, 1, 1, 0.9)
+	inputBox:SetAutoFocus(false)
+	inputBox:SetText(addValue)
+	inputBox:SetAllPoints()
+	inputBox:SetJustifyH("LEFT")
+	inputBox:ClearFocus()
+	if SolidTex then
+		SolidTex(inputFrame, "BACKGROUND", DD_BG_R, DD_BG_G, DD_BG_B, 0.6):SetAllPoints()
+	end
+	if MakeBorder and PP then MakeBorder(inputFrame, 1, 1, 1, 0.10, PP) end
+	inputBox:SetScript("OnTextChanged", function(self) addValue = self:GetText() or "" end)
+	inputBox:SetScript("OnEnterPressed", function(self)
+		self:ClearFocus()
+		if addValueToList(addValue) then
+			inputBox:SetText("")
+			rebuildRows()
+		end
+	end)
+	inputBox:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
+
+	local addBtn = CreateFrame("Button", nil, inputContainer)
+	addBtn:SetSize(52, 26)
+	addBtn:SetPoint("RIGHT", inputContainer, "RIGHT", -6, 0)
+	addBtn:SetFrameLevel(menu:GetFrameLevel() + 2)
+	if SolidTex then
+		SolidTex(addBtn, "BACKGROUND", EG.r, EG.g, EG.b, 0.18):SetAllPoints()
+	end
+	if MakeBorder and PP then MakeBorder(addBtn, EG.r, EG.g, EG.b, 0.4, PP) end
+	if MakeFont then
+		local addLbl = MakeFont(addBtn, 12, nil, EG.r, EG.g, EG.b, 0.9)
+		addLbl:SetPoint("CENTER")
+		addLbl:SetText(opts.addButton or "Add")
+	end
+	addBtn:SetScript("OnClick", function()
+		if addValueToList(addValue) then
+			inputBox:SetText("")
+			rebuildRows()
+		end
+	end)
+
+	emptyLabel = MakeFont and MakeFont(menu, 11, nil, 1, 1, 1, 0.35) or menu:CreateFontString(nil, "OVERLAY")
+	if not MakeFont then
+		emptyLabel:SetFont("Fonts\\FRIZQT__.TTF", 11, "")
+		emptyLabel:SetTextColor(1, 1, 1, 0.35)
+	end
+	emptyLabel:SetPoint("TOP", menu, "TOP", 0, -(INPUT_H + 4))
+	emptyLabel:Hide()
+
+	scrollFrame = CreateFrame("ScrollFrame", nil, menu)
+	scrollFrame:SetPoint("TOPLEFT", menu, "TOPLEFT", 1, -(INPUT_H + 1))
+	scrollFrame:SetPoint("TOPRIGHT", menu, "TOPRIGHT", -1, -(INPUT_H + 1))
+	scrollFrame:EnableMouseWheel(true)
+	scrollChild = CreateFrame("Frame", nil, scrollFrame)
+	scrollChild:SetWidth(MENU_W - 2)
+	scrollChild:SetHeight(1)
+	scrollFrame:SetScrollChild(scrollChild)
+	scrollFrame:SetScript("OnMouseWheel", function(self, delta)
+		local s = self:GetVerticalScroll()
+		local maxS = math.max(0, scrollChild:GetHeight() - self:GetHeight())
+		self:SetVerticalScroll(math.max(0, math.min(maxS, s - delta * 30)))
+	end)
+
+	rebuildRows = function()
+		local kids = { scrollChild:GetChildren() }
+		for _, kid in ipairs(kids) do kid:Hide() end
+
+		local entries = getEntries()
+		local count = #entries
+
+		if count == 0 then
+			emptyLabel:Show()
+			emptyLabel:SetText("List is empty")
+			scrollFrame:SetHeight(EMPTY_H)
+			scrollChild:SetHeight(1)
+			menu:SetHeight(INPUT_H + 1 + EMPTY_H + 1)
+		else
+			emptyLabel:Hide()
+			local contentH = count * ITEM_H
+			local visH = math.min(contentH, MAX_LIST_H)
+			scrollFrame:SetHeight(visH)
+			scrollChild:SetHeight(contentH)
+			menu:SetHeight(INPUT_H + 1 + visH + 1)
+
+			for idx, key in ipairs(entries) do
+				local row = CreateFrame("Button", nil, scrollChild)
+				row:SetHeight(ITEM_H)
+				row:SetPoint("TOPLEFT", scrollChild, "TOPLEFT", 1, -((idx - 1) * ITEM_H))
+				row:SetPoint("TOPRIGHT", scrollChild, "TOPRIGHT", -1, -((idx - 1) * ITEM_H))
+				row:SetFrameLevel(menu:GetFrameLevel() + 2)
+
+				local hl = row:CreateTexture(nil, "ARTWORK")
+				hl:SetAllPoints()
+				hl:SetColorTexture(1, 1, 1, 0)
+
+				local icon = row:CreateTexture(nil, "ARTWORK")
+				icon:SetSize(ICON_SZ, ICON_SZ)
+				icon:SetPoint("LEFT", row, "LEFT", 10, 0)
+				icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+
+				local nameFS = MakeFont and MakeFont(row, 13, nil, 0.75, 0.75, 0.75, 1)
+					or row:CreateFontString(nil, "OVERLAY")
+				if not MakeFont then
+					nameFS:SetFont("Fonts\\FRIZQT__.TTF", 13, "")
+					nameFS:SetTextColor(0.75, 0.75, 0.75, 1)
+				end
+				nameFS:SetPoint("LEFT", icon, "RIGHT", 8, 0)
+				nameFS:SetPoint("RIGHT", row, "RIGHT", -30, 0)
+				nameFS:SetJustifyH("LEFT")
+				nameFS:SetWordWrap(false)
+				nameFS:SetMaxLines(1)
+
+				local numKey = tonumber(key)
+				if numKey then
+					if _G.C_Item and _G.C_Item.GetItemInfoInstant then
+						local _, _, _, _, iconFileID = _G.C_Item.GetItemInfoInstant(numKey)
+						if iconFileID then icon:SetTexture(iconFileID) end
+					end
+					local iName = _G.GetItemInfo(numKey)
+					if iName then
+						nameFS:SetText(iName .. " (" .. key .. ")")
+					else
+						nameFS:SetText("Loading... (" .. key .. ")")
+						local tc = 0; local ticker
+						ticker = _G.C_Timer.NewTicker(0.2, function()
+							tc = tc + 1
+							local n = _G.GetItemInfo(numKey)
+							if n then
+								nameFS:SetText(n .. " (" .. key .. ")")
+								ticker:Cancel()
+							elseif tc >= 25 then
+								ticker:Cancel()
+							end
+						end)
+					end
+				else
+					nameFS:SetText(tostring(key))
+				end
+
+				row:SetScript("OnEnter", function()
+					nameFS:SetTextColor(1, 1, 1, 1)
+					hl:SetColorTexture(1, 1, 1, DD_ITEM_HL_A)
+				end)
+				row:SetScript("OnLeave", function()
+					nameFS:SetTextColor(0.75, 0.75, 0.75, 1)
+					hl:SetColorTexture(1, 1, 1, 0)
+				end)
+
+				local delBtn = CreateFrame("Button", nil, row)
+				delBtn:SetSize(20, 20)
+				delBtn:SetPoint("RIGHT", row, "RIGHT", -6, 0)
+				delBtn:SetFrameLevel(row:GetFrameLevel() + 2)
+				local delTex = delBtn:CreateFontString(nil, "OVERLAY")
+				delTex:SetFont("Fonts\\FRIZQT__.TTF", 14, "")
+				delTex:SetTextColor(1, 0.35, 0.35, 0.5)
+				delTex:SetAllPoints()
+				delTex:SetText("×")
+				delBtn:SetScript("OnEnter", function() delTex:SetTextColor(1, 0.35, 0.35, 1) end)
+				delBtn:SetScript("OnLeave", function() delTex:SetTextColor(1, 0.35, 0.35, 0.5) end)
+				delBtn:SetScript("OnClick", function()
+					removeByKey(key)
+					rebuildRows()
+				end)
+			end
+		end
+
+		scrollFrame:SetVerticalScroll(0)
+	end
+
+	menu:SetScript("OnShow", function(self)
+		local btnScale = anchorBtn:GetEffectiveScale()
+		local uiScale = _G.UIParent:GetEffectiveScale()
+		self:SetScale(btnScale / uiScale)
+		self:SetScript("OnUpdate", function(m)
+			if not m:IsMouseOver() and not anchorBtn:IsMouseOver()
+			   and _G.IsMouseButtonDown("LeftButton") then
+				closeDropdown()
+			end
+		end)
+	end)
+	menu:SetScript("OnHide", function(self)
+		self:SetScript("OnUpdate", nil)
+	end)
+
+	rebuildRows()
+	menu:Show()
+	addon._activeListDropdown = closeDropdown
+	addon._activeListDropdownBtn = anchorBtn
+end
+
+addon.OpenListEditor = addon.OpenListDropdown
+
+function addon.BuildListTrigger(parent, ddW, fLevel, labelText, onClick, disabledFn)
+	local EUI = EllesmereUI
+	local PP = EUI and EUI.PP
+	local s = EUI and EUI.RD_DD_COLOURS
+	local CreateFrame = _G.CreateFrame
+	if not s then return CreateFrame("Button", nil, parent) end
+
+	local btn = CreateFrame("Button", nil, parent)
+	PP.Size(btn, ddW, 30)
+	btn:SetFrameLevel(fLevel or 1)
+
+	local bg = EUI.SolidTex(btn, "BACKGROUND", s[1], s[2], s[3], s[4])
+	bg:SetAllPoints()
+	local brd = EUI.MakeBorder(btn, s[9], s[10], s[11], s[12], PP)
+
+	local lbl = EUI.MakeFont(btn, 13, nil, s[17], s[18], s[19])
+	lbl:SetAlpha(s[20])
+	lbl:SetJustifyH("LEFT")
+	lbl:SetWordWrap(false)
+	lbl:SetMaxLines(1)
+	PP.Point(lbl, "LEFT", btn, "LEFT", 12, 0)
+
+	if EUI.MakeDropdownArrow then
+		local arrow = EUI.MakeDropdownArrow(btn, 12, PP)
+		PP.Point(lbl, "RIGHT", arrow, "LEFT", -5, 0)
+	else
+		PP.Point(lbl, "RIGHT", btn, "RIGHT", -12, 0)
+	end
+	lbl:SetText(labelText)
+
+	local function applyNormal()
+		lbl:SetTextColor(s[17], s[18], s[19], s[20])
+		brd:SetColor(s[9], s[10], s[11], s[12])
+		bg:SetColorTexture(s[1], s[2], s[3], s[4])
+	end
+	local function applyHover()
+		lbl:SetTextColor(s[21], s[22], s[23], s[24])
+		brd:SetColor(s[13], s[14], s[15], s[16])
+		bg:SetColorTexture(s[5], s[6], s[7], s[8])
+	end
+
+	btn:SetScript("OnEnter", function()
+		if disabledFn and disabledFn() then return end
+		applyHover()
+	end)
+	btn:SetScript("OnLeave", function() applyNormal() end)
+	btn:SetScript("OnClick", function(self)
+		if disabledFn and disabledFn() then return end
+		onClick(self)
+	end)
+
+	applyNormal()
+	btn._lbl = lbl
+	return btn
+end
+
+function addon.ListEditorButton(Widgets, parent, y, opts)
+	local frame, h
+	local function label()
+		local count = CountTable(opts.list, opts.mode == "array")
+		return (opts.label or opts.title or "Manage List") .. " (" .. count .. ")"
+	end
+	frame, h = Widgets:Button(parent, label(), y, function()
+		addon.OpenListDropdown(opts, frame)
 	end)
 	return frame, h
 end
@@ -470,12 +783,15 @@ do
 	local FOV = addon.FONT_OUTLINE_VALUES
 	local FOO = addon.FONT_OUTLINE_ORDER
 
-	function addon.FontSection(Widgets, parent, y, dbTable)
+	function addon.FontSection(Widgets, parent, y, dbTable, after)
 		local _, h
 		local fonts = GetLSMFonts2()
-		_, h = Widgets:Dropdown(parent, "Font", y, fonts, addon.DBGet(dbTable, "name"), addon.DBSet(dbTable, "name")); y = y - h
-		_, h = Widgets:Dropdown(parent, "Outline", y, FOV, FOO, addon.DBGet(dbTable, "style"), addon.DBSet(dbTable, "style")); y = y - h
-		_, h = Widgets:Slider(parent, "Size", y, 5, 60, 1, addon.DBGet(dbTable, "size"), addon.DBSet(dbTable, "size")); y = y - h
+		local fontOrder = {}
+		for k in pairs(fonts) do fontOrder[#fontOrder + 1] = k end
+		table.sort(fontOrder)
+		_, h = Widgets:Dropdown(parent, "Font", y, fonts, addon.DBGet(dbTable, "name"), addon.DBSet(dbTable, "name", after), fontOrder); y = y - h
+		_, h = Widgets:Dropdown(parent, "Outline", y, FOV, addon.DBGet(dbTable, "style"), addon.DBSet(dbTable, "style", after), FOO); y = y - h
+		_, h = Widgets:Slider(parent, "Size", y, 5, 60, 1, addon.DBGet(dbTable, "size"), addon.DBSet(dbTable, "size", after)); y = y - h
 		return y
 	end
 end

@@ -1,6 +1,6 @@
 local W, F, E, L = unpack((select(2, ...))) ---@type WindTools, Functions, ElvUI, LocaleTable
 local CB = W:GetModule("ChatBar") ---@class ChatBar
-local ST = W:NewModule("SmartTab", "AceHook-3.0", "AceEvent-3.0")
+local ST = W:NewModule("SmartTab")
 
 local _G = _G
 local ipairs = ipairs
@@ -246,7 +246,6 @@ function ST:SecureTabPressed(frame)
 			frame:SetAttribute("channelTarget", worldChannelID)
 			nextChatType = "CHANNEL"
 		else
-			-- If the world channel is not available, skip to the next channel
 			nextChatType, nextTellTarget = self:GetNext(nextChatType, nextTellTarget)
 		end
 	end

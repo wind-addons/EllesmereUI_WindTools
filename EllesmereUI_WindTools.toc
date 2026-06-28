@@ -18,3 +18,4 @@ Core\Metadata.lua
 Core\Load_Core.xml
 Settings\Load_Settings.xml
 Options\Load_Options.xml
+Modules\Load_Modules.xml

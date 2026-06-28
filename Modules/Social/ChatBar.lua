@@ -1,8 +1,11 @@
 local W, F, E, L = unpack((select(2, ...))) ---@type WindTools, Functions, ElvUI, LocaleTable
-local CB = W:NewModule("ChatBar", "AceHook-3.0", "AceEvent-3.0") ---@class ChatBar : AceModule, AceHook-3.0, AceEvent-3.0
-local S = W.Modules.Skins ---@type Skins
+local CB = W:NewModule("ChatBar") ---@class ChatBar : AceModule, AceHook-3.0, AceEvent-3.0
 local LSM = E.Libs.LSM
 local C = W.Utilities.Color
+
+-- EllesmereUI native APIs (no ElvUI dependencies)
+local EUI = _G.EllesmereUI
+local PP = EUI and EUI.PP
 
 local _G = _G
 local format = format
@@ -29,6 +32,8 @@ local IsInRaid = IsInRaid
 local JoinPermanentChannel = JoinPermanentChannel
 local LeaveChannelByName = LeaveChannelByName
 local RandomRoll = RandomRoll
+local securecallfunction = securecallfunction
+local UnitFactionGroup = UnitFactionGroup
 local UnitIsGroupAssistant = UnitIsGroupAssistant
 local UnitIsGroupLeader = UnitIsGroupLeader
 
@@ -38,6 +43,35 @@ local LE_PARTY_CATEGORY_INSTANCE = LE_PARTY_CATEGORY_INSTANCE
 local BUTTON_HOVER_FONT_SIZE_INCREASE = 4
 local MOUSE_OVER_HEIGHT_PADDING = 6
 local NORMAL_CHANNELS = { "SAY", "YELL", "PARTY", "INSTANCE", "RAID", "RAID_WARNING", "GUILD", "OFFICER", "EMOTE" }
+
+-- Fallback texture path (ElvUI's normTex is not available in CompatE)
+local NORM_TEX = "Interface\\Buttons\\WHITE8x8"
+
+---Apply font from DB to a FontString, EllesmereUI-native way.
+---Resolves "__global" via EllesmereUI.GetFontPath and uses EllesmereUI's
+---outline flag system (none/outline/thick -> WoW font flags).
+---@param fontString FontString The FontString to style
+---@param db table Font DB: { name = "__global"|fontName, size = number, style = "none"|"outline"|"thick" }
+local function ApplyFont(fontString, db)
+	if not fontString or not db then
+		return
+	end
+	local path
+	if db.name == "__global" or not db.name then
+		path = EUI and EUI.GetFontPath and EUI.GetFontPath("WindTools")
+				or (LSM and LSM:Fetch("font", "Expressway"))
+				or "Fonts\\FRIZQT__.TTF"
+	else
+		path = (LSM and LSM:Fetch("font", db.name)) or db.name
+	end
+	local flag = ""
+	if db.style == "outline" then
+		flag = EUI and EUI.GetFontOutlineFlag and EUI.GetFontOutlineFlag("WindTools") or "OUTLINE"
+	elseif db.style == "thick" then
+		flag = "THICKOUTLINE"
+	end
+	fontString:SetFont(path, db.size or 12, flag)
+end
 
 local checkFunctions = {
 	PARTY = function()
@@ -160,11 +194,12 @@ end
 ---@return table? config The best matching configuration or nil
 local function GetBestWorldChannelConfig(configTable)
 	local validConfigs = {}
+	local myFaction = UnitFactionGroup("player")
 
 	for _, c in pairs(configTable) do
 		if
 			(c.region == "ALL" or c.region == W.RealRegion)
-			and (c.faction == "ALL" or c.faction == E.myfaction)
+			and (c.faction == "ALL" or c.faction == myFaction)
 			and (c.realmID == "ALL" or c.realmID == W.CurrentRealmID)
 		then
 			tinsert(validConfigs, c)
@@ -198,6 +233,38 @@ local function GetBestWorldChannelConfig(configTable)
 	return validConfigs[1]
 end
 
+---Apply a transparent black backdrop + 1px border to a frame, EllesmereUI style.
+---@param frame Frame The frame to style
+local function ApplyBackdrop(frame)
+	if not PP then
+		return
+	end
+	-- Semi-transparent black background texture
+	local bg = frame.bg or frame:CreateTexture(nil, "BACKGROUND")
+	bg:SetTexture(NORM_TEX)
+	bg:SetVertexColor(0, 0, 0, 0.5)
+	bg:SetAllPoints()
+	if bg.SetSnapToPixelGrid then
+		bg:SetSnapToPixelGrid(false)
+		bg:SetTexelSnappingBias(0)
+	end
+	frame.bg = bg
+	-- 1px border via EllesmereUI PP system
+	PP.CreateBorder(frame, 0, 0, 0, 1, 1, "BORDER", 0)
+end
+
+---Set border color on a frame styled with ApplyBackdrop.
+---@param frame Frame The frame
+---@param r number Red
+---@param g number Green
+---@param b number Blue
+---@param a number? Alpha (default 1)
+local function SetBorderColor(frame, r, g, b, a)
+	if PP and PP.SetBorderColor then
+		PP.SetBorderColor(frame, r, g, b, a or 1)
+	end
+end
+
 function CB:OnEnterBar()
 	if self.db.mouseOver then
 		E:UIFrameFadeIn(self.bar, 0.2, self.bar:GetAlpha(), 1)
@@ -223,35 +290,30 @@ end
 ---@param abbr string Button abbreviation or icon
 ---@return Button button The created or updated button
 function CB:UpdateButton(name, func, anchorPoint, x, y, color, tex, tooltip, tips, abbr)
-	local ElvUIValueColor = E.db.general.valuecolor
+	local valueColor = E.media.rgbvaluecolor
 
 	if not self.bar[name] then
 		local button = CreateFrame("Button", nil, self.bar, "SecureActionButtonTemplate, BackdropTemplate") --[[@as Button]]
-		button:StripTextures()
-		button:SetBackdropBorderColor(0, 0, 0)
 		button:RegisterForClicks("AnyDown")
 		button:SetScript("OnMouseUp", func)
 
 		button.colorBlock = button:CreateTexture(nil, "ARTWORK")
 		button.colorBlock:SetAllPoints()
-		button:CreateBackdrop("Transparent")
-		S:CreateShadow(button.backdrop, 3, nil, nil, nil, true)
+		ApplyBackdrop(button)
 
 		button.text = button:CreateFontString(nil, "OVERLAY")
-		button.text:Point("CENTER", button, "CENTER", 0, 0)
-		F.SetFontWithDB(button.text, self.db.font)
+		button.text:SetPoint("CENTER", button, "CENTER", 0, 0)
+		ApplyFont(button.text, self.db.font)
 		button.defaultFontSize = self.db.font.size
 
 		-- Tooltip
 		button:SetScript("OnEnter", function(btn)
 			if CB.db.style == "BLOCK" then
-				if btn.backdrop.shadow then
-					btn.backdrop.shadow:SetBackdropBorderColor(ElvUIValueColor.r, ElvUIValueColor.g, ElvUIValueColor.b)
-					btn.backdrop.shadow:Show()
-				end
+				-- Highlight border with value color (replaces ElvUI shadow highlight)
+				SetBorderColor(btn, valueColor.r, valueColor.g, valueColor.b, 1)
 			else
 				local fontName, _, fontFlags = btn.text:GetFont()
-				btn.text:FontTemplate(fontName, btn.defaultFontSize + BUTTON_HOVER_FONT_SIZE_INCREASE, fontFlags)
+				btn.text:SetFont(fontName, btn.defaultFontSize + BUTTON_HOVER_FONT_SIZE_INCREASE, fontFlags)
 			end
 
 			_G.GameTooltip:SetOwner(btn, "ANCHOR_TOP", 0, 7)
@@ -269,21 +331,23 @@ function CB:UpdateButton(name, func, anchorPoint, x, y, color, tex, tooltip, tip
 		button:SetScript("OnLeave", function(btn)
 			_G.GameTooltip:Hide()
 			if CB.db.style == "BLOCK" then
-				btn.backdrop.shadow:SetBackdropBorderColor(0, 0, 0)
-
-				if not CB.db.blockShadow then
-					if btn.backdrop.shadow then
-						btn.backdrop.shadow:Hide()
-					end
-				end
+				-- Reset border to black
+				SetBorderColor(btn, 0, 0, 0, 1)
 			else
 				local fontName, _, fontFlags = btn.text:GetFont()
-				btn.text:FontTemplate(fontName, btn.defaultFontSize, fontFlags)
+				btn.text:SetFont(fontName, btn.defaultFontSize, fontFlags)
 			end
 		end)
 
-		self:HookScript(button, "OnEnter", "OnEnterBar")
-		self:HookScript(button, "OnLeave", "OnLeaveBar")
+		-- Hook OnEnter/OnLeave for bar fade (Blizzard native HookScript;
+		-- WindTools' AddCommonMethods does not provide an AceHook-style
+		-- module:HookScript(frame, script, handler) wrapper).
+		button:HookScript("OnEnter", function()
+			CB:OnEnterBar()
+		end)
+		button:HookScript("OnLeave", function()
+			CB:OnLeaveBar()
+		end)
 
 		self.bar[name] = button
 	end
@@ -293,38 +357,36 @@ function CB:UpdateButton(name, func, anchorPoint, x, y, color, tex, tooltip, tip
 
 	-- Block style
 	if self.db.style == "BLOCK" then
-		self.bar[name].colorBlock:SetTexture(tex and LSM:Fetch("statusbar", tex) or E.media.normTex)
+		self.bar[name].colorBlock:SetTexture(tex and LSM:Fetch("statusbar", tex) or NORM_TEX)
 
 		if color then
 			self.bar[name].colorBlock:SetVertexColor(color.r, color.g, color.b, color.a)
 		end
 
 		self.bar[name].colorBlock:Show()
-		self.bar[name].backdrop:Show()
-		if self.bar[name].backdrop.shadow then
-			if self.db.blockShadow then
-				self.bar[name].backdrop.shadow:Show()
-			else
-				self.bar[name].backdrop.shadow:Hide()
-			end
-		end
-
+		self.bar[name].bg:Show()
 		self.bar[name].text:Hide()
 	else
 		local buttonText = self.db.color and color and C.StringWithRGB(abbr, color) or abbr
 		self.bar[name].text:SetText(buttonText)
 		self.bar[name].defaultFontSize = self.db.font.size
-		F.SetFontWithDB(self.bar[name].text, self.db.font)
+		ApplyFont(self.bar[name].text, self.db.font)
 		self.bar[name].text:Show()
 
 		self.bar[name].colorBlock:Hide()
-		self.bar[name].backdrop:Hide()
+		self.bar[name].bg:Hide()
 	end
 
-	-- Update size and position
-	self.bar[name]:Size(CB.db.buttonWidth, CB.db.buttonHeight)
-	self.bar[name]:ClearAllPoints()
-	self.bar[name]:Point(anchorPoint, CB.bar, anchorPoint, x, y)
+	-- Update size and position (EllesmereUI PP for pixel-perfect scaling)
+	if PP then
+		PP.Size(self.bar[name], CB.db.buttonWidth, CB.db.buttonHeight)
+		self.bar[name]:ClearAllPoints()
+		PP.Point(self.bar[name], anchorPoint, CB.bar, anchorPoint, x, y)
+	else
+		self.bar[name]:SetSize(CB.db.buttonWidth, CB.db.buttonHeight)
+		self.bar[name]:ClearAllPoints()
+		self.bar[name]:SetPoint(anchorPoint, CB.bar, anchorPoint, x, y)
+	end
 
 	self.bar[name]:Show()
 	return self.bar[name]
@@ -414,8 +476,8 @@ function CB:UpdateBar()
 				if mouseButton == "LeftButton" then
 					local autoJoined = false
 					if channelID == 0 and config.autoJoin then
-						JoinPermanentChannel(config.name)
-						DefaultChatFrame:AddChannel(config.name)
+						securecallfunction(JoinPermanentChannel, config.name)
+						securecallfunction(DefaultChatFrame.AddChannel, DefaultChatFrame, config.name)
 						channelID = GetChannelName(config.name)
 						autoJoined = true
 					end
@@ -432,10 +494,10 @@ function CB:UpdateBar()
 					end
 				elseif mouseButton == "RightButton" then
 					if channelID == 0 then
-						JoinPermanentChannel(config.name)
-						DefaultChatFrame:AddChannel(config.name)
+						securecallfunction(JoinPermanentChannel, config.name)
+						securecallfunction(DefaultChatFrame.AddChannel, DefaultChatFrame, config.name)
 					else
-						LeaveChannelByName(config.name)
+						securecallfunction(LeaveChannelByName, config.name)
 					end
 				end
 			end
@@ -554,18 +616,16 @@ function CB:UpdateBar()
 		self.bar:SetAlpha(1)
 	end
 
-	self.bar:Size(width, height)
+	if PP then
+		PP.Size(self.bar, width, height)
+	else
+		self.bar:SetSize(width, height)
+	end
 
 	if self.db.backdrop then
-		self.bar.backdrop:Show()
-		if E.private.WT.skins.shadow and self.bar.shadow then
-			self.bar.shadow:Show()
-		end
+		self.bar.bg:Show()
 	else
-		self.bar.backdrop:Hide()
-		if E.private.WT.skins.shadow and self.bar.shadow then
-			self.bar.shadow:Hide()
-		end
+		self.bar.bg:Hide()
 	end
 end
 
@@ -582,15 +642,119 @@ function CB:CreateBar()
 	bar:SetClampedToScreen(true)
 	bar:SetFrameStrata("LOW")
 	bar:SetFrameLevel(5) -- Higher than ElvUI Exp Bar
-	bar:CreateBackdrop("Transparent")
+	ApplyBackdrop(bar)
 	bar:ClearAllPoints()
-	bar:Point("BOTTOMLEFT", _G.LeftChatPanel, "TOPLEFT", 6, 3)
-	S:CreateBackdropShadow(bar)
 
 	self.bar = bar
 
-	self:HookScript(self.bar, "OnEnter", "OnEnterBar")
-	self:HookScript(self.bar, "OnLeave", "OnLeaveBar")
+	-- Blizzard native HookScript (see UpdateButton for rationale).
+	bar:HookScript("OnEnter", function()
+		CB:OnEnterBar()
+	end)
+	bar:HookScript("OnLeave", function()
+		CB:OnLeaveBar()
+	end)
+
+	self:ApplyDefaultPosition()
+end
+
+---Resolve a sensible default anchor frame: the EllesmereUI chat background if
+---available, otherwise UIParent. Returns (frame, point, relPoint, x, y).
+---Never returns nil for the frame — always falls back to UIParent so SetPoint
+---cannot fail with a nil anchor (which would silently break the whole module
+---inside SafeCall).
+local function ResolveDefaultAnchor()
+	-- EllesmereUIChat stores per-frame data via EllesmereUI._chatCFD(cf).bg
+	local chatFrame = _G.ChatFrame1
+	if chatFrame and EUI and EUI._chatCFD then
+		local ok, data = pcall(EUI._chatCFD, chatFrame)
+		if ok and data and data.bg then
+			-- Anchor above the chat background's top-left corner
+			return data.bg, "TOPLEFT", "TOPLEFT", 6, 30
+		end
+	end
+	-- Fallback: bottom-left of screen, a bit above the very bottom
+	return _G.UIParent, "BOTTOMLEFT", "BOTTOMLEFT", 6, 180
+end
+
+---Apply the saved mover position, or the default anchor if none.
+function CB:ApplyDefaultPosition()
+	if not self.bar then
+		return
+	end
+	local pos = E.global.WT and E.global.WT.social and E.global.WT.social.chatBar
+		and E.global.WT.social.chatBar.position
+	self.bar:ClearAllPoints()
+	if pos and pos.point and pos.x and pos.y then
+		self.bar:SetPoint(pos.point, _G.UIParent, pos.relPoint or pos.point, pos.x, pos.y)
+	else
+		-- Default: above the chat panel (or UIParent fallback)
+		local anchorFrame, point, relPoint, x, y = ResolveDefaultAnchor()
+		self.bar:SetPoint(point, anchorFrame, relPoint, x, y)
+	end
+end
+
+---Register the chat bar with EllesmereUI's Unlock Mode so it can be dragged
+---and positioned alongside all other EllesmereUI layout elements.
+function CB:RegisterMover()
+	if not EUI or not EUI.RegisterUnlockElements or not EUI.MakeUnlockElement then
+		return
+	end
+
+	local MK = EUI.MakeUnlockElement
+	local key = "WTChatBar"
+
+	local elements = {
+		MK({
+			key = key,
+			label = L["Chat Bar"],
+			group = "WindTools",
+			order = 900,
+			getFrame = function()
+				return CB.bar
+			end,
+			getSize = function()
+				if not CB.bar then
+					return 1, 1
+				end
+				return CB.bar:GetWidth(), CB.bar:GetHeight()
+			end,
+			savePos = function(_, point, relPoint, x, y)
+				if point and x and y then
+					E.global.WT.social.chatBar.position = {
+						point = point,
+						relPoint = relPoint or point,
+						x = x,
+						y = y,
+					}
+				end
+			end,
+			loadPos = function()
+				local pos = E.global.WT and E.global.WT.social and E.global.WT.social.chatBar
+					and E.global.WT.social.chatBar.position
+				if not pos then
+					return nil
+				end
+				return {
+					point = pos.point,
+					relPoint = pos.relPoint or pos.point,
+					x = pos.x,
+					y = pos.y,
+				}
+			end,
+			clearPos = function()
+				E.global.WT.social.chatBar.position = nil
+			end,
+			applyPos = function()
+				CB:ApplyDefaultPosition()
+			end,
+			isHidden = function()
+				return not (CB.db and CB.db.enable)
+			end,
+		}),
+	}
+
+	EUI:RegisterUnlockElements(elements, "EllesmereUI_WindTools")
 end
 
 function CB:Initialize()
@@ -601,10 +765,7 @@ function CB:Initialize()
 
 	CB:CreateBar()
 	CB:UpdateBar()
-
-	E:CreateMover(CB.bar, "WTChatBarMover", L["Chat Bar"], nil, nil, nil, "ALL,WINDTOOLS", function()
-		return CB.db.enable
-	end, "WindTools,social,chatBar")
+	CB:RegisterMover()
 
 	if self.db.autoHide then
 		self:RegisterEvent("GROUP_ROSTER_UPDATE", "UpdateBar")

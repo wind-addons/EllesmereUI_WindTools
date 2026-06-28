@@ -31,6 +31,13 @@ G.item = {
 		favorites = {},
 		updateAlts = true,
 	},
+	extraItemsBar = {
+		bar1 = {},
+		bar2 = {},
+		bar3 = {},
+		bar4 = {},
+		bar5 = {},
+	},
 }
 
 G.combat = {
@@ -50,4 +57,13 @@ G.misc = {
 
 G.maps = {
 	eventTracker = {},
+}
+
+G.social = {
+	chatBar = {
+		-- Mover position saved at account level so layout is shared across
+		-- characters. Populated by EllesmereUI Unlock Mode via the
+		-- RegisterUnlockElements API. Nil = use default anchor (above LeftChatPanel).
+		position = nil,
+	},
 }
