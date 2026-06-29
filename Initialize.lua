@@ -154,28 +154,35 @@ local PAGE_GROUPS = {{
     categories = {"announcement"}
 }, {
     page = "Item",
+    categories = {"item"},
     pages = { "Loot & Trade", "Display", "Inspect", "Item Level", "Merchant" }
 }, {
     page = "Extra Items Bar",
     categories = {"extraItemsBar"}
 }, {
     page = "Combat",
-    categories = {"combat"}
+    categories = {"combat"},
+    pages = { "Raid Markers", "Combat Alert", "Quick Tools", "Damage Meter" }
 }, {
     page = "Social",
-    categories = {"social"}
+    categories = {"social"},
+    pages = { "Chat Bar", "Smart Tab" }
 }, {
     page = "Maps",
-    categories = {"maps"}
+    categories = {"maps"},
+    pages = { "Super Tracker", "Minimap", "World Map", "Difficulty & Events" }
 }, {
     page = "Quest",
-    categories = {"quest"}
+    categories = {"quest"},
+    pages = { "Objective Tracker", "Automation", "Progress & Turn In", "Achievement" }
 }, {
     page = "Tooltips",
-    categories = {"tooltips"}
+    categories = {"tooltips"},
+    pages = { "General", "Progression", "Keystone & Group Info", "Advanced" }
 }, {
     page = "Unit Frames",
-    categories = {"unitFrames"}
+    categories = {"unitFrames"},
+    pages = { "Quick Focus", "Absorb", "Name Clip" }
 }, {
     page = "Skins",
     categories = {"skins"}

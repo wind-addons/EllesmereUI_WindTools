@@ -18,46 +18,46 @@ local TURNIN_MODIFIER = {
 }
 local TURNIN_MODIFIER_ORDER = { "ANY", "ALT", "CTRL", "SHIFT", "NONE" }
 
-addon.RegisterOptionBuilder("quest", function(parent, y, cat)
+local function BuildObjectiveTracker(parent, y, cat)
+	local Widgets = EllesmereUI.Widgets
+	local MH = function(mod, sub) return addon.MakeHeader(cat, mod, sub) end
+	local _, h
+	local ot = E.private.WT.quest.objectiveTracker
+	_, h = Widgets:SectionHeader(parent, MH("Objective Tracker"), y); y = y - h
+	_, h = Widgets:Toggle(parent, "Enable", y,
+		DBGet(ot, "enable"), DBSet(ot, "enable"),
+		"Customize the font of Objective Tracker and add colorful progress text."); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Objective Tracker", "Progress"), y); y = y - h
+	_, h = Widgets:DualRow(parent, y,
+		{ type = "toggle", text = "No Dash",
+		  getValue = DBGet(ot, "noDash"), setValue = DBSet(ot, "noDash") },
+		{ type = "toggle", text = "Colorful Progress",
+		  getValue = DBGet(ot, "colorfulProgress"), setValue = DBSet(ot, "colorfulProgress") }
+	); y = y - h
+	_, h = Widgets:DualRow(parent, y,
+		{ type = "toggle", text = "Percentage",
+		  getValue = DBGet(ot, "percentage"), setValue = DBSet(ot, "percentage") },
+		{ type = "toggle", text = "Colorful Percentage",
+		  getValue = DBGet(ot, "colorfulPercentage"), setValue = DBSet(ot, "colorfulPercentage") }
+	); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Objective Tracker", "Header"), y); y = y - h
+	y = FontSection(Widgets, parent, y, ot.header)
+	if ot.header then
+		_, h = Widgets:DualRow(parent, y,
+			{ type = "toggle", text = "Short Header",
+			  getValue = DBGet2(ot, "header", "shortHeader"), setValue = DBSet2(ot, "header", "shortHeader") },
+			{ type = "toggle", text = "Uppercase",
+			  getValue = DBGet2(ot, "header", "uppercase"), setValue = DBSet2(ot, "header", "uppercase") }
+		); y = y - h
+	end
+	return y
+end
+
+local function BuildAutomation(parent, y, cat)
 	local Widgets = EllesmereUI.Widgets
 	local MH = function(mod, sub) return addon.MakeHeader(cat, mod, sub) end
 	local _, h
 	local db = E.db.WT.quest
-	local pdb = E.private.WT.quest
-
-	_, h = Widgets:SectionHeader(parent, MH("Objective Tracker"), y); y = y - h
-	do
-		local ot = pdb.objectiveTracker
-		_, h = Widgets:Toggle(parent, "Enable", y,
-			DBGet(ot, "enable"), DBSet(ot, "enable"),
-			"Customize the font of Objective Tracker and add colorful progress text."); y = y - h
-
-		_, h = Widgets:SectionHeader(parent, MH("Objective Tracker", "Progress"), y); y = y - h
-		_, h = Widgets:DualRow(parent, y,
-			{ type = "toggle", text = "No Dash",
-			  getValue = DBGet(ot, "noDash"), setValue = DBSet(ot, "noDash") },
-			{ type = "toggle", text = "Colorful Progress",
-			  getValue = DBGet(ot, "colorfulProgress"), setValue = DBSet(ot, "colorfulProgress") }
-		); y = y - h
-		_, h = Widgets:DualRow(parent, y,
-			{ type = "toggle", text = "Percentage",
-			  getValue = DBGet(ot, "percentage"), setValue = DBSet(ot, "percentage") },
-			{ type = "toggle", text = "Colorful Percentage",
-			  getValue = DBGet(ot, "colorfulPercentage"), setValue = DBSet(ot, "colorfulPercentage") }
-		); y = y - h
-
-		_, h = Widgets:SectionHeader(parent, MH("Objective Tracker", "Header"), y); y = y - h
-		y = FontSection(Widgets, parent, y, ot.header)
-		if ot.header then
-			_, h = Widgets:DualRow(parent, y,
-				{ type = "toggle", text = "Short Header",
-				  getValue = DBGet2(ot, "header", "shortHeader"), setValue = DBSet2(ot, "header", "shortHeader") },
-				{ type = "toggle", text = "Uppercase",
-				  getValue = DBGet2(ot, "header", "uppercase"), setValue = DBSet2(ot, "header", "uppercase") }
-			); y = y - h
-		end
-	end
-
 	_, h = Widgets:SectionHeader(parent, MH("Auto Collapse"), y); y = y - h
 	do
 		local ac = db.autoCollapse
@@ -101,7 +101,6 @@ addon.RegisterOptionBuilder("quest", function(parent, y, cat)
 			  getValue = DBGet(ac, "raid"), setValue = DBSet(ac, "raid"), disabled = acDis }
 		); y = y - h
 	end
-
 	_, h = Widgets:SectionHeader(parent, MH("Switch Buttons"), y); y = y - h
 	do
 		local sb = db.switchButtons
@@ -118,7 +117,14 @@ addon.RegisterOptionBuilder("quest", function(parent, y, cat)
 		_, h = Widgets:Toggle(parent, "Bar Backdrop", y,
 			DBGet(sb, "backdrop"), DBSet(sb, "backdrop"), nil, sbDis); y = y - h
 	end
+	return y
+end
 
+local function BuildProgressTurnIn(parent, y, cat)
+	local Widgets = EllesmereUI.Widgets
+	local MH = function(mod, sub) return addon.MakeHeader(cat, mod, sub) end
+	local _, h
+	local db = E.db.WT.quest
 	_, h = Widgets:SectionHeader(parent, MH("Progress"), y); y = y - h
 	do
 		local qp = db.progress
@@ -136,7 +142,6 @@ addon.RegisterOptionBuilder("quest", function(parent, y, cat)
 			DBGet(qp, "disableIfRequiredOver"), DBSet(qp, "disableIfRequiredOver"),
 			"Disable the progress message if the required number of objectives is over this value.", qpDis); y = y - h
 	end
-
 	_, h = Widgets:SectionHeader(parent, MH("Turn In"), y); y = y - h
 	do
 		local ti = db.turnIn
@@ -169,7 +174,6 @@ addon.RegisterOptionBuilder("quest", function(parent, y, cat)
 			); y = y - h
 		end
 	end
-
 	_, h = Widgets:SectionHeader(parent, MH("Prey Hunt"), y); y = y - h
 	do
 		local ph = db.preyHunt
@@ -177,7 +181,14 @@ addon.RegisterOptionBuilder("quest", function(parent, y, cat)
 			DBGet(ph, "enable"), DBSet(ph, "enable"),
 			"Additional UI enhancements for Prey Hunt."); y = y - h
 	end
+	return y
+end
 
+local function BuildAchievement(parent, y, cat)
+	local Widgets = EllesmereUI.Widgets
+	local MH = function(mod, sub) return addon.MakeHeader(cat, mod, sub) end
+	local _, h
+	local db = E.db.WT.quest
 	_, h = Widgets:SectionHeader(parent, MH("Achievement Screenshot"), y); y = y - h
 	do
 		local as = db.achievementScreenshot
@@ -197,7 +208,6 @@ addon.RegisterOptionBuilder("quest", function(parent, y, cat)
 			  getValue = DBGet(as, "chatMessage"), setValue = DBSet(as, "chatMessage") }
 		); y = y - h
 	end
-
 	_, h = Widgets:SectionHeader(parent, MH("Achievement Tracker"), y); y = y - h
 	do
 		local at = db.achievementTracker
@@ -217,6 +227,14 @@ addon.RegisterOptionBuilder("quest", function(parent, y, cat)
 			); y = y - h
 		end
 	end
+	return y
+end
 
+addon.RegisterOptionBuilder("quest", function(parent, y, cat, subPage)
+	if     subPage == "Objective Tracker"  then return BuildObjectiveTracker(parent, y, cat)
+	elseif subPage == "Automation"          then return BuildAutomation(parent, y, cat)
+	elseif subPage == "Progress & Turn In"  then return BuildProgressTurnIn(parent, y, cat)
+	elseif subPage == "Achievement"         then return BuildAchievement(parent, y, cat)
+	end
 	return y
 end)
