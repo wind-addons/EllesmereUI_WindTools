@@ -41,6 +41,7 @@ local NAV_ROW_H = 34
 local NAV_TOP = -16
 local SCROLL_BAR_W = 4
 local CLOSE_BTN_SIZE = 28
+local TAB_BAR_H = 36
 
 -- Navigation text colors (matching EllesmereUI's NAV_* constants)
 local NAV_SELECTED_TEXT      = { r = 1, g = 1, b = 1, a = 1 }
@@ -115,6 +116,13 @@ local headerTitle, headerDesc
 local pageWrapper      -- current page's wrapper frame
 local versionText
 local searchBox
+
+-- Tab bar state
+local tabBar
+local tabButtons = {}
+local activeTab          -- current tab index (nil when page has no sub-pages)
+local subPages           -- sub-page name array for current page (nil = no tabs)
+local tabBarHeight = 0   -- 0 when hidden, TAB_BAR_H when visible
 
 -- Forward declarations for content layout
 local UpdateScrollThumbFn
@@ -375,6 +383,125 @@ local function RefreshSidebarStates()
     UpdateSidebarHighlight()
 end
 
+-------------------------------------------------------------------------------
+--  Tab bar management
+-------------------------------------------------------------------------------
+local function UpdateTabHighlight()
+    local eg = EG()
+    for i, btn in ipairs(tabButtons) do
+        if i == activeTab then
+            btn._label:SetTextColor(NAV_SELECTED_TEXT.r, NAV_SELECTED_TEXT.g, NAV_SELECTED_TEXT.b, NAV_SELECTED_TEXT.a)
+            btn._underline:Show()
+        else
+            btn._label:SetTextColor(NAV_ENABLED_TEXT.r, NAV_ENABLED_TEXT.g, NAV_ENABLED_TEXT.b, NAV_ENABLED_TEXT.a)
+            btn._underline:Hide()
+        end
+    end
+end
+
+local function BuildTabButtons(pages)
+    for _, btn in ipairs(tabButtons) do btn:Hide(); btn:SetParent(nil) end
+    wipe(tabButtons)
+
+    local eg = EG()
+    local x = 0
+    for i, pageName in ipairs(pages) do
+        local btn = CreateFrame("Button", nil, tabBar)
+        btn:SetHeight(TAB_BAR_H - 4)
+        btn:SetPoint("LEFT", tabBar, "LEFT", x, 0)
+        btn:SetFrameLevel(tabBar:GetFrameLevel() + 1)
+
+        local label = MakeFont(btn, 13, nil, NAV_ENABLED_TEXT.r, NAV_ENABLED_TEXT.g, NAV_ENABLED_TEXT.b, NAV_ENABLED_TEXT.a)
+        label:SetPoint("LEFT", btn, "LEFT", 0, 2)
+        label:SetText(L(pageName))
+        btn._label = label
+
+        local underline = SolidTex(btn, "ARTWORK", eg.r, eg.g, eg.b, 1)
+        underline:SetHeight(2)
+        underline:SetPoint("BOTTOMLEFT", label, "BOTTOMLEFT", -2, -4)
+        underline:SetPoint("BOTTOMRIGHT", label, "BOTTOMRIGHT", 2, -4)
+        underline:Hide()
+        btn._underline = underline
+
+        local textW = label:GetStringWidth()
+        btn:SetWidth(textW + 4)
+
+        local tabIndex = i
+        btn:SetScript("OnEnter", function(self)
+            if tabIndex ~= activeTab then
+                self._label:SetTextColor(NAV_HOVER_ENABLED_TEXT.r, NAV_HOVER_ENABLED_TEXT.g, NAV_HOVER_ENABLED_TEXT.b, NAV_HOVER_ENABLED_TEXT.a)
+            end
+        end)
+        btn:SetScript("OnLeave", function(self)
+            if tabIndex ~= activeTab then
+                self._label:SetTextColor(NAV_ENABLED_TEXT.r, NAV_ENABLED_TEXT.g, NAV_ENABLED_TEXT.b, NAV_ENABLED_TEXT.a)
+            end
+        end)
+        btn:SetScript("OnClick", function()
+            SelectTab(tabIndex)
+        end)
+
+        tabButtons[i] = btn
+        x = x + textW + 24
+    end
+end
+
+local function SetupTabsForPage(pageName)
+    local group = addon.OptionGroupByPage and addon.OptionGroupByPage[pageName]
+    if group and group.pages and #group.pages > 0 then
+        subPages = group.pages
+        activeTab = 1
+        BuildTabButtons(group.pages)
+        tabBar:Show()
+        tabBarHeight = TAB_BAR_H
+        UpdateTabHighlight()
+    else
+        subPages = nil
+        activeTab = nil
+        for _, btn in ipairs(tabButtons) do btn:Hide(); btn:SetParent(nil) end
+        wipe(tabButtons)
+        tabBar:Hide()
+        tabBarHeight = 0
+    end
+    if UpdateContentLayout then UpdateContentLayout() end
+end
+
+local function SelectTab(tabIndex)
+    if not subPages or tabIndex == activeTab then return end
+    activeTab = tabIndex
+    UpdateTabHighlight()
+    -- Rebuild content for the new sub-page
+    ClearContent()
+    ClearContentHeader()
+
+    local e2 = EUI()
+    if e2 and e2.ResetRowCounters then e2.ResetRowCounters() end
+    ClearEUIRefreshList()
+
+    pageWrapper = CreateFrame("Frame", nil, contentScrollChild)
+    pageWrapper:SetAllPoints(contentScrollChild)
+
+    local subPageName = subPages[activeTab]
+    local startY = -6
+    local totalH = 0
+    if addon.BuildOptionsPage then
+        local ok, h = pcall(addon.BuildOptionsPage, activePage, pageWrapper, startY, subPageName)
+        if ok and type(h) == "number" then
+            totalH = h
+        else
+            totalH = 600
+        end
+    end
+
+    contentScrollChild:SetHeight(math_max(totalH + 30, 100))
+    SnapshotRefreshList()
+    CallRefreshList()
+
+    if contentScrollFrame and contentScrollFrame.SetVerticalScroll then
+        contentScrollFrame:SetVerticalScroll(0)
+    end
+end
+
 local function SelectPage(pageName)
     if not pageName or pageName == activePage then return end
 
@@ -399,6 +526,9 @@ local function SelectPage(pageName)
     activePage = pageName
     UpdateSidebarHighlight()
 
+    -- Setup tab bar (or hide it)
+    SetupTabsForPage(pageName)
+
     -- Build page content
     ClearContent()
     ClearContentHeader()
@@ -412,8 +542,9 @@ local function SelectPage(pageName)
 
     local startY = -6
     local totalH = 0
+    local subPageName = subPages and subPages[activeTab] or nil
     if addon.BuildOptionsPage then
-        local ok, h = pcall(addon.BuildOptionsPage, pageName, pageWrapper, startY)
+        local ok, h = pcall(addon.BuildOptionsPage, pageName, pageWrapper, startY, subPageName)
         if ok and type(h) == "number" then
             totalH = h
         else
@@ -452,8 +583,13 @@ local function RefreshPage(force)
 
     -- Slow path: full rebuild
     local currentPage = activePage
+    local savedTab = activeTab
     activePage = nil  -- force SelectPage to rebuild
     SelectPage(currentPage)
+    -- Restore tab position if there was one
+    if savedTab and savedTab > 1 and subPages then
+        SelectTab(savedTab)
+    end
 end
 
 -------------------------------------------------------------------------------
@@ -758,6 +894,20 @@ local function BuildContentArea()
     -- Footer offset
     contentScrollBottom = FOOTER_H + 8
 
+    -- Tab bar (optional, between title and content header)
+    tabBar = CreateFrame("Frame", nil, clickArea)
+    tabBar:SetWidth(contentW)
+    tabBar:SetHeight(TAB_BAR_H)
+    tabBar:SetPoint("TOPLEFT", clickArea, "TOPLEFT", SIDEBAR_W, -HEADER_H)
+    tabBar:SetFrameLevel(clickArea:GetFrameLevel() + 2)
+    tabBar:Hide()
+
+    -- Subtle bottom divider for the tab bar
+    local tabDiv = SolidTex(tabBar, "BORDER", 1, 1, 1, 0.06)
+    tabDiv:SetHeight(1)
+    tabDiv:SetPoint("BOTTOMLEFT", tabBar, "BOTTOMLEFT", 0, 0)
+    tabDiv:SetPoint("BOTTOMRIGHT", tabBar, "BOTTOMRIGHT", 0, 0)
+
     -- Scroll frame (position and height managed by UpdateContentLayout)
     contentScrollFrame = CreateFrame("ScrollFrame", "WindToolsOptionsScrollFrame", clickArea)
     contentScrollFrame:SetWidth(contentW)
@@ -841,10 +991,17 @@ local function BuildContentArea()
         UpdateScrollThumb()
     end)
 
-    -- Layout updater: repositions scroll frame based on contentHeaderHeight
+    -- Layout updater: repositions content header + scroll frame based on
+    -- tab bar visibility and contentHeaderHeight
     UpdateContentLayout = function()
         if not contentScrollFrame then return end
-        local scrollTop = HEADER_H + contentHeaderHeight + 8
+        -- Reposition content header below tab bar
+        if contentHeaderFrame then
+            contentHeaderFrame:ClearAllPoints()
+            contentHeaderFrame:SetPoint("TOPLEFT", clickArea, "TOPLEFT", SIDEBAR_W,
+                -(HEADER_H + tabBarHeight))
+        end
+        local scrollTop = HEADER_H + tabBarHeight + contentHeaderHeight + 8
         contentScrollFrame:ClearAllPoints()
         contentScrollFrame:SetPoint("TOPLEFT", clickArea, "TOPLEFT", SIDEBAR_W, -scrollTop)
         local scrollH = FRAME_H - scrollTop - contentScrollBottom

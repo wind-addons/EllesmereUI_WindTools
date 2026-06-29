@@ -21,12 +21,14 @@ local CONTACTS_PAGE_VALUES = {
 }
 local CONTACTS_PAGE_ORDER = { "ALTS", "FRIENDS", "GUILD", "FAVORITE" }
 
-addon.RegisterOptionBuilder("item", function(parent, y, cat)
+-- =========================================================================
+--  Sub-page: Loot & Trade  (Delete Item + Fast Loot + Trade)
+-- =========================================================================
+local function BuildLootTrade(parent, y, cat)
 	local Widgets = EllesmereUI.Widgets
 	local MH = function(mod, sub) return addon.MakeHeader(cat, mod, sub) end
 	local _, h
 	local db = E.db.WT.item
-	local pdb = E.private.WT.item
 
 	_, h = Widgets:SectionHeader(parent, MH("Delete Item"), y); y = y - h
 	do
@@ -42,6 +44,39 @@ addon.RegisterOptionBuilder("item", function(parent, y, cat)
 			  getValue = DBGet(dl, "fillIn"), setValue = DBSet(dl, "fillIn") }
 		); y = y - h
 	end
+
+	_, h = Widgets:SectionHeader(parent, MH("Fast Loot"), y); y = y - h
+	do
+		local fl = db.fastLoot
+		_, h = Widgets:Toggle(parent, "Enable", y,
+			DBGet(fl, "enable"), DBSet(fl, "enable"),
+			"This module will accelerate the speed of loot."); y = y - h
+		_, h = Widgets:Slider(parent, "Limit", y, 0.05, 0.5, 0.01,
+			DBGet(fl, "limit"), DBSet(fl, "limit"),
+			"The time delay between every loot operations. (Default is 0.3)"); y = y - h
+	end
+
+	_, h = Widgets:SectionHeader(parent, MH("Trade"), y); y = y - h
+	do
+		local td = db.trade
+		_, h = Widgets:Toggle(parent, "Enable", y,
+			DBGet(td, "enable"), DBSet(td, "enable"),
+			"Add some features on Trade Frame."); y = y - h
+		_, h = Widgets:Toggle(parent, "Thanks Button", y,
+			DBGet(td, "thanksButton"), DBSet(td, "thanksButton")); y = y - h
+	end
+
+	return y
+end
+
+-- =========================================================================
+--  Sub-page: Display  (Already Known + Contacts)
+-- =========================================================================
+local function BuildDisplay(parent, y, cat)
+	local Widgets = EllesmereUI.Widgets
+	local MH = function(mod, sub) return addon.MakeHeader(cat, mod, sub) end
+	local _, h
+	local db = E.db.WT.item
 
 	_, h = Widgets:SectionHeader(parent, MH("Already Known"), y); y = y - h
 	do
@@ -66,27 +101,6 @@ addon.RegisterOptionBuilder("item", function(parent, y, cat)
 		end
 	end
 
-	_, h = Widgets:SectionHeader(parent, MH("Fast Loot"), y); y = y - h
-	do
-		local fl = db.fastLoot
-		_, h = Widgets:Toggle(parent, "Enable", y,
-			DBGet(fl, "enable"), DBSet(fl, "enable"),
-			"This module will accelerate the speed of loot."); y = y - h
-		_, h = Widgets:Slider(parent, "Limit", y, 0.05, 0.5, 0.01,
-			DBGet(fl, "limit"), DBSet(fl, "limit"),
-			"The time delay between every loot operations. (Default is 0.3)"); y = y - h
-	end
-
-	_, h = Widgets:SectionHeader(parent, MH("Trade"), y); y = y - h
-	do
-		local td = db.trade
-		_, h = Widgets:Toggle(parent, "Enable", y,
-			DBGet(td, "enable"), DBSet(td, "enable"),
-			"Add some features on Trade Frame."); y = y - h
-		_, h = Widgets:Toggle(parent, "Thanks Button", y,
-			DBGet(td, "thanksButton"), DBSet(td, "thanksButton")); y = y - h
-	end
-
 	_, h = Widgets:SectionHeader(parent, MH("Contacts"), y); y = y - h
 	do
 		local ct = db.contacts
@@ -102,6 +116,18 @@ addon.RegisterOptionBuilder("item", function(parent, y, cat)
 			  getValue = DBGet(ct, "defaultPage"), setValue = DBSet(ct, "defaultPage") }
 		); y = y - h
 	end
+
+	return y
+end
+
+-- =========================================================================
+--  Sub-page: Inspect
+-- =========================================================================
+local function BuildInspect(parent, y, cat)
+	local Widgets = EllesmereUI.Widgets
+	local MH = function(mod, sub) return addon.MakeHeader(cat, mod, sub) end
+	local _, h
+	local db = E.db.WT.item
 
 	_, h = Widgets:SectionHeader(parent, MH("Inspect"), y); y = y - h
 	do
@@ -172,6 +198,18 @@ addon.RegisterOptionBuilder("item", function(parent, y, cat)
 		end
 	end
 
+	return y
+end
+
+-- =========================================================================
+--  Sub-page: Item Level
+-- =========================================================================
+local function BuildItemLevel(parent, y, cat)
+	local Widgets = EllesmereUI.Widgets
+	local MH = function(mod, sub) return addon.MakeHeader(cat, mod, sub) end
+	local _, h
+	local db = E.db.WT.item
+
 	_, h = Widgets:SectionHeader(parent, MH("Item Level"), y); y = y - h
 	do
 		local il = db.itemLevel
@@ -207,6 +245,18 @@ addon.RegisterOptionBuilder("item", function(parent, y, cat)
 		end
 	end
 
+	return y
+end
+
+-- =========================================================================
+--  Sub-page: Merchant  (Extend Merchant Pages)
+-- =========================================================================
+local function BuildMerchant(parent, y, cat)
+	local Widgets = EllesmereUI.Widgets
+	local MH = function(mod, sub) return addon.MakeHeader(cat, mod, sub) end
+	local _, h
+	local pdb = E.private.WT.item
+
 	_, h = Widgets:SectionHeader(parent, MH("Extend Merchant Pages"), y); y = y - h
 	do
 		local emp = pdb.extendMerchantPages
@@ -218,5 +268,18 @@ addon.RegisterOptionBuilder("item", function(parent, y, cat)
 			"The number of pages shown in the merchant frame."); y = y - h
 	end
 
+	return y
+end
+
+-- =========================================================================
+--  Single builder with sub-page dispatch (EUI pattern)
+-- =========================================================================
+addon.RegisterOptionBuilder("item", function(parent, y, cat, subPage)
+	if     subPage == "Loot & Trade" then return BuildLootTrade(parent, y, cat)
+	elseif subPage == "Display"      then return BuildDisplay(parent, y, cat)
+	elseif subPage == "Inspect"      then return BuildInspect(parent, y, cat)
+	elseif subPage == "Item Level"   then return BuildItemLevel(parent, y, cat)
+	elseif subPage == "Merchant"     then return BuildMerchant(parent, y, cat)
+	end
 	return y
 end)

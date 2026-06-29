@@ -154,7 +154,7 @@ local PAGE_GROUPS = {{
     categories = {"announcement"}
 }, {
     page = "Item",
-    categories = {"item"}
+    pages = { "Loot & Trade", "Display", "Inspect", "Item Level", "Merchant" }
 }, {
     page = "Extra Items Bar",
     categories = {"extraItemsBar"}
@@ -211,16 +211,17 @@ local SIDEBAR_GROUPS = {
 }
 
 -- Build a single options page by invoking its registered category builders.
+-- When the page has sub-pages (tabs), subPageName selects which to build.
 -- Returns the total content height (positive number).
-local function BuildPage(pageName, parent, yOffset)
+local function BuildPage(pageName, parent, yOffset, subPageName)
     local y = yOffset or -6
     local group = GROUP_BY_PAGE[pageName]
-    if not group or not group.categories then
+    if not group then
         return math.abs(y) + 30
     end
 
     local Widgets = EllesmereUI.Widgets
-    for index, categoryKey in ipairs(group.categories) do
+    for index, categoryKey in ipairs(group.categories or {}) do
         local builder = addon.OptionBuilders and addon.OptionBuilders[categoryKey]
         if builder then
             if index > 1 then
@@ -229,7 +230,7 @@ local function BuildPage(pageName, parent, yOffset)
             end
             local title = CATEGORY_TITLES[categoryKey] or categoryKey
             local ok, newY = xpcall(function()
-                return builder(parent, y, title)
+                return builder(parent, y, title, subPageName)
             end, function(err)
                 return geterrorhandler()(err)
             end)
