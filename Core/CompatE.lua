@@ -284,11 +284,14 @@ local function CreateCompatE()
 		return StaticPopup_Show(name, ...)
 	end
 
-	function E:ToggleOptions()
-		if EUI.Toggle then
-			return EUI:Toggle()
-		elseif EUI.OpenOptions then
-			return EUI:OpenOptions()
+	function E:ToggleOptions(path)
+		-- Route to the standalone WindTools options panel instead of the
+		-- EllesmereUI main panel. Accepts an optional page name or an
+		-- ElvUI-style comma-separated path like "WindTools,information".
+		-- addon[1] is W (resolved at call time, not at CreateCompatE time).
+		local wt = addon[1]
+		if wt and wt.ToggleOptions then
+			return wt:ToggleOptions(path)
 		end
 	end
 

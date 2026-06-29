@@ -113,33 +113,105 @@ local function Print(...)
     end
 end
 
-local CATEGORIES = {{
-    key = "extraItemsBar",
-    title = "Extra Items Bar"
-}, {
-    key = "social",
-    title = "Social"
-}}
+addon.Print = Print
 
+-------------------------------------------------------------------------------
+--  Options page definitions
+--  PAGE_GROUPS: ordered list of pages; each page aggregates one or more
+--               category builders registered via addon.RegisterOptionBuilder.
+--  A page renders by walking its categories and calling each builder with
+--  (parent, y, title). Builders return the new y offset.
+--
+--  CATEGORY_TITLES: maps the internal category key (used in
+--  RegisterOptionBuilder) to the human-readable title passed as the third
+--  argument to each builder. Builders use this title for section headers.
+-------------------------------------------------------------------------------
+local CATEGORY_TITLES = {
+    information    = "Information",
+    misc           = "Misc",
+    announcement   = "Announcement",
+    item           = "Item",
+    extraItemsBar  = "Extra Items Bar",
+    combat         = "Combat",
+    social         = "Social",
+    maps           = "Maps",
+    quest          = "Quest",
+    tooltips       = "Tooltips",
+    unitFrames     = "Unit Frames",
+    skins          = "Skins",
+    advanced       = "Advanced",
+}
+
+-- All pages and their category mappings (flat, used by BuildPage).
 local PAGE_GROUPS = {{
+    page = "Information",
+    categories = {"information"}
+}, {
+    page = "General",
+    categories = {"misc"}
+}, {
+    page = "Announcement",
+    categories = {"announcement"}
+}, {
+    page = "Item",
+    categories = {"item"}
+}, {
     page = "Extra Items Bar",
     categories = {"extraItemsBar"}
 }, {
+    page = "Combat",
+    categories = {"combat"}
+}, {
     page = "Social",
     categories = {"social"}
+}, {
+    page = "Maps",
+    categories = {"maps"}
+}, {
+    page = "Quest",
+    categories = {"quest"}
+}, {
+    page = "Tooltips",
+    categories = {"tooltips"}
+}, {
+    page = "Unit Frames",
+    categories = {"unitFrames"}
+}, {
+    page = "Skins",
+    categories = {"skins"}
+}, {
+    page = "Advanced",
+    categories = {"advanced"}
 }}
 
 local PAGE_NAMES = {}
-local CATEGORY_BY_KEY = {}
 local GROUP_BY_PAGE = {}
 for _, group in ipairs(PAGE_GROUPS) do
     PAGE_NAMES[#PAGE_NAMES + 1] = group.page
     GROUP_BY_PAGE[group.page] = group
 end
-for _, cat in ipairs(CATEGORIES) do
-    CATEGORY_BY_KEY[cat.key] = cat
-end
 
+-------------------------------------------------------------------------------
+--  Sidebar layout
+--  Mirrors EllesmereUI's sidebar structure: special buttons at the top,
+--  then a search bar, then grouped page rows with accent-colored headers.
+-------------------------------------------------------------------------------
+
+-- Pages shown as full-width special buttons above the search bar.
+local SPECIAL_PAGES = { "Information", "Advanced" }
+
+-- Grouped pages shown below the search bar. Each group has a label and an
+-- ordered list of page names.
+local SIDEBAR_GROUPS = {
+    { label = "General",        pages = { "General" } },
+    { label = "Items & Combat", pages = { "Item", "Extra Items Bar", "Combat" } },
+    { label = "Social",         pages = { "Social", "Announcement" } },
+    { label = "Maps & Quest",   pages = { "Maps", "Quest" } },
+    { label = "UI Tweaks",      pages = { "Tooltips", "Unit Frames", "Skins" } },
+}
+
+-- Build a single options page by invoking its registered category builders.
+-- Returns the total content height (positive number).
 local function BuildPage(pageName, parent, yOffset)
     local y = yOffset or -6
     local group = GROUP_BY_PAGE[pageName]
@@ -149,55 +221,67 @@ local function BuildPage(pageName, parent, yOffset)
 
     local Widgets = EllesmereUI.Widgets
     for index, categoryKey in ipairs(group.categories) do
-        local category = CATEGORY_BY_KEY[categoryKey]
-        if category then
+        local builder = addon.OptionBuilders and addon.OptionBuilders[categoryKey]
+        if builder then
             if index > 1 then
-                local _, sh = Widgets:Spacer(parent, y, 8);
+                local _, sh = Widgets:Spacer(parent, y, 8)
                 y = y - sh
             end
-
-            local builder = addon.OptionBuilders and addon.OptionBuilders[category.key]
-            if builder then
-                local ok, newY = xpcall(function()
-                    return builder(parent, y, category.title)
-                end, function(err)
-                    return geterrorhandler()(err)
-                end)
-                if ok and type(newY) == "number" then
-                    y = newY
-                end
+            local title = CATEGORY_TITLES[categoryKey] or categoryKey
+            local ok, newY = xpcall(function()
+                return builder(parent, y, title)
+            end, function(err)
+                return geterrorhandler()(err)
+            end)
+            if ok and type(newY) == "number" then
+                y = newY
             end
         end
     end
     return math.abs(y) + 30
 end
 
-local function RegisterExternalModule()
-    if not EUI.RegisterExternalModule then
-        Print("RegisterExternalModule is unavailable; update EllesmereUI.")
-        return
-    end
+-- Expose options metadata + builders to the rest of the addon (Panel.lua).
+addon.OptionPageGroups = PAGE_GROUPS
+addon.OptionPageNames = PAGE_NAMES
+addon.OptionGroupByPage = GROUP_BY_PAGE
+addon.SpecialPages = SPECIAL_PAGES
+addon.SidebarGroups = SIDEBAR_GROUPS
+addon.BuildOptionsPage = BuildPage
+addon.InitDB = InitDB
+addon.GetDB = function() return db end
 
-    local ok, err = EUI.RegisterExternalModule({
-        folder = addonName,
-        display = "WindTools",
-        apiVersion = EUI.API_VERSION,
-        title = "WindTools",
-        description = "WindTools for EllesmereUI.",
-        pages = PAGE_NAMES,
-        buildPage = BuildPage,
-        searchTerms = {"windtools", "wt", "item", "extraItemBar", "extrabar", "actionbar", "combat", "maps", "quest",
-                       "social", "announcement", "tooltips", "unitframes", "misc", "advanced"},
-        onReset = function()
-            if db then
-                db:ResetProfile()
-            end
+-------------------------------------------------------------------------------
+--  Blizzard Settings panel entry (Options -> AddOns)
+--  Registers a canvas-layout category with a single button that opens the
+--  standalone WindTools options panel. Uses the same Settings API as
+--  EllesmereUI's own entry.
+-------------------------------------------------------------------------------
+local function RegisterBlizzardOptionsEntry()
+    if not Settings or not Settings.RegisterCanvasLayoutCategory then return end
+
+    local panel = CreateFrame("Frame")
+    panel.name = L("WindTools") .. " for EllesmereUI"
+
+    local btn = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
+    btn:SetSize(220, 30)
+    btn:SetPoint("CENTER", panel, "CENTER", 0, 0)
+    btn:SetText("Open WindTools")
+
+    btn:SetScript("OnClick", function()
+        -- Close Blizzard settings first to avoid overlapping windows
+        if SettingsPanel and SettingsPanel:IsShown() then
+            HideUIPanel(SettingsPanel)
         end
-    })
+        C_Timer.After(0, function()
+            if W.ToggleOptions then
+                W:ToggleOptions()
+            end
+        end)
+    end)
 
-    if not ok then
-        Print("external registration failed:", tostring(err))
-    end
+    local category = Settings.RegisterCanvasLayoutCategory(panel, panel.name)
+    Settings.RegisterAddOnCategory(category)
 end
 
 function W:OnProfileChanged()
@@ -208,21 +292,23 @@ W:RegisterEvent("PLAYER_LOGIN", function()
     InitDB()
     W.initialized = true
     SafeCall(W.InitializeModules, W)
-    RegisterExternalModule()
-    if EUI.RegisterModuleCallback then
-        EUI.RegisterModuleCallback(W, "ProfileChanged", "OnProfileChanged")
-    end
+    RegisterBlizzardOptionsEntry()
     if db and db.profile.core and db.profile.core.loginMessage then
         Print("loaded for EllesmereUI.")
     end
 end)
 
+-------------------------------------------------------------------------------
+--  AddOn Compartment + slash command entry
+--  Both open the standalone WindTools options panel (W:ToggleOptions).
+--  The panel is implemented in Options/Panel.lua and lazily built on first
+--  open, so it is safe to reference here even before that file has loaded
+--  its body (the function is looked up at call time via W:ToggleOptions).
+-------------------------------------------------------------------------------
 _G.WindTools_OnAddonCompartmentClick = function()
-    if EUI.Toggle then
-        EUI:Toggle()
-    elseif EUI.OpenOptions then
-        EUI:OpenOptions()
+    if W.ToggleOptions then
+        W:ToggleOptions()
     else
-        Print("Open EllesmereUI options and select WindTools under External.")
+        Print("options panel is not available.")
     end
 end

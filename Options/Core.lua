@@ -84,6 +84,20 @@ local function MarkSettingsChanged()
 	EllesmereUI._settingsChanged = true
 end
 
+-- Safe wrappers for EllesmereUI panel methods that may not exist when the
+-- standalone WindTools panel is used without EllesmereUI's own panel open.
+addon.SetContentHeader = function(builder)
+	if EllesmereUI and EllesmereUI.SetContentHeader then
+		pcall(EllesmereUI.SetContentHeader, EllesmereUI, builder)
+	end
+end
+
+addon.InvalidateContentHeaderCache = function()
+	if EllesmereUI and EllesmereUI.InvalidateContentHeaderCache then
+		pcall(EllesmereUI.InvalidateContentHeaderCache, EllesmereUI)
+	end
+end
+
 local function Print(text)
 	if EllesmereUI.Print then
 		EllesmereUI.Print("|cff0cd29f[WindTools]|r", text)

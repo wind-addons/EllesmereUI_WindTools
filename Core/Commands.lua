@@ -100,3 +100,19 @@ do
 		F.PrintGradientLine()
 	end
 end
+
+-- /wt and /windtools open the standalone WindTools options panel.
+-- An optional page name argument (e.g. "/wt social") jumps straight to a page.
+W:AddCommand("OPTIONS", { "/wt", "/windtools", "/ewt" }, function(msg)
+	if not W.ToggleOptions then
+		F.Print("Options panel is not available.")
+		return
+	end
+
+	local page = msg and strlower(strtrim(msg))
+	if page and page ~= "" then
+		W:ToggleOptions(page)
+	else
+		W:ToggleOptions()
+	end
+end)

@@ -33,7 +33,8 @@ addon.RegisterOptionBuilder("information", function(parent, y, cat)
 
 	_, h = Widgets:SectionHeader(parent, MH("Credits"), y); y = y - h
 
-	_, h = Widgets:Button(parent, "Author: fang2hou, XanaHopper", y, function() end); y = y - h
+	_, h = Widgets:Button(parent, "Author: fang2hou", y, function() end); y = y - h
+	_, h = Widgets:Button(parent, "Author: XanaHopper", y, function() end); y = y - h
 
 	return y
 end)

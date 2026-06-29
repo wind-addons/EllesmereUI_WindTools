@@ -275,9 +275,9 @@ addon.RegisterOptionBuilder("extraItemsBar", function(parent, y, cat)
 			function(v)
 				_selectedBar = v
 				selectedBar = v
-				EllesmereUI:InvalidateContentHeaderCache()
-				EllesmereUI:SetContentHeader(_headerBuilder)
-				EllesmereUI:RefreshPage(true)
+				addon.InvalidateContentHeaderCache()
+				addon.SetContentHeader(_headerBuilder)
+				addon.RefreshOptions(true)
 			end
 		)
 		ddBtn:ClearAllPoints()
@@ -290,7 +290,7 @@ addon.RegisterOptionBuilder("extraItemsBar", function(parent, y, cat)
 
 		return math.abs(fy) + 10
 	end
-	EllesmereUI:SetContentHeader(_headerBuilder)
+	addon.SetContentHeader(_headerBuilder)
 
 	-- =========================================================================
 	--  GLOBAL SETTINGS
@@ -401,9 +401,9 @@ addon.RegisterOptionBuilder("extraItemsBar", function(parent, y, cat)
 		); y = y - h
 		if lr1 and lr1._leftRegion then EllesmereUI.BuildSyncIcon({
 			region=lr1._leftRegion, tooltip="Apply spacing to all Bars",
-			onClick=function() for i=1,5 do local d=db["bar"..i]; if d then d.backdropSpacing=SB().backdropSpacing; d.spacing=SB().spacing end end; updateBars(); EllesmereUI:RefreshPage() end,
+			onClick=function() for i=1,5 do local d=db["bar"..i]; if d then d.backdropSpacing=SB().backdropSpacing; d.spacing=SB().spacing end end; updateBars(); addon.RefreshOptions() end,
 			isSynced=function() local vs=SB().spacing; local vb=SB().backdropSpacing; for i=1,5 do if db["bar"..i].enable and (db["bar"..i].spacing~=vs or db["bar"..i].backdropSpacing~=vb) then return false end end; return true end,
-			multiApply={ elementKeys={1,2,3,4,5}, elementLabels={[1]="Bar 1",[2]="Bar 2",[3]="Bar 3",[4]="Bar 4",[5]="Bar 5"}, getCurrentKey=function() return selectedBar end, onApply=function(keys) for _,i in ipairs(keys) do local d=db["bar"..i]; if d then d.backdropSpacing=SB().backdropSpacing; d.spacing=SB().spacing end end; updateBars(); EllesmereUI:RefreshPage() end },
+			multiApply={ elementKeys={1,2,3,4,5}, elementLabels={[1]="Bar 1",[2]="Bar 2",[3]="Bar 3",[4]="Bar 4",[5]="Bar 5"}, getCurrentKey=function() return selectedBar end, onApply=function(keys) for _,i in ipairs(keys) do local d=db["bar"..i]; if d then d.backdropSpacing=SB().backdropSpacing; d.spacing=SB().spacing end end; updateBars(); addon.RefreshOptions() end },
 		}) end
 
 		lr2, h = Widgets:DualRow(parent, y,
@@ -414,9 +414,9 @@ addon.RegisterOptionBuilder("extraItemsBar", function(parent, y, cat)
 		); y = y - h
 		if lr2 and lr2._leftRegion then EllesmereUI.BuildSyncIcon({
 			region=lr2._leftRegion, tooltip="Apply button count to all Bars",
-			onClick=function() for i=1,5 do local d=db["bar"..i]; if d then d.numButtons=SB().numButtons; d.buttonsPerRow=SB().buttonsPerRow end end; updateBars(); EllesmereUI:RefreshPage() end,
+			onClick=function() for i=1,5 do local d=db["bar"..i]; if d then d.numButtons=SB().numButtons; d.buttonsPerRow=SB().buttonsPerRow end end; updateBars(); addon.RefreshOptions() end,
 			isSynced=function() local vn=SB().numButtons; local vp=SB().buttonsPerRow; for i=1,5 do if db["bar"..i].enable and (db["bar"..i].numButtons~=vn or db["bar"..i].buttonsPerRow~=vp) then return false end end; return true end,
-			multiApply={ elementKeys={1,2,3,4,5}, elementLabels={[1]="Bar 1",[2]="Bar 2",[3]="Bar 3",[4]="Bar 4",[5]="Bar 5"}, getCurrentKey=function() return selectedBar end, onApply=function(keys) for _,i in ipairs(keys) do local d=db["bar"..i]; if d then d.numButtons=SB().numButtons; d.buttonsPerRow=SB().buttonsPerRow end end; updateBars(); EllesmereUI:RefreshPage() end },
+			multiApply={ elementKeys={1,2,3,4,5}, elementLabels={[1]="Bar 1",[2]="Bar 2",[3]="Bar 3",[4]="Bar 4",[5]="Bar 5"}, getCurrentKey=function() return selectedBar end, onApply=function(keys) for _,i in ipairs(keys) do local d=db["bar"..i]; if d then d.numButtons=SB().numButtons; d.buttonsPerRow=SB().buttonsPerRow end end; updateBars(); addon.RefreshOptions() end },
 		}) end
 
 		lr3, h = Widgets:DualRow(parent, y,
@@ -427,9 +427,9 @@ addon.RegisterOptionBuilder("extraItemsBar", function(parent, y, cat)
 		); y = y - h
 		if lr3 and lr3._leftRegion then EllesmereUI.BuildSyncIcon({
 			region=lr3._leftRegion, tooltip="Apply size to all Bars",
-			onClick=function() for i=1,5 do local d=db["bar"..i]; if d then d.buttonWidth=SB().buttonWidth; d.buttonHeight=SB().buttonHeight end end; updateBars(); EllesmereUI:RefreshPage() end,
+			onClick=function() for i=1,5 do local d=db["bar"..i]; if d then d.buttonWidth=SB().buttonWidth; d.buttonHeight=SB().buttonHeight end end; updateBars(); addon.RefreshOptions() end,
 			isSynced=function() local vw=SB().buttonWidth; local vh=SB().buttonHeight; for i=1,5 do if db["bar"..i].enable and (db["bar"..i].buttonWidth~=vw or db["bar"..i].buttonHeight~=vh) then return false end end; return true end,
-			multiApply={ elementKeys={1,2,3,4,5}, elementLabels={[1]="Bar 1",[2]="Bar 2",[3]="Bar 3",[4]="Bar 4",[5]="Bar 5"}, getCurrentKey=function() return selectedBar end, onApply=function(keys) for _,i in ipairs(keys) do local d=db["bar"..i]; if d then d.buttonWidth=SB().buttonWidth; d.buttonHeight=SB().buttonHeight end end; updateBars(); EllesmereUI:RefreshPage() end },
+			multiApply={ elementKeys={1,2,3,4,5}, elementLabels={[1]="Bar 1",[2]="Bar 2",[3]="Bar 3",[4]="Bar 4",[5]="Bar 5"}, getCurrentKey=function() return selectedBar end, onApply=function(keys) for _,i in ipairs(keys) do local d=db["bar"..i]; if d then d.buttonWidth=SB().buttonWidth; d.buttonHeight=SB().buttonHeight end end; updateBars(); addon.RefreshOptions() end },
 		}) end
 
 		local anchorRow
@@ -498,9 +498,9 @@ addon.RegisterOptionBuilder("extraItemsBar", function(parent, y, cat)
 		); y = y - h
 		if vr1 and vr1._leftRegion then EllesmereUI.BuildSyncIcon({
 			region=vr1._leftRegion, tooltip="Apply fade mode to all Bars",
-			onClick=function() for i=1,5 do local d=db["bar"..i]; if d then d.globalFade=SB().globalFade; d.mouseOver=SB().mouseOver end end; updateBars(); EllesmereUI:RefreshPage() end,
+			onClick=function() for i=1,5 do local d=db["bar"..i]; if d then d.globalFade=SB().globalFade; d.mouseOver=SB().mouseOver end end; updateBars(); addon.RefreshOptions() end,
 			isSynced=function() local vg=SB().globalFade; local vm=SB().mouseOver; for i=1,5 do if db["bar"..i].enable and (db["bar"..i].globalFade~=vg or db["bar"..i].mouseOver~=vm) then return false end end; return true end,
-			multiApply={ elementKeys={1,2,3,4,5}, elementLabels={[1]="Bar 1",[2]="Bar 2",[3]="Bar 3",[4]="Bar 4",[5]="Bar 5"}, getCurrentKey=function() return selectedBar end, onApply=function(keys) for _,i in ipairs(keys) do local d=db["bar"..i]; if d then d.globalFade=SB().globalFade; d.mouseOver=SB().mouseOver end end; updateBars(); EllesmereUI:RefreshPage() end },
+			multiApply={ elementKeys={1,2,3,4,5}, elementLabels={[1]="Bar 1",[2]="Bar 2",[3]="Bar 3",[4]="Bar 4",[5]="Bar 5"}, getCurrentKey=function() return selectedBar end, onApply=function(keys) for _,i in ipairs(keys) do local d=db["bar"..i]; if d then d.globalFade=SB().globalFade; d.mouseOver=SB().mouseOver end end; updateBars(); addon.RefreshOptions() end },
 		}) end
 		AttachCog(vr1 and vr1._rightRegion, "Fade Settings", {
 			{ type="slider", label="Fade Time", min=0, max=2, step=0.01,

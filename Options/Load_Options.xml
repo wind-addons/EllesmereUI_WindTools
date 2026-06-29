@@ -13,4 +13,5 @@
 	<Script file='Skins.lua'/>
 	<Script file='Advanced.lua'/>
 	<Script file='Information.lua'/>
+	<Script file='Panel.lua'/>
 </Ui>
