@@ -251,10 +251,10 @@ local function SelectPage(pageName)
     local group = addon.OptionGroupByPage and addon.OptionGroupByPage[pageName]
     if not group then return end
 
-    -- Update header
-    if headerTitle then headerTitle:SetText(L("WindTools")) end
+    -- Update header: title shows page name, desc shows group name
+    if headerTitle then headerTitle:SetText(L(pageName)) end
     if headerDesc then
-        headerDesc:SetText(L(pageName))
+        headerDesc:SetText(L(group))
     end
 
     activePage = pageName
@@ -419,12 +419,12 @@ local function BuildSidebar(sidebar)
     local td = TextDim()
 
     -- 1. Title
-    local title = MakeFont(sidebar, 18, "", eg.r, eg.g, eg.b, 1)
+    local title = MakeFont(sidebar, 22, "", eg.r, eg.g, eg.b, 1)
     title:SetPoint("TOPLEFT", sidebar, "TOPLEFT", SIDEBAR_PAD, NAV_TOP)
     title:SetText(L("WindTools"))
     title:SetJustifyH("LEFT")
 
-    local y = NAV_TOP - 30
+    local y = NAV_TOP - 36
 
     -- 2. Special page buttons (full-width, like EUI's top nav rows)
     local specialPages = addon.SpecialPages or {}
