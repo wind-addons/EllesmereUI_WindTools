@@ -206,6 +206,7 @@ addon.RegisterOptionBuilder("extraItemsBar", function(parent, y, cat)
 		pf._origScale = scale; pf._scrollFrame = sf; pf._wrapper = wrapper
 		pf._PREVIEW_MAX_H = PREVIEW_MAX_H; pf._smoothFrame = smoothFrame
 		pf._updatePVThumb = UpdatePVThumb
+		pf._headerFixedH = math.abs(yOff) + 10
 
 		pf.Update = function(self)
 			local bdb = SB(); if not bdb then return end
@@ -215,11 +216,12 @@ addon.RegisterOptionBuilder("extraItemsBar", function(parent, y, cat)
 			local anchor = bdb.anchor or "TOPLEFT"
 			local _rows = ceil(_nb / _bpr); local _cols = _nb < _bpr and _nb or _bpr
 			local _gw = 2 * _bs + _cols * _bw + (_cols - 1) * _sp
-			local _gh = 2 * _bs + _rows * _bh + (_rows - 1) * sp
+			local _gh = 2 * _bs + _rows * _bh + (_rows - 1) * _sp
 			local s = self._origScale
 			if _gw * s > self._maxW then s = self._maxW / _gw end
+			local newWrapperH = floor(math.min(_gh * s, self._PREVIEW_MAX_H))
 			self:SetSize(_gw, _gh); self:SetScale(s)
-			self._wrapper:SetSize(_gw * s, floor(math.min(_gh * s, self._PREVIEW_MAX_H)))
+			self._wrapper:SetSize(_gw * s, newWrapperH)
 			self._bgTex:SetAllPoints()
 			if bdb.backdrop then self._bgTex:Show() else self._bgTex:Hide() end
 			local realBar = _G["WTExtraItemsBar" .. selectedBar]
@@ -252,6 +254,9 @@ addon.RegisterOptionBuilder("extraItemsBar", function(parent, y, cat)
 				else e.frame:Hide() end
 			end
 			if self._updatePVThumb then self._updatePVThumb() end
+			if addon.UpdateContentHeaderHeight then
+				addon.UpdateContentHeaderHeight(self._headerFixedH + newWrapperH)
+			end
 		end
 		pf.Update(pf)
 		activePreview = pf

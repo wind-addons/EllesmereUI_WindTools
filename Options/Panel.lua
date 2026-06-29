@@ -55,10 +55,18 @@ local activePage       -- current page name
 local sidebarButtons = {}  -- pageName -> button frame
 local contentScrollFrame
 local contentScrollChild
+local contentHeaderFrame
+local contentHeaderHeight = 0
+local contentScrollBottom = 0
+local clickArea
 local headerTitle, headerDesc
 local pageWrapper      -- current page's wrapper frame
 local versionText
 local searchBox
+
+-- Forward declarations for content layout
+local UpdateScrollThumbFn
+local UpdateContentLayout
 
 -- Per-page widget refresh callbacks captured during page build.
 local pageRefreshList = {}
@@ -171,6 +179,44 @@ local function ClearContent()
 end
 
 -------------------------------------------------------------------------------
+--  Content header management (fixed region above scroll area)
+-------------------------------------------------------------------------------
+local function ClearContentHeader()
+    if not contentHeaderFrame then return end
+    local children = { contentHeaderFrame:GetChildren() }
+    for _, c in ipairs(children) do c:Hide(); c:SetParent(nil) end
+    contentHeaderFrame:Hide()
+    contentHeaderFrame:SetHeight(1)
+    contentHeaderHeight = 0
+    if UpdateContentLayout then UpdateContentLayout() end
+end
+
+local function SetContentHeader(builder)
+    if not contentHeaderFrame or type(builder) ~= "function" then return end
+    local children = { contentHeaderFrame:GetChildren() }
+    for _, c in ipairs(children) do c:Hide(); c:SetParent(nil) end
+    local contentW = FRAME_W - SIDEBAR_W - CONTENT_PAD
+    contentHeaderFrame:Show()
+    local ok, h = pcall(builder, contentHeaderFrame, contentW)
+    contentHeaderHeight = (ok and type(h) == "number" and h) or 0
+    contentHeaderFrame:SetHeight(math_max(contentHeaderHeight, 1))
+    if UpdateContentLayout then UpdateContentLayout() end
+end
+
+local function UpdateContentHeaderHeight(h)
+    if not contentHeaderFrame or not contentHeaderFrame:IsShown() then return end
+    contentHeaderHeight = h
+    contentHeaderFrame:SetHeight(math_max(h, 1))
+    if UpdateContentLayout then UpdateContentLayout() end
+end
+
+-- Override Core.lua wrappers with our own panel-local implementations
+addon.SetContentHeader = function(builder) SetContentHeader(builder) end
+addon.ClearContentHeader = function() ClearContentHeader() end
+addon.UpdateContentHeaderHeight = function(h) UpdateContentHeaderHeight(h) end
+addon.InvalidateContentHeaderCache = function() end
+
+-------------------------------------------------------------------------------
 --  Navigation decoration helpers
 --  Replicates EllesmereUI's DecorateSidebarButton visual style:
 --  - _indicator: 3px accent bar on the left edge (shown when selected)
@@ -262,6 +308,7 @@ local function SelectPage(pageName)
 
     -- Build page content
     ClearContent()
+    ClearContentHeader()
 
     local e2 = EUI()
     if e2 and e2.ResetRowCounters then e2.ResetRowCounters() end
@@ -503,12 +550,12 @@ local function BuildSidebar(sidebar)
 end
 
 -------------------------------------------------------------------------------
---  Content scroll construction
+--  Content area construction (title header + content header + scroll)
 -------------------------------------------------------------------------------
-local function BuildContentArea(clickArea)
+local function BuildContentArea()
     local contentW = FRAME_W - SIDEBAR_W - CONTENT_PAD
 
-    -- Header
+    -- Title header (always visible)
     local headerFrame = CreateFrame("Frame", nil, clickArea)
     headerFrame:SetSize(contentW, HEADER_H)
     headerFrame:SetPoint("TOPLEFT", clickArea, "TOPLEFT", SIDEBAR_W, 0)
@@ -522,14 +569,35 @@ local function BuildContentArea(clickArea)
     headerDesc:SetWidth(contentW - CONTENT_PAD * 2)
     headerDesc:SetJustifyH("LEFT")
 
-    -- Scroll frame
-    local scrollTop = HEADER_H + 8
-    local scrollBottom = FOOTER_H + 8
-    local scrollH = FRAME_H - scrollTop - scrollBottom
+    -- Content header (optional, pinned between title and scroll area)
+    contentHeaderFrame = CreateFrame("Frame", nil, clickArea)
+    contentHeaderFrame:SetWidth(contentW)
+    contentHeaderFrame:SetHeight(1)
+    contentHeaderFrame:SetPoint("TOPLEFT", clickArea, "TOPLEFT", SIDEBAR_W, -HEADER_H)
+    contentHeaderFrame:SetFrameLevel(clickArea:GetFrameLevel() + 3)
+    contentHeaderFrame:EnableMouseWheel(true)
+    contentHeaderFrame:SetScript("OnMouseWheel", function(_, delta)
+        if contentScrollFrame then
+            local fn = contentScrollFrame:GetScript("OnMouseWheel")
+            if fn then fn(contentScrollFrame, delta) end
+        end
+    end)
+    contentHeaderFrame:SetClipsChildren(true)
+    contentHeaderFrame:Hide()
 
+    local chBg = SolidTex(contentHeaderFrame, "BACKGROUND", 0, 0, 0, 0.1)
+    chBg:SetAllPoints()
+    local chDiv = SolidTex(contentHeaderFrame, "OVERLAY", 1, 1, 1, 0.06)
+    chDiv:SetHeight(1)
+    chDiv:SetPoint("BOTTOMLEFT", contentHeaderFrame, "BOTTOMLEFT", 0, 0)
+    chDiv:SetPoint("BOTTOMRIGHT", contentHeaderFrame, "BOTTOMRIGHT", 0, 0)
+
+    -- Footer offset
+    contentScrollBottom = FOOTER_H + 8
+
+    -- Scroll frame (position and height managed by UpdateContentLayout)
     contentScrollFrame = CreateFrame("ScrollFrame", "WindToolsOptionsScrollFrame", clickArea)
-    contentScrollFrame:SetSize(contentW, scrollH)
-    contentScrollFrame:SetPoint("TOPLEFT", clickArea, "TOPLEFT", SIDEBAR_W, -scrollTop)
+    contentScrollFrame:SetWidth(contentW)
     contentScrollFrame:EnableMouseWheel(true)
     contentScrollFrame:SetClipsChildren(true)
 
@@ -575,6 +643,7 @@ local function BuildContentArea(clickArea)
         scrollThumb:ClearAllPoints()
         scrollThumb:SetPoint("TOP", scrollTrack, "TOP", 0, -(scrollRatio * maxThumbTravel))
     end
+    UpdateScrollThumbFn = UpdateScrollThumb
 
     contentScrollFrame:SetScript("OnMouseWheel", function(self, delta)
         local current = self:GetVerticalScroll()
@@ -609,7 +678,20 @@ local function BuildContentArea(clickArea)
         UpdateScrollThumb()
     end)
 
-    return scrollBottom
+    -- Layout updater: repositions scroll frame based on contentHeaderHeight
+    UpdateContentLayout = function()
+        if not contentScrollFrame then return end
+        local scrollTop = HEADER_H + contentHeaderHeight + 8
+        contentScrollFrame:ClearAllPoints()
+        contentScrollFrame:SetPoint("TOPLEFT", clickArea, "TOPLEFT", SIDEBAR_W, -scrollTop)
+        local scrollH = FRAME_H - scrollTop - contentScrollBottom
+        contentScrollFrame:SetHeight(math_max(scrollH, 10))
+        UpdateScrollThumb()
+    end
+
+    UpdateContentLayout()
+
+    return contentScrollBottom
 end
 
 -------------------------------------------------------------------------------
@@ -739,7 +821,7 @@ local function CreateOptionsFrame()
     end)
 
     -- Click area (handles drag + mouse, like EUI's clickArea)
-    local clickArea = CreateFrame("Frame", nil, frame)
+    clickArea = CreateFrame("Frame", nil, frame)
     clickArea:SetAllPoints(frame)
     clickArea:SetFrameLevel(frame:GetFrameLevel() + 1)
     clickArea:EnableMouse(true)
@@ -765,8 +847,8 @@ local function CreateOptionsFrame()
 
     BuildSidebar(sidebar)
 
-    local scrollBottom = BuildContentArea(clickArea)
-    BuildFooter(clickArea, scrollBottom)
+    BuildContentArea()
+    BuildFooter(clickArea, contentScrollBottom)
 
     -- ESC to close
     if e and e.RegisterEscapeClose then
