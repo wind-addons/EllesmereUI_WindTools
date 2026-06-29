@@ -43,9 +43,61 @@ local SCROLL_BAR_W = 4
 local CLOSE_BTN_SIZE = 28
 
 -- Navigation text colors (matching EllesmereUI's NAV_* constants)
-local NAV_SELECTED_TEXT = { r = 1, g = 1, b = 1, a = 1 }
-local NAV_ENABLED_TEXT  = { r = 1, g = 1, b = 1, a = 0.6 }
+local NAV_SELECTED_TEXT      = { r = 1, g = 1, b = 1, a = 1 }
+local NAV_ENABLED_TEXT       = { r = 1, g = 1, b = 1, a = 0.6 }
 local NAV_HOVER_ENABLED_TEXT = { r = 1, g = 1, b = 1, a = 0.86 }
+local NAV_DISABLED_TEXT      = { r = 1, g = 1, b = 1, a = 0.11 }
+local NAV_HOVER_DISABLED_TEXT= { r = 1, g = 1, b = 1, a = 0.39 }
+local NAV_ENABLED_ICON_A     = 0.60
+local NAV_SELECTED_ICON_A    = 1.0
+local NAV_DISABLED_ICON_A    = 0.20
+
+-------------------------------------------------------------------------------
+--  Page enable config registry
+--  Only pages with a top-level "enable" toggle are listed here.
+--  These pages show a power icon on the sidebar and support disabled state.
+-------------------------------------------------------------------------------
+local PageEnableConfig = {
+    ["Extra Items Bar"] = {
+        get = function()
+            local E = addon[3]
+            local v = E and E.db and E.db.WT and E.db.WT.item and E.db.WT.item.extraItemsBar
+            return v and v.enable ~= false
+        end,
+        set = function(enabled)
+            local E = addon[3]
+            local v = E and E.db and E.db.WT and E.db.WT.item and E.db.WT.item.extraItemsBar
+            if v then v.enable = enabled end
+        end,
+        refresh = function()
+            local W = addon[1]
+            if W and W.Modules and W.Modules.ExtraItemsBar then
+                addon.SafeModuleCall(W.Modules.ExtraItemsBar, "UpdateBars")
+            end
+        end,
+    },
+    ["Announcement"] = {
+        get = function()
+            local E = addon[3]
+            local v = E and E.db and E.db.WT and E.db.WT.announcement
+            return v and v.enable ~= false
+        end,
+        set = function(enabled)
+            local E = addon[3]
+            local v = E and E.db and E.db.WT and E.db.WT.announcement
+            if v then v.enable = enabled end
+        end,
+        refresh = nil,
+    },
+}
+
+local function IsPageEnabled(pageName)
+    local config = PageEnableConfig[pageName]
+    if not config then return true end
+    local ok, result = pcall(config.get)
+    if not ok then return true end
+    return result
+end
 
 -------------------------------------------------------------------------------
 --  State
@@ -272,15 +324,24 @@ end
 --  Page selection
 -------------------------------------------------------------------------------
 local function UpdateSidebarHighlight()
+    local eg = EG()
     for pageName, btn in pairs(sidebarButtons) do
         btn._hoverGlow:Hide()
         btn._hoverIndicator:Hide()
-        if pageName == activePage then
+        local isSelected = (pageName == activePage)
+        local isDisabled = btn._notEnabled
+        if isSelected then
             btn._indicator:Show()
             btn._glow:Show()
             btn._glowTop:Show()
             btn._glowBot:Show()
             btn._label:SetTextColor(NAV_SELECTED_TEXT.r, NAV_SELECTED_TEXT.g, NAV_SELECTED_TEXT.b, NAV_SELECTED_TEXT.a)
+        elseif isDisabled then
+            btn._indicator:Hide()
+            btn._glow:Hide()
+            btn._glowTop:Hide()
+            btn._glowBot:Hide()
+            btn._label:SetTextColor(NAV_DISABLED_TEXT.r, NAV_DISABLED_TEXT.g, NAV_DISABLED_TEXT.b, NAV_DISABLED_TEXT.a)
         else
             btn._indicator:Hide()
             btn._glow:Hide()
@@ -288,7 +349,30 @@ local function UpdateSidebarHighlight()
             btn._glowBot:Hide()
             btn._label:SetTextColor(NAV_ENABLED_TEXT.r, NAV_ENABLED_TEXT.g, NAV_ENABLED_TEXT.b, NAV_ENABLED_TEXT.a)
         end
+        if btn._pwrTex then
+            if isDisabled then
+                btn._pwrTex:SetVertexColor(0.4, 0.4, 0.4)
+                btn._pwrTex:SetAlpha(NAV_DISABLED_ICON_A)
+                btn._pwrTex:SetDesaturated(true)
+            else
+                btn._pwrTex:SetVertexColor(eg.r, eg.g, eg.b)
+                btn._pwrTex:SetAlpha(isSelected and NAV_SELECTED_ICON_A or NAV_ENABLED_ICON_A)
+                btn._pwrTex:SetDesaturated(false)
+            end
+        end
     end
+end
+
+-------------------------------------------------------------------------------
+--  Refresh sidebar enable/disable states from DB
+-------------------------------------------------------------------------------
+local function RefreshSidebarStates()
+    for pageName, btn in pairs(sidebarButtons) do
+        if PageEnableConfig[pageName] then
+            btn._notEnabled = not IsPageEnabled(pageName)
+        end
+    end
+    UpdateSidebarHighlight()
 end
 
 local function SelectPage(pageName)
@@ -348,6 +432,9 @@ local function SelectPage(pageName)
     if contentScrollFrame and contentScrollFrame.SetVerticalScroll then
         contentScrollFrame:SetVerticalScroll(0)
     end
+
+    -- Refresh sidebar enable states (toggles inside page may have changed)
+    RefreshSidebarStates()
 end
 
 -------------------------------------------------------------------------------
@@ -437,8 +524,14 @@ local function CreateSidebarButton(sidebar, y, pageName, indent, rowH)
 
     DecorateSidebarButton(btn)
 
+    local hasEnable = PageEnableConfig[pageName] ~= nil
+    btn._hasEnable = hasEnable
+    btn._notEnabled = false
+
     local label = MakeFont(btn, 14, nil, NAV_ENABLED_TEXT.r, NAV_ENABLED_TEXT.g, NAV_ENABLED_TEXT.b, NAV_ENABLED_TEXT.a)
+    local labelRightPad = hasEnable and 28 or 0
     label:SetPoint("LEFT", btn, "LEFT", indent, 0)
+    label:SetPoint("RIGHT", btn, "RIGHT", -labelRightPad, 0)
     label:SetText(L(pageName))
     label:SetJustifyH("LEFT")
     btn._label = label
@@ -446,7 +539,63 @@ local function CreateSidebarButton(sidebar, y, pageName, indent, rowH)
     local hlTex = SolidTex(btn, "HIGHLIGHT", 1, 1, 1, 0)
     hlTex:SetAllPoints()
 
+    -- Power toggle icon (only for pages with enable config)
+    if hasEnable then
+        local pwrBtn = CreateFrame("Button", nil, btn)
+        pwrBtn:SetSize(20, 20)
+        pwrBtn:SetPoint("RIGHT", btn, "RIGHT", -4, 0)
+        pwrBtn:SetFrameLevel(btn:GetFrameLevel() + 5)
+
+        local pwrTex = pwrBtn:CreateTexture(nil, "OVERLAY")
+        local e = EUI()
+        local iconPath = e and e.ICONS_PATH and (e.ICONS_PATH .. "power.png")
+        if iconPath then
+            pwrTex:SetTexture(iconPath)
+        else
+            pwrTex:SetColorTexture(0, 1, 0, 0.6)
+        end
+        pwrTex:SetSize(14, 14)
+        pwrTex:SetPoint("CENTER")
+        btn._pwrTex = pwrTex
+
+        pwrBtn:SetScript("OnEnter", function()
+            local enabled = not btn._notEnabled
+            if enabled then
+                pwrTex:SetVertexColor(0.824, 0.212, 0.212)
+            else
+                pwrTex:SetVertexColor(0.212, 0.824, 0.325)
+            end
+            pwrTex:SetAlpha(1)
+            pwrTex:SetDesaturated(false)
+            local ee = EUI()
+            if ee and ee.ShowWidgetTooltip then
+                local tip = enabled and (L("Disable") .. " " .. L(pageName))
+                                 or (L("Enable") .. " " .. L(pageName))
+                ee.ShowWidgetTooltip(pwrBtn, tip)
+            end
+        end)
+        pwrBtn:SetScript("OnLeave", function()
+            local ee = EUI()
+            if ee and ee.HideWidgetTooltip then
+                ee.HideWidgetTooltip(pwrBtn)
+            end
+            RefreshSidebarStates()
+        end)
+        pwrBtn:SetScript("OnClick", function(_, button)
+            if button ~= "LeftButton" then return end
+            local config = PageEnableConfig[pageName]
+            if not config then return end
+            local currentlyEnabled = IsPageEnabled(pageName)
+            config.set(not currentlyEnabled)
+            if config.refresh then config.refresh() end
+            RefreshSidebarStates()
+            if addon.RefreshOptions then addon.RefreshOptions() end
+        end)
+        btn._pwrBtn = pwrBtn
+    end
+
     btn:SetScript("OnEnter", function(self)
+        if self._notEnabled then return end
         if activePage ~= pageName then
             hlTex:SetAlpha(0.06)
             self._hoverGlow:Show()
@@ -459,10 +608,15 @@ local function CreateSidebarButton(sidebar, y, pageName, indent, rowH)
         self._hoverGlow:Hide()
         self._hoverIndicator:Hide()
         if activePage ~= pageName then
-            self._label:SetTextColor(NAV_ENABLED_TEXT.r, NAV_ENABLED_TEXT.g, NAV_ENABLED_TEXT.b, NAV_ENABLED_TEXT.a)
+            if self._notEnabled then
+                self._label:SetTextColor(NAV_DISABLED_TEXT.r, NAV_DISABLED_TEXT.g, NAV_DISABLED_TEXT.b, NAV_DISABLED_TEXT.a)
+            else
+                self._label:SetTextColor(NAV_ENABLED_TEXT.r, NAV_ENABLED_TEXT.g, NAV_ENABLED_TEXT.b, NAV_ENABLED_TEXT.a)
+            end
         end
     end)
-    btn:SetScript("OnClick", function()
+    btn:SetScript("OnClick", function(self)
+        if self._notEnabled then return end
         SelectPage(pageName)
     end)
 
@@ -927,8 +1081,11 @@ function W:ShowOptions(page)
 
     frame:Show()
 
+    -- Refresh sidebar enable/disable states
+    RefreshSidebarStates()
+
     local target = ResolvePage(page)
-    if target then
+    if target and IsPageEnabled(target) then
         -- Force selection even if same page (first open)
         activePage = nil
         SelectPage(target)
@@ -972,4 +1129,8 @@ end
 -- Bridge for option builders that previously called EllesmereUI:RefreshPage().
 addon.RefreshOptions = function(force)
     if W.RefreshOptions then W:RefreshOptions(force) end
+end
+
+addon.RefreshSidebarStates = function()
+    RefreshSidebarStates()
 end

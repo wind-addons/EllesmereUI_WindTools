@@ -45,7 +45,7 @@ addon.RegisterOptionBuilder("announcement", function(parent, y, cat)
 	local db = E.db.WT.announcement
 
 	_, h = Widgets:Toggle(parent, "Enable", y,
-		DBGet(db, "enable"), DBSet(db, "enable"),
+		DBGet(db, "enable"), DBSet(db, "enable", function() if addon.RefreshSidebarStates then addon.RefreshSidebarStates() end end),
 		"Announcement module is a tool to help you send messages."); y = y - h
 
 	_, h = Widgets:SectionHeader(parent, MH("General"), y); y = y - h

@@ -308,7 +308,7 @@ addon.RegisterOptionBuilder("extraItemsBar", function(parent, y, cat)
 	enableRow, h = Widgets:DualRow(parent, y,
 		{ type="toggle", text="Enable",
 		  getValue=DBGet(db, "enable"),
-		  setValue=function(v) db.enable = v; refreshWidgets(); updateBars() end,
+		  setValue=function(v) db.enable = v; refreshWidgets(); updateBars(); if addon.RefreshSidebarStates then addon.RefreshSidebarStates() end end,
 		  tooltip="Add bars to contain quest items and usable equipment." },
 		{ type="spacer" }
 	); y = y - h
