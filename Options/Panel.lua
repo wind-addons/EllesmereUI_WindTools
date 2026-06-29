@@ -297,10 +297,19 @@ local function SelectPage(pageName)
     local group = addon.OptionGroupByPage and addon.OptionGroupByPage[pageName]
     if not group then return end
 
+    -- Find sidebar group label for this page (for header description)
+    local groupLabel = ""
+    local sidebarGroups = addon.SidebarGroups or {}
+    for _, sg in ipairs(sidebarGroups) do
+        for _, pn in ipairs(sg.pages or {}) do
+            if pn == pageName then groupLabel = sg.label or "" break end
+        end
+    end
+
     -- Update header: title shows page name, desc shows group name
     if headerTitle then headerTitle:SetText(L(pageName)) end
     if headerDesc then
-        headerDesc:SetText(L(group))
+        headerDesc:SetText(L(groupLabel))
     end
 
     activePage = pageName
