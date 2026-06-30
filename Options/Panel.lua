@@ -42,6 +42,9 @@ local NAV_TOP = -16
 local SCROLL_BAR_W = 4
 local CLOSE_BTN_SIZE = 28
 local TAB_BAR_H = 36
+local SIDEBAR_SCROLL_BAR_W = 4
+local SIDEBAR_SCROLL_STEP = 60
+local SIDEBAR_SMOOTH_SPEED = 12
 
 -- Navigation text colors (matching EllesmereUI's NAV_* constants)
 local NAV_SELECTED_TEXT      = { r = 1, g = 1, b = 1, a = 1 }
@@ -116,6 +119,15 @@ local headerTitle, headerDesc
 local pageWrapper      -- current page's wrapper frame
 local versionText
 local searchBox
+
+-- Sidebar scroll list state
+local sidebarScrollFrame
+local sidebarScrollChild
+local sidebarScrollTarget = 0
+local sidebarIsSmoothing = false
+local sidebarSmoothFrame
+local sidebarTrack, sidebarThumb
+local UpdateSidebarScrollThumb
 
 -- Tab bar state
 local tabBar
@@ -593,46 +605,63 @@ local function RefreshPage(force)
 end
 
 -------------------------------------------------------------------------------
---  Search filter
---  Hides/shows page buttons based on the search query. Group headers
---  visibility follows whether any child in that group is visible.
+--  Search filter with reflow
+--  Walks groups in order, collects matching children, and repositions
+--  visible items sequentially within sidebarScrollChild. Adjusts scroll
+--  child height and resets scroll to top.
 -------------------------------------------------------------------------------
 local groupHeaders = {}  -- groupLabel -> fontstring
 
 local function ApplySearch(text)
     text = text and strlower(text) or ""
+    if not sidebarScrollChild then return end
 
-    -- Page buttons
-    for pageName, btn in pairs(sidebarButtons) do
-        if text == "" then
-            btn:Show()
-        else
-            local pageLower = strlower(pageName)
-            if pageLower:find(text, 1, true) then
-                btn:Show()
-            else
-                btn:Hide()
-            end
-        end
-    end
+    local y = 0
+    local firstVisibleGroup = true
 
-    -- Group headers: hide if no child is visible
-    local sidebarGroups = addon.SidebarGroups or {}
-    for _, group in ipairs(sidebarGroups) do
-        local header = groupHeaders[group.label]
-        if header then
-            if text == "" then
-                header:Show()
-            else
-                local anyVisible = false
-                for _, pageName in ipairs(group.pages) do
-                    local btn = sidebarButtons[pageName]
-                    if btn and btn:IsShown() then anyVisible = true; break end
+    for _, group in ipairs(addon.SidebarGroups or {}) do
+        -- Collect matching children
+        local visibleChildren = {}
+        for _, pageName in ipairs(group.pages or {}) do
+            local btn = sidebarButtons[pageName]
+            if btn then
+                local match = (text == "") or strlower(pageName):find(text, 1, true)
+                if match then
+                    visibleChildren[#visibleChildren + 1] = btn
+                else
+                    btn:Hide()
                 end
-                if anyVisible then header:Show() else header:Hide() end
+            end
+        end
+
+        local header = groupHeaders[group.label]
+        if #visibleChildren == 0 then
+            if header then header:Hide() end
+        else
+            if not firstVisibleGroup then y = y + GROUP_GAP end
+            firstVisibleGroup = false
+
+            if header then
+                header:ClearAllPoints()
+                header:SetPoint("TOPLEFT", sidebarScrollChild, "TOPLEFT", SIDEBAR_PAD, -y)
+                header:Show()
+                y = y + GROUP_ROW_H
+            end
+
+            for _, btn in ipairs(visibleChildren) do
+                btn:ClearAllPoints()
+                btn:SetPoint("TOPLEFT", sidebarScrollChild, "TOPLEFT", SIDEBAR_PAD, -y)
+                btn:Show()
+                y = y + CHILD_ROW_H
             end
         end
     end
+
+    sidebarScrollChild:SetHeight(math_max(y, 1))
+    if sidebarScrollFrame then
+        sidebarScrollFrame:SetVerticalScroll(0)
+    end
+    if UpdateSidebarScrollThumb then UpdateSidebarScrollThumb() end
 end
 
 -------------------------------------------------------------------------------
@@ -652,11 +681,11 @@ local CHILD_INDENT = 16
 local GROUP_GAP = 10
 local SEARCH_GAP = 14
 
-local function CreateSidebarButton(sidebar, y, pageName, indent, rowH)
-    local btn = CreateFrame("Button", nil, sidebar)
+local function CreateSidebarButton(parent, y, pageName, indent, rowH)
+    local btn = CreateFrame("Button", nil, parent)
     btn:SetSize(SIDEBAR_W - SIDEBAR_PAD, rowH)
-    btn:SetPoint("TOPLEFT", sidebar, "TOPLEFT", SIDEBAR_PAD, y)
-    btn:SetFrameLevel(sidebar:GetFrameLevel() + 1)
+    btn:SetPoint("TOPLEFT", parent, "TOPLEFT", SIDEBAR_PAD, y)
+    btn:SetFrameLevel(parent:GetFrameLevel() + 1)
 
     DecorateSidebarButton(btn)
 
@@ -772,14 +801,14 @@ local function BuildSidebar(sidebar)
 
     local y = NAV_TOP - 36
 
-    -- 2. Special page buttons (full-width, like EUI's top nav rows)
+    -- 2. Special page buttons (on sidebar, always visible)
     local specialPages = addon.SpecialPages or {}
     for _, pageName in ipairs(specialPages) do
         CreateSidebarButton(sidebar, y, pageName, 8, SPECIAL_ROW_H)
         y = y - SPECIAL_ROW_H
     end
 
-    -- 3. Search box
+    -- 3. Search box (on sidebar, always visible)
     y = y - SEARCH_GAP
     local sbFrame = CreateFrame("Frame", nil, sidebar)
     sbFrame:SetSize(SIDEBAR_W - SIDEBAR_PAD * 2, 26)
@@ -818,29 +847,149 @@ local function BuildSidebar(sidebar)
 
     y = y - 26 - SEARCH_GAP
 
-    -- 4. Grouped page rows
+    -- 4. Sidebar scroll frame (fills space between search box and version text)
+    local versionReserve = 40
+    local scrollH = FRAME_H + y - versionReserve
+
+    sidebarScrollFrame = CreateFrame("ScrollFrame", nil, sidebar)
+    sidebarScrollFrame:SetSize(SIDEBAR_W, scrollH)
+    sidebarScrollFrame:SetPoint("TOPLEFT", sidebar, "TOPLEFT", 0, y)
+    sidebarScrollFrame:SetFrameLevel(sidebar:GetFrameLevel() + 1)
+    sidebarScrollFrame:EnableMouseWheel(true)
+    sidebarScrollFrame:SetClipsChildren(true)
+
+    sidebarScrollChild = CreateFrame("Frame", nil, sidebarScrollFrame)
+    sidebarScrollChild:SetWidth(SIDEBAR_W)
+    sidebarScrollChild:SetHeight(1)
+    sidebarScrollFrame:SetScrollChild(sidebarScrollChild)
+
+    -- Thin scrollbar
+    sidebarTrack = CreateFrame("Frame", nil, sidebarScrollFrame)
+    sidebarTrack:SetWidth(SIDEBAR_SCROLL_BAR_W)
+    sidebarTrack:SetPoint("TOPRIGHT", sidebarScrollFrame, "TOPRIGHT", -4, -2)
+    sidebarTrack:SetPoint("BOTTOMRIGHT", sidebarScrollFrame, "BOTTOMRIGHT", -4, 2)
+    sidebarTrack:SetFrameLevel(sidebarScrollFrame:GetFrameLevel() + 3)
+    sidebarTrack:Hide()
+    local trackBg = SolidTex(sidebarTrack, "BACKGROUND", 1, 1, 1, 0.02)
+    trackBg:SetAllPoints()
+
+    sidebarThumb = CreateFrame("Button", nil, sidebarTrack)
+    sidebarThumb:SetWidth(SIDEBAR_SCROLL_BAR_W)
+    sidebarThumb:SetHeight(40)
+    sidebarThumb:SetPoint("TOP", sidebarTrack, "TOP", 0, 0)
+    sidebarThumb:SetFrameLevel(sidebarTrack:GetFrameLevel() + 1)
+    sidebarThumb:EnableMouse(true)
+    sidebarThumb:RegisterForDrag("LeftButton")
+    local thumbTex = SolidTex(sidebarThumb, "ARTWORK", 1, 1, 1, 0.25)
+    thumbTex:SetAllPoints()
+
+    -- Scrollbar thumb updater
+    UpdateSidebarScrollThumb = function()
+        local maxScroll = sidebarScrollFrame:GetVerticalScrollRange()
+        if maxScroll <= 0 then
+            sidebarTrack:Hide()
+            return
+        end
+        sidebarTrack:Show()
+        local trackH = sidebarTrack:GetHeight()
+        local visH = sidebarScrollFrame:GetHeight()
+        local ratio = visH / (visH + maxScroll)
+        local thumbH = math_max(30, trackH * ratio)
+        sidebarThumb:SetHeight(thumbH)
+        local scrollRatio = sidebarScrollFrame:GetVerticalScroll() / maxScroll
+        sidebarThumb:ClearAllPoints()
+        sidebarThumb:SetPoint("TOP", sidebarTrack, "TOP", 0, -(scrollRatio * (trackH - thumbH)))
+    end
+
+    -- Smooth scroll
+    sidebarSmoothFrame = CreateFrame("Frame")
+    sidebarSmoothFrame:Hide()
+    sidebarSmoothFrame:SetScript("OnUpdate", function(_, elapsed)
+        local cur = sidebarScrollFrame:GetVerticalScroll()
+        local maxScroll = sidebarScrollFrame:GetVerticalScrollRange()
+        sidebarScrollTarget = math_max(0, math_min(maxScroll, sidebarScrollTarget))
+        local diff = sidebarScrollTarget - cur
+        if math_abs(diff) < 0.3 then
+            sidebarScrollFrame:SetVerticalScroll(sidebarScrollTarget)
+            UpdateSidebarScrollThumb()
+            sidebarIsSmoothing = false
+            sidebarSmoothFrame:Hide()
+            return
+        end
+        local newScroll = cur + diff * math_min(1, SIDEBAR_SMOOTH_SPEED * elapsed)
+        newScroll = math_max(0, math.min(maxScroll, newScroll))
+        sidebarScrollFrame:SetVerticalScroll(newScroll)
+        UpdateSidebarScrollThumb()
+    end)
+
+    sidebarScrollFrame:SetScript("OnMouseWheel", function(self, delta)
+        local maxScroll = self:GetVerticalScrollRange()
+        if maxScroll <= 0 then return end
+        local base = sidebarIsSmoothing and sidebarScrollTarget or self:GetVerticalScroll()
+        sidebarScrollTarget = math_max(0, math.min(maxScroll, base - delta * SIDEBAR_SCROLL_STEP))
+        if not sidebarIsSmoothing then
+            sidebarIsSmoothing = true
+            sidebarSmoothFrame:Show()
+        end
+    end)
+    sidebarScrollFrame:SetScript("OnScrollRangeChanged", function()
+        if UpdateSidebarScrollThumb then UpdateSidebarScrollThumb() end
+    end)
+
+    -- Track click/drag
+    sidebarTrack:EnableMouse(true)
+    sidebarTrack:SetHitRectInsets(-8, -2, 0, 0)
+    local isDraggingSidebar = false
+    local function ScrollSidebarToCursor()
+        local maxScroll = sidebarScrollFrame:GetVerticalScrollRange()
+        if maxScroll <= 0 then return end
+        local trackH = sidebarTrack:GetHeight()
+        local thumbH = sidebarThumb:GetHeight()
+        local travel = math_max(1, trackH - thumbH)
+        local _, cy = GetCursorPosition()
+        local scale = sidebarTrack:GetEffectiveScale()
+        local trackTop = sidebarTrack:GetTop() or 0
+        local offset = math_max(0, math.min(travel, (trackTop - cy / scale) - thumbH / 2))
+        sidebarScrollFrame:SetVerticalScroll((offset / travel) * maxScroll)
+        UpdateSidebarScrollThumb()
+    end
+    sidebarTrack:SetScript("OnMouseDown", function(self)
+        sidebarIsSmoothing = false
+        sidebarSmoothFrame:Hide()
+        isDraggingSidebar = true
+        ScrollSidebarToCursor()
+    end)
+    sidebarTrack:SetScript("OnMouseUp", function() isDraggingSidebar = false end)
+    sidebarTrack:SetScript("OnHide", function() isDraggingSidebar = false end)
+    sidebarTrack:SetScript("OnUpdate", function()
+        if isDraggingSidebar then ScrollSidebarToCursor() end
+    end)
+
+    -- 5. Group headers + child buttons (on sidebarScrollChild)
+    local contentY = 0
     local sidebarGroups = addon.SidebarGroups or {}
     for gi, group in ipairs(sidebarGroups) do
         if gi > 1 then
-            y = y - GROUP_GAP
+            contentY = contentY + GROUP_GAP
         end
 
-        -- Group header (accent-colored label, not clickable)
-        local headerLabel = MakeFont(sidebar, 15, nil, eg.r, eg.g, eg.b, 0.85)
-        headerLabel:SetPoint("TOPLEFT", sidebar, "TOPLEFT", SIDEBAR_PAD, y)
+        local headerLabel = MakeFont(sidebarScrollChild, 15, nil, eg.r, eg.g, eg.b, 0.85)
+        headerLabel:SetPoint("TOPLEFT", sidebarScrollChild, "TOPLEFT", SIDEBAR_PAD, -contentY)
         headerLabel:SetText(L(group.label))
         headerLabel:SetJustifyH("LEFT")
         groupHeaders[group.label] = headerLabel
-        y = y - GROUP_ROW_H
+        contentY = contentY + GROUP_ROW_H
 
-        -- Child rows
         for _, pageName in ipairs(group.pages) do
-            CreateSidebarButton(sidebar, y, pageName, CHILD_INDENT, CHILD_ROW_H)
-            y = y - CHILD_ROW_H
+            CreateSidebarButton(sidebarScrollChild, -contentY, pageName, CHILD_INDENT, CHILD_ROW_H)
+            contentY = contentY + CHILD_ROW_H
         end
     end
 
-    -- 5. Version text at bottom
+    sidebarScrollChild:SetHeight(math_max(contentY, 1))
+    UpdateSidebarScrollThumb()
+
+    -- 6. Version text (on sidebar, always visible)
     versionText = MakeFont(sidebar, 10, nil, td.r, td.g, td.b, td.a)
     versionText:SetPoint("BOTTOMLEFT", sidebar, "BOTTOMLEFT", SIDEBAR_PAD, 16)
     versionText:SetAlpha(0.5)
