@@ -60,9 +60,6 @@ local function BuildProgression(parent, y, cat)
 	local _, h
 	local pg = E.private.WT.tooltips.progression
 	_, h = Widgets:SectionHeader(parent, MH("Progression"), y); y = y - h
-	_, h = Widgets:Toggle(parent, "Enable", y,
-		DBGet(pg, "enable"), DBSet(pg, "enable"),
-		"Add progression information to tooltips."); y = y - h
 	_, h = Widgets:DualRow(parent, y,
 		{ type = "toggle", text = "Disable In Combat", tooltip = "Disable progression information in combat.",
 		  getValue = DBGet(pg, "disableInCombat"), setValue = DBSet(pg, "disableInCombat") },

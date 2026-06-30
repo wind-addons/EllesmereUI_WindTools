@@ -28,9 +28,6 @@ local function BuildQuickFocus(parent, y, cat)
 	local qf = E.private.WT.unitFrames.quickFocus
 	local qfDis = function() return not qf.enable end
 	_, h = Widgets:SectionHeader(parent, MH("Quick Focus"), y); y = y - h
-	_, h = Widgets:Toggle(parent, "Enable", y,
-		DBGet(qf, "enable"), DBSet(qf, "enable"),
-		"Focus the target by modifier key + click."); y = y - h
 	_, h = Widgets:DualRow(parent, y,
 		{ type = "dropdown", text = "Modifier Key",
 		  values = MODIFIER_VALUES, order = MODIFIER_ORDER,
@@ -55,9 +52,6 @@ local function BuildAbsorb(parent, y, cat)
 	local _, h
 	local ab = E.db.WT.unitFrames.absorb
 	_, h = Widgets:SectionHeader(parent, MH("Absorb"), y); y = y - h
-	_, h = Widgets:Toggle(parent, "Enable", y,
-		DBGet(ab, "enable"), DBSet(ab, "enable"),
-		"Modify the texture of the absorb bar."); y = y - h
 	if ab.damageAbsorb then
 		local da = ab.damageAbsorb
 		_, h = Widgets:Toggle(parent, "Enable Texture Replacement", y,
@@ -83,11 +77,6 @@ local function BuildNameClip(parent, y, cat)
 	local _, h
 	local nc = E.private.WT.unitFrames.nameClip
 	_, h = Widgets:SectionHeader(parent, MH("Name Clip"), y); y = y - h
-	if nc then
-		_, h = Widgets:Toggle(parent, "Enable", y,
-			DBGet(nc, "enable"), DBSet(nc, "enable"),
-			"Clip long names on unit frames to prevent text overflow."); y = y - h
-	end
 	return y
 end
 

@@ -51,12 +51,6 @@ local function BuildChatBar(parent, y, cat)
 	end
 
 	_, h = Widgets:SectionHeader(parent, L("Chat Bar"), y); y = y - h
-	local enableRow
-	enableRow, h = Widgets:DualRow(parent, y,
-		{ type="toggle", text="Enable", tooltip="Add a chat bar for switching channel.",
-		  getValue = DBGet(cb, "enable"), setValue = DBSet(cb, "enable", afterCB) },
-		{ type="spacer" }
-	); y = y - h
 	local row2
 	row2, h = Widgets:DualRow(parent, y,
 		{ type="toggle", text="Auto Hide", tooltip="Hide channels that do not exist.",
@@ -160,10 +154,7 @@ local function BuildSmartTab(parent, y, cat)
 	local _, h
 	local st = E.db.WT.social.smartTab
 	local stDis = function() return not st.enable end
-	_, h = Widgets:SectionHeader(parent, L("Smart Tab"), y); y = y - h
-	_, h = Widgets:Toggle(parent, "Enable", y,
-		DBGet(st, "enable"), DBSet(st, "enable"),
-		"This module will change the channel when Tab has been pressed."); y = y - h
+	_, h = Widgets:SectionHeader(parent, L("SmartTab"), y); y = y - h
 	_, h = Widgets:SectionHeader(parent, L("Channel"), y); y = y - h
 	do
 		local channelItems = {

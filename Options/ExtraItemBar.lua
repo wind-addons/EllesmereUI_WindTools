@@ -304,20 +304,9 @@ addon.RegisterOptionBuilder("extraItemsBar", function(parent, y, cat)
 	local ebDis = function() return not db.enable end
 
 	_, h = Widgets:SectionHeader(parent, MH("General"), y); y = y - h
-	local enableRow
-	enableRow, h = Widgets:DualRow(parent, y,
-		{ type="toggle", text="Enable",
-		  getValue=DBGet(db, "enable"),
-		  setValue=function(v) db.enable = v; refreshWidgets(); updateBars(); if addon.RefreshSidebarStates then addon.RefreshSidebarStates() end end,
-		  tooltip="Add bars to contain quest items and usable equipment." },
-		{ type="spacer" }
-	); y = y - h
-	AttachCog(enableRow and enableRow._leftRegion, "General Settings", {
-		{ type="toggle", label="No Quantum Items",
-		  tooltip="Automatically blacklist the quantum items.",
-		  get=function() return db.noQuantumItems end,
-		  set=function(v) db.noQuantumItems = v; updateBars() end },
-	})
+	_, h = Widgets:Toggle(parent, "No Quantum Items", y,
+		DBGet(db, "noQuantumItems"), DBSet(db, "noQuantumItems", updateBars),
+		"Automatically blacklist the quantum items."); y = y - h
 	local function itemSummary(list, isArray)
 		local names = {}
 		if isArray then

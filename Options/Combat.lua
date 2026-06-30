@@ -29,9 +29,6 @@ local function BuildRaidMarkers(parent, y, cat)
 	local rm = E.db.WT.combat.raidMarkers
 	local rmDis = function() return not rm.enable end
 	_, h = Widgets:SectionHeader(parent, MH("Raid Markers"), y); y = y - h
-	_, h = Widgets:Toggle(parent, "Enable", y,
-		DBGet(rm, "enable"), DBSet(rm, "enable"),
-		"Toggle raid markers bar."); y = y - h
 	_, h = Widgets:Toggle(parent, "Inverse Mode", y,
 		DBGet(rm, "inverse"), DBSet(rm, "inverse"),
 		"Swap the functionality of normal click and click with modifier keys.", rmDis); y = y - h
@@ -101,9 +98,6 @@ local function BuildCombatAlert(parent, y, cat)
 	local ca = E.db.WT.combat.combatAlert
 	local caDis = function() return not ca.enable end
 	_, h = Widgets:SectionHeader(parent, MH("Combat Alert"), y); y = y - h
-	_, h = Widgets:Toggle(parent, "Enable", y,
-		DBGet(ca, "enable"), DBSet(ca, "enable"),
-		"This module will display a alert frame when entering and leaving combat."); y = y - h
 	_, h = Widgets:DualRow(parent, y,
 		{ type = "slider", text = "Speed", min = 0.1, max = 4, step = 0.01,
 		  getValue = DBGet(ca, "speed"), setValue = DBSet(ca, "speed"),
@@ -188,9 +182,6 @@ local function BuildDamageMeter(parent, y, cat)
 	local dl = E.db.WT.combat.damageMeterLayout
 	local dlDis = function() return not dl.enable end
 	_, h = Widgets:SectionHeader(parent, MH("Damage Meter Layout"), y); y = y - h
-	_, h = Widgets:Toggle(parent, "Enable", y,
-		DBGet(dl, "enable"), DBSet(dl, "enable"),
-		"Manage Blizzard Damage Meter windows with reusable layouts."); y = y - h
 	_, h = Widgets:SectionHeader(parent, MH("Damage Meter Layout", "Container"), y); y = y - h
 	_, h = Widgets:DualRow(parent, y,
 		{ type = "slider", text = "Width", min = 200, max = 1600, step = 1,

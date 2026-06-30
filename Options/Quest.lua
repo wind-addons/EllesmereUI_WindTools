@@ -24,9 +24,6 @@ local function BuildObjectiveTracker(parent, y, cat)
 	local _, h
 	local ot = E.private.WT.quest.objectiveTracker
 	_, h = Widgets:SectionHeader(parent, MH("Objective Tracker"), y); y = y - h
-	_, h = Widgets:Toggle(parent, "Enable", y,
-		DBGet(ot, "enable"), DBSet(ot, "enable"),
-		"Customize the font of Objective Tracker and add colorful progress text."); y = y - h
 	_, h = Widgets:SectionHeader(parent, MH("Objective Tracker", "Progress"), y); y = y - h
 	_, h = Widgets:DualRow(parent, y,
 		{ type = "toggle", text = "No Dash",

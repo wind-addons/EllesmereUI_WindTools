@@ -20,9 +20,6 @@ local function BuildSuperTracker(parent, y, cat)
 	local st = E.private.WT.maps.superTracker
 	local stDis = function() return not st.enable end
 	_, h = Widgets:SectionHeader(parent, MH("Super Tracker"), y); y = y - h
-	_, h = Widgets:Toggle(parent, "Enable", y,
-		DBGet(st, "enable"), DBSet(st, "enable"),
-		"Additional features for waypoint."); y = y - h
 	_, h = Widgets:DualRow(parent, y,
 		{ type = "toggle", text = "Auto Track Waypoint", tooltip = "Auto track the waypoint after setting.",
 		  getValue = DBGet(st, "autoTrackWaypoint"), setValue = DBSet(st, "autoTrackWaypoint"), disabled = stDis },
@@ -110,9 +107,6 @@ local function BuildWorldMap(parent, y, cat)
 	local _, h
 	local wm = E.private.WT.maps.worldMap
 	_, h = Widgets:SectionHeader(parent, MH("World Map"), y); y = y - h
-	_, h = Widgets:Toggle(parent, "Enable", y,
-		DBGet(wm, "enable"), DBSet(wm, "enable"),
-		"This module will help you to reveal and resize maps."); y = y - h
 	_, h = Widgets:SectionHeader(parent, MH("World Map", "Reveal"), y); y = y - h
 	_, h = Widgets:Toggle(parent, "Enable", y,
 		DBGet2(wm, "reveal", "enable"), DBSet2(wm, "reveal", "enable"),

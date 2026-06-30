@@ -133,10 +133,7 @@ local function BuildInspect(parent, y, cat)
 	do
 		local is = db.inspect
 		local isDis = function() return not is.enable end
-		_, h = Widgets:Toggle(parent, "Enable", y,
-			DBGet(is, "enable"), DBSet(is, "enable"),
-			"This module will add an equipment list beside the character panel and inspect frame."); y = y - h
-		_, h = Widgets:SectionHeader(parent, MH("Inspect", "Lists"), y); y = y - h
+	_, h = Widgets:SectionHeader(parent, MH("Inspect", "Lists"), y); y = y - h
 		_, h = Widgets:DualRow(parent, y,
 			{ type = "toggle", text = "Player", tooltip = "Add a frame to your character panel.",
 			  getValue = DBGet(is, "player"), setValue = DBSet(is, "player"), disabled = isDis },
@@ -214,9 +211,6 @@ local function BuildItemLevel(parent, y, cat)
 	do
 		local il = db.itemLevel
 		local ilDis = function() return not il.enable end
-		_, h = Widgets:Toggle(parent, "Enable", y,
-			DBGet(il, "enable"), DBSet(il, "enable"),
-			"Add an extra item level text to some equipment buttons."); y = y - h
 
 		_, h = Widgets:SectionHeader(parent, MH("Item Level", "Flyout Button"), y); y = y - h
 		do
