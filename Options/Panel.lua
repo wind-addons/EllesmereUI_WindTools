@@ -63,74 +63,71 @@ local NAV_DISABLED_ICON_A    = 0.20
 local function Edb() local E = addon[3]; return E and E.db and E.db.WT end
 local function Epdb() local E = addon[3]; return E and E.private and E.private.WT end
 
-local function SimpleGet(t, k) return function() return t and t[k] ~= false end end
-local function SimpleSet(t, k) return function(v) if t then t[k] = v end end end
-
 local PageEnableConfig = {
     ["Extra Items Bar"] = {
-        get = SimpleGet(Edb() and Edb().item and Edb().item.extraItemsBar, "enable"),
-        set = SimpleSet(Edb() and Edb().item and Edb().item.extraItemsBar, "enable"),
+        get = function() local t = Edb(); t = t and t.item and t.item.extraItemsBar; return t and t.enable ~= false end,
+        set = function(v) local t = Edb(); if t and t.item and t.item.extraItemsBar then t.item.extraItemsBar.enable = v end end,
         refresh = function() addon.SafeModuleCall(addon[1].Modules.ExtraItemsBar, "UpdateBars") end,
     },
     ["Announcement"] = {
-        get = SimpleGet(Edb() and Edb().announcement, "enable"),
-        set = SimpleSet(Edb() and Edb().announcement, "enable"),
+        get = function() local t = Edb(); t = t and t.announcement; return t and t.enable ~= false end,
+        set = function(v) local t = Edb(); if t and t.announcement then t.announcement.enable = v end end,
     },
     ["Raid Markers"] = {
-        get = SimpleGet(Edb() and Edb().combat and Edb().combat.raidMarkers, "enable"),
-        set = SimpleSet(Edb() and Edb().combat and Edb().combat.raidMarkers, "enable"),
+        get = function() local t = Edb(); t = t and t.combat and t.combat.raidMarkers; return t and t.enable ~= false end,
+        set = function(v) local t = Edb(); if t and t.combat and t.combat.raidMarkers then t.combat.raidMarkers.enable = v end end,
     },
     ["Combat Alert"] = {
-        get = SimpleGet(Edb() and Edb().combat and Edb().combat.combatAlert, "enable"),
-        set = SimpleSet(Edb() and Edb().combat and Edb().combat.combatAlert, "enable"),
+        get = function() local t = Edb(); t = t and t.combat and t.combat.combatAlert; return t and t.enable ~= false end,
+        set = function(v) local t = Edb(); if t and t.combat and t.combat.combatAlert then t.combat.combatAlert.enable = v end end,
     },
     ["Damage Meter"] = {
-        get = SimpleGet(Edb() and Edb().combat and Edb().combat.damageMeterLayout, "enable"),
-        set = SimpleSet(Edb() and Edb().combat and Edb().combat.damageMeterLayout, "enable"),
+        get = function() local t = Edb(); t = t and t.combat and t.combat.damageMeterLayout; return t and t.enable ~= false end,
+        set = function(v) local t = Edb(); if t and t.combat and t.combat.damageMeterLayout then t.combat.damageMeterLayout.enable = v end end,
     },
     ["Chat Bar"] = {
-        get = SimpleGet(Edb() and Edb().social and Edb().social.chatBar, "enable"),
-        set = SimpleSet(Edb() and Edb().social and Edb().social.chatBar, "enable"),
+        get = function() local t = Edb(); t = t and t.social and t.social.chatBar; return t and t.enable ~= false end,
+        set = function(v) local t = Edb(); if t and t.social and t.social.chatBar then t.social.chatBar.enable = v end end,
     },
     ["Smart Tab"] = {
-        get = SimpleGet(Edb() and Edb().social and Edb().social.smartTab, "enable"),
-        set = SimpleSet(Edb() and Edb().social and Edb().social.smartTab, "enable"),
+        get = function() local t = Edb(); t = t and t.social and t.social.smartTab; return t and t.enable ~= false end,
+        set = function(v) local t = Edb(); if t and t.social and t.social.smartTab then t.social.smartTab.enable = v end end,
     },
     ["Super Tracker"] = {
-        get = SimpleGet(Epdb() and Epdb().maps and Epdb().maps.superTracker, "enable"),
-        set = SimpleSet(Epdb() and Epdb().maps and Epdb().maps.superTracker, "enable"),
+        get = function() local t = Epdb(); t = t and t.maps and t.maps.superTracker; return t and t.enable ~= false end,
+        set = function(v) local t = Epdb(); if t and t.maps and t.maps.superTracker then t.maps.superTracker.enable = v end end,
     },
     ["World Map"] = {
-        get = SimpleGet(Epdb() and Epdb().maps and Epdb().maps.worldMap, "enable"),
-        set = SimpleSet(Epdb() and Epdb().maps and Epdb().maps.worldMap, "enable"),
+        get = function() local t = Epdb(); t = t and t.maps and t.maps.worldMap; return t and t.enable ~= false end,
+        set = function(v) local t = Epdb(); if t and t.maps and t.maps.worldMap then t.maps.worldMap.enable = v end end,
     },
     ["Objective Tracker"] = {
-        get = SimpleGet(Epdb() and Epdb().quest and Epdb().quest.objectiveTracker, "enable"),
-        set = SimpleSet(Epdb() and Epdb().quest and Epdb().quest.objectiveTracker, "enable"),
+        get = function() local t = Epdb(); t = t and t.quest and t.quest.objectiveTracker; return t and t.enable ~= false end,
+        set = function(v) local t = Epdb(); if t and t.quest and t.quest.objectiveTracker then t.quest.objectiveTracker.enable = v end end,
     },
     ["Inspect"] = {
-        get = SimpleGet(Edb() and Edb().item and Edb().item.inspect, "enable"),
-        set = SimpleSet(Edb() and Edb().item and Edb().item.inspect, "enable"),
+        get = function() local t = Edb(); t = t and t.item and t.item.inspect; return t and t.enable ~= false end,
+        set = function(v) local t = Edb(); if t and t.item and t.item.inspect then t.item.inspect.enable = v end end,
     },
     ["Item Level"] = {
-        get = SimpleGet(Edb() and Edb().item and Edb().item.itemLevel, "enable"),
-        set = SimpleSet(Edb() and Edb().item and Edb().item.itemLevel, "enable"),
+        get = function() local t = Edb(); t = t and t.item and t.item.itemLevel; return t and t.enable ~= false end,
+        set = function(v) local t = Edb(); if t and t.item and t.item.itemLevel then t.item.itemLevel.enable = v end end,
     },
     ["Progression"] = {
-        get = SimpleGet(Epdb() and Epdb().tooltips and Epdb().tooltips.progression, "enable"),
-        set = SimpleSet(Epdb() and Epdb().tooltips and Epdb().tooltips.progression, "enable"),
+        get = function() local t = Epdb(); t = t and t.tooltips and t.tooltips.progression; return t and t.enable ~= false end,
+        set = function(v) local t = Epdb(); if t and t.tooltips and t.tooltips.progression then t.tooltips.progression.enable = v end end,
     },
     ["Quick Focus"] = {
-        get = SimpleGet(Epdb() and Epdb().unitFrames and Epdb().unitFrames.quickFocus, "enable"),
-        set = SimpleSet(Epdb() and Epdb().unitFrames and Epdb().unitFrames.quickFocus, "enable"),
+        get = function() local t = Epdb(); t = t and t.unitFrames and t.unitFrames.quickFocus; return t and t.enable ~= false end,
+        set = function(v) local t = Epdb(); if t and t.unitFrames and t.unitFrames.quickFocus then t.unitFrames.quickFocus.enable = v end end,
     },
     ["Absorb"] = {
-        get = SimpleGet(Edb() and Edb().unitFrames and Edb().unitFrames.absorb, "enable"),
-        set = SimpleSet(Edb() and Edb().unitFrames and Edb().unitFrames.absorb, "enable"),
+        get = function() local t = Edb(); t = t and t.unitFrames and t.unitFrames.absorb; return t and t.enable ~= false end,
+        set = function(v) local t = Edb(); if t and t.unitFrames and t.unitFrames.absorb then t.unitFrames.absorb.enable = v end end,
     },
     ["Name Clip"] = {
-        get = SimpleGet(Epdb() and Epdb().unitFrames and Epdb().unitFrames.nameClip, "enable"),
-        set = SimpleSet(Epdb() and Epdb().unitFrames and Epdb().unitFrames.nameClip, "enable"),
+        get = function() local t = Epdb(); t = t and t.unitFrames and t.unitFrames.nameClip; return t and t.enable ~= false end,
+        set = function(v) local t = Epdb(); if t and t.unitFrames and t.unitFrames.nameClip then t.unitFrames.nameClip.enable = v end end,
     },
 }
 
