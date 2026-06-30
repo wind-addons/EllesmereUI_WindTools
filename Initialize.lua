@@ -144,51 +144,69 @@ local CATEGORY_TITLES = {
 
 -- All pages and their category mappings (flat, used by BuildPage).
 local PAGE_GROUPS = {{
-    page = "Information",
-    categories = {"information"}
+    page = "Information",       categories = {"information"}
 }, {
-    page = "General",
-    categories = {"misc"}
+    page = "General",           categories = {"misc"}
 }, {
-    page = "Announcement",
-    categories = {"announcement"}
+    page = "Loot & Trade",      categories = {"item"}
 }, {
-    page = "Item",
-    categories = {"item"},
-    pages = { "Loot & Trade", "Display", "Inspect", "Item Level", "Merchant" }
+    page = "Display",           categories = {"item"}
 }, {
-    page = "Extra Items Bar",
-    categories = {"extraItemsBar"}
+    page = "Inspect",           categories = {"item"}
 }, {
-    page = "Combat",
-    categories = {"combat"},
-    pages = { "Raid Markers", "Combat Alert", "Quick Tools", "Damage Meter" }
+    page = "Item Level",        categories = {"item"}
 }, {
-    page = "Social",
-    categories = {"social"},
-    pages = { "Chat Bar", "Smart Tab" }
+    page = "Merchant",          categories = {"item"}
 }, {
-    page = "Maps",
-    categories = {"maps"},
-    pages = { "Super Tracker", "Minimap", "World Map", "Difficulty & Events" }
+    page = "Extra Items Bar",   categories = {"extraItemsBar"}
 }, {
-    page = "Quest",
-    categories = {"quest"},
-    pages = { "Objective Tracker", "Automation", "Progress & Turn In", "Achievement" }
+    page = "Announcement",      categories = {"announcement"}
 }, {
-    page = "Tooltips",
-    categories = {"tooltips"},
-    pages = { "General", "Progression", "Keystone & Group Info", "Advanced" }
+    page = "Raid Markers",      categories = {"combat"}
 }, {
-    page = "Unit Frames",
-    categories = {"unitFrames"},
-    pages = { "Quick Focus", "Absorb", "Name Clip" }
+    page = "Combat Alert",      categories = {"combat"}
 }, {
-    page = "Skins",
-    categories = {"skins"}
+    page = "Quick Tools",       categories = {"combat"}
 }, {
-    page = "Advanced",
-    categories = {"advanced"}
+    page = "Damage Meter",      categories = {"combat"}
+}, {
+    page = "Chat Bar",          categories = {"social"}
+}, {
+    page = "Smart Tab",         categories = {"social"}
+}, {
+    page = "Super Tracker",     categories = {"maps"}
+}, {
+    page = "Minimap",           categories = {"maps"}
+}, {
+    page = "World Map",         categories = {"maps"}
+}, {
+    page = "Difficulty & Events", categories = {"maps"}
+}, {
+    page = "Objective Tracker", categories = {"quest"}
+}, {
+    page = "Automation",        categories = {"quest"}
+}, {
+    page = "Progress & Turn In", categories = {"quest"}
+}, {
+    page = "Achievement",       categories = {"quest"}
+}, {
+    page = "Tooltip Info",      categories = {"tooltips"}
+}, {
+    page = "Progression",       categories = {"tooltips"}
+}, {
+    page = "Keystone & Group Info", categories = {"tooltips"}
+}, {
+    page = "Tooltip Advanced",  categories = {"tooltips"}
+}, {
+    page = "Quick Focus",       categories = {"unitFrames"}
+}, {
+    page = "Absorb",            categories = {"unitFrames"}
+}, {
+    page = "Name Clip",         categories = {"unitFrames"}
+}, {
+    page = "Skins",             categories = {"skins"}
+}, {
+    page = "Advanced",          categories = {"advanced"}
 }}
 
 local PAGE_NAMES = {}
@@ -210,17 +228,19 @@ local SPECIAL_PAGES = { "Information", "Advanced" }
 -- Grouped pages shown below the search bar. Each group has a label and an
 -- ordered list of page names.
 local SIDEBAR_GROUPS = {
-    { label = "General",        pages = { "General" } },
-    { label = "Items & Combat", pages = { "Item", "Extra Items Bar", "Combat" } },
-    { label = "Social",         pages = { "Social", "Announcement" } },
-    { label = "Maps & Quest",   pages = { "Maps", "Quest" } },
-    { label = "UI Tweaks",      pages = { "Tooltips", "Unit Frames", "Skins" } },
+    { label = "General",      pages = { "General" } },
+    { label = "Items",        pages = { "Loot & Trade", "Display", "Inspect", "Item Level", "Merchant", "Extra Items Bar" } },
+    { label = "Combat",       pages = { "Raid Markers", "Combat Alert", "Quick Tools", "Damage Meter" } },
+    { label = "Social",       pages = { "Chat Bar", "Smart Tab", "Announcement" } },
+    { label = "Maps",         pages = { "Super Tracker", "Minimap", "World Map", "Difficulty & Events" } },
+    { label = "Quest",        pages = { "Objective Tracker", "Automation", "Progress & Turn In", "Achievement" } },
+    { label = "UI Tweaks",    pages = { "Tooltip Info", "Progression", "Keystone & Group Info", "Tooltip Advanced", "Quick Focus", "Absorb", "Name Clip", "Skins" } },
 }
 
 -- Build a single options page by invoking its registered category builders.
--- When the page has sub-pages (tabs), subPageName selects which to build.
--- Returns the total content height (positive number).
-local function BuildPage(pageName, parent, yOffset, subPageName)
+-- pageName is passed as the 4th arg (subPage) so dispatch builders can
+-- route to the correct section. Returns total content height.
+local function BuildPage(pageName, parent, yOffset)
     local y = yOffset or -6
     local group = GROUP_BY_PAGE[pageName]
     if not group then
@@ -237,7 +257,7 @@ local function BuildPage(pageName, parent, yOffset, subPageName)
             end
             local title = CATEGORY_TITLES[categoryKey] or categoryKey
             local ok, newY = xpcall(function()
-                return builder(parent, y, title, subPageName)
+                return builder(parent, y, title, pageName)
             end, function(err)
                 return geterrorhandler()(err)
             end)

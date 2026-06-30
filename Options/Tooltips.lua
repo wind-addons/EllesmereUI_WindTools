@@ -173,10 +173,10 @@ local function BuildAdvanced(parent, y, cat)
 end
 
 addon.RegisterOptionBuilder("tooltips", function(parent, y, cat, subPage)
-	if     subPage == "General"               then return BuildGeneral(parent, y, cat)
+	if     subPage == "Tooltip Info"          then return BuildGeneral(parent, y, cat)
 	elseif subPage == "Progression"           then return BuildProgression(parent, y, cat)
 	elseif subPage == "Keystone & Group Info" then return BuildKeystoneGroupInfo(parent, y, cat)
-	elseif subPage == "Advanced"              then return BuildAdvanced(parent, y, cat)
+	elseif subPage == "Tooltip Advanced"      then return BuildAdvanced(parent, y, cat)
 	end
 	return y
 end)

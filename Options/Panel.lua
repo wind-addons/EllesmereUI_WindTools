@@ -41,7 +41,6 @@ local NAV_ROW_H = 34
 local NAV_TOP = -16
 local SCROLL_BAR_W = 4
 local CLOSE_BTN_SIZE = 28
-local TAB_BAR_H = 36
 local SIDEBAR_SCROLL_BAR_W = 4
 local SIDEBAR_SCROLL_STEP = 60
 local SIDEBAR_SMOOTH_SPEED = 12
@@ -61,37 +60,77 @@ local NAV_DISABLED_ICON_A    = 0.20
 --  Only pages with a top-level "enable" toggle are listed here.
 --  These pages show a power icon on the sidebar and support disabled state.
 -------------------------------------------------------------------------------
+local function Edb() local E = addon[3]; return E and E.db and E.db.WT end
+local function Epdb() local E = addon[3]; return E and E.private and E.private.WT end
+
+local function SimpleGet(t, k) return function() return t and t[k] ~= false end end
+local function SimpleSet(t, k) return function(v) if t then t[k] = v end end end
+
 local PageEnableConfig = {
     ["Extra Items Bar"] = {
-        get = function()
-            local E = addon[3]
-            local v = E and E.db and E.db.WT and E.db.WT.item and E.db.WT.item.extraItemsBar
-            return v and v.enable ~= false
-        end,
-        set = function(enabled)
-            local E = addon[3]
-            local v = E and E.db and E.db.WT and E.db.WT.item and E.db.WT.item.extraItemsBar
-            if v then v.enable = enabled end
-        end,
-        refresh = function()
-            local W = addon[1]
-            if W and W.Modules and W.Modules.ExtraItemsBar then
-                addon.SafeModuleCall(W.Modules.ExtraItemsBar, "UpdateBars")
-            end
-        end,
+        get = SimpleGet(Edb() and Edb().item and Edb().item.extraItemsBar, "enable"),
+        set = SimpleSet(Edb() and Edb().item and Edb().item.extraItemsBar, "enable"),
+        refresh = function() addon.SafeModuleCall(addon[1].Modules.ExtraItemsBar, "UpdateBars") end,
     },
     ["Announcement"] = {
-        get = function()
-            local E = addon[3]
-            local v = E and E.db and E.db.WT and E.db.WT.announcement
-            return v and v.enable ~= false
-        end,
-        set = function(enabled)
-            local E = addon[3]
-            local v = E and E.db and E.db.WT and E.db.WT.announcement
-            if v then v.enable = enabled end
-        end,
-        refresh = nil,
+        get = SimpleGet(Edb() and Edb().announcement, "enable"),
+        set = SimpleSet(Edb() and Edb().announcement, "enable"),
+    },
+    ["Raid Markers"] = {
+        get = SimpleGet(Edb() and Edb().combat and Edb().combat.raidMarkers, "enable"),
+        set = SimpleSet(Edb() and Edb().combat and Edb().combat.raidMarkers, "enable"),
+    },
+    ["Combat Alert"] = {
+        get = SimpleGet(Edb() and Edb().combat and Edb().combat.combatAlert, "enable"),
+        set = SimpleSet(Edb() and Edb().combat and Edb().combat.combatAlert, "enable"),
+    },
+    ["Damage Meter"] = {
+        get = SimpleGet(Edb() and Edb().combat and Edb().combat.damageMeterLayout, "enable"),
+        set = SimpleSet(Edb() and Edb().combat and Edb().combat.damageMeterLayout, "enable"),
+    },
+    ["Chat Bar"] = {
+        get = SimpleGet(Edb() and Edb().social and Edb().social.chatBar, "enable"),
+        set = SimpleSet(Edb() and Edb().social and Edb().social.chatBar, "enable"),
+    },
+    ["Smart Tab"] = {
+        get = SimpleGet(Edb() and Edb().social and Edb().social.smartTab, "enable"),
+        set = SimpleSet(Edb() and Edb().social and Edb().social.smartTab, "enable"),
+    },
+    ["Super Tracker"] = {
+        get = SimpleGet(Epdb() and Epdb().maps and Epdb().maps.superTracker, "enable"),
+        set = SimpleSet(Epdb() and Epdb().maps and Epdb().maps.superTracker, "enable"),
+    },
+    ["World Map"] = {
+        get = SimpleGet(Epdb() and Epdb().maps and Epdb().maps.worldMap, "enable"),
+        set = SimpleSet(Epdb() and Epdb().maps and Epdb().maps.worldMap, "enable"),
+    },
+    ["Objective Tracker"] = {
+        get = SimpleGet(Epdb() and Epdb().quest and Epdb().quest.objectiveTracker, "enable"),
+        set = SimpleSet(Epdb() and Epdb().quest and Epdb().quest.objectiveTracker, "enable"),
+    },
+    ["Inspect"] = {
+        get = SimpleGet(Edb() and Edb().item and Edb().item.inspect, "enable"),
+        set = SimpleSet(Edb() and Edb().item and Edb().item.inspect, "enable"),
+    },
+    ["Item Level"] = {
+        get = SimpleGet(Edb() and Edb().item and Edb().item.itemLevel, "enable"),
+        set = SimpleSet(Edb() and Edb().item and Edb().item.itemLevel, "enable"),
+    },
+    ["Progression"] = {
+        get = SimpleGet(Epdb() and Epdb().tooltips and Epdb().tooltips.progression, "enable"),
+        set = SimpleSet(Epdb() and Epdb().tooltips and Epdb().tooltips.progression, "enable"),
+    },
+    ["Quick Focus"] = {
+        get = SimpleGet(Epdb() and Epdb().unitFrames and Epdb().unitFrames.quickFocus, "enable"),
+        set = SimpleSet(Epdb() and Epdb().unitFrames and Epdb().unitFrames.quickFocus, "enable"),
+    },
+    ["Absorb"] = {
+        get = SimpleGet(Edb() and Edb().unitFrames and Edb().unitFrames.absorb, "enable"),
+        set = SimpleSet(Edb() and Edb().unitFrames and Edb().unitFrames.absorb, "enable"),
+    },
+    ["Name Clip"] = {
+        get = SimpleGet(Epdb() and Epdb().unitFrames and Epdb().unitFrames.nameClip, "enable"),
+        set = SimpleSet(Epdb() and Epdb().unitFrames and Epdb().unitFrames.nameClip, "enable"),
     },
 }
 
@@ -128,13 +167,6 @@ local sidebarIsSmoothing = false
 local sidebarSmoothFrame
 local sidebarTrack, sidebarThumb
 local UpdateSidebarScrollThumb
-
--- Tab bar state
-local tabBar
-local tabButtons = {}
-local activeTab          -- current tab index (nil when page has no sub-pages)
-local subPages           -- sub-page name array for current page (nil = no tabs)
-local tabBarHeight = 0   -- 0 when hidden, TAB_BAR_H when visible
 
 -- Forward declarations for content layout
 local UpdateScrollThumbFn
@@ -398,122 +430,6 @@ end
 -------------------------------------------------------------------------------
 --  Tab bar management
 -------------------------------------------------------------------------------
-local function UpdateTabHighlight()
-    local eg = EG()
-    for i, btn in ipairs(tabButtons) do
-        if i == activeTab then
-            btn._label:SetTextColor(NAV_SELECTED_TEXT.r, NAV_SELECTED_TEXT.g, NAV_SELECTED_TEXT.b, NAV_SELECTED_TEXT.a)
-            btn._underline:Show()
-        else
-            btn._label:SetTextColor(NAV_ENABLED_TEXT.r, NAV_ENABLED_TEXT.g, NAV_ENABLED_TEXT.b, NAV_ENABLED_TEXT.a)
-            btn._underline:Hide()
-        end
-    end
-end
-
-local function BuildTabButtons(pages)
-    for _, btn in ipairs(tabButtons) do btn:Hide(); btn:SetParent(nil) end
-    wipe(tabButtons)
-
-    local eg = EG()
-    local x = 0
-    for i, pageName in ipairs(pages) do
-        local btn = CreateFrame("Button", nil, tabBar)
-        btn:SetHeight(TAB_BAR_H - 4)
-        btn:SetPoint("LEFT", tabBar, "LEFT", x, 0)
-        btn:SetFrameLevel(tabBar:GetFrameLevel() + 1)
-
-        local label = MakeFont(btn, 13, nil, NAV_ENABLED_TEXT.r, NAV_ENABLED_TEXT.g, NAV_ENABLED_TEXT.b, NAV_ENABLED_TEXT.a)
-        label:SetPoint("LEFT", btn, "LEFT", 0, 2)
-        label:SetText(L(pageName))
-        btn._label = label
-
-        local underline = SolidTex(btn, "ARTWORK", eg.r, eg.g, eg.b, 1)
-        underline:SetHeight(2)
-        underline:SetPoint("BOTTOMLEFT", label, "BOTTOMLEFT", -2, -4)
-        underline:SetPoint("BOTTOMRIGHT", label, "BOTTOMRIGHT", 2, -4)
-        underline:Hide()
-        btn._underline = underline
-
-        local textW = label:GetStringWidth()
-        btn:SetWidth(textW + 4)
-
-        local tabIndex = i
-        btn:SetScript("OnEnter", function(self)
-            if tabIndex ~= activeTab then
-                self._label:SetTextColor(NAV_HOVER_ENABLED_TEXT.r, NAV_HOVER_ENABLED_TEXT.g, NAV_HOVER_ENABLED_TEXT.b, NAV_HOVER_ENABLED_TEXT.a)
-            end
-        end)
-        btn:SetScript("OnLeave", function(self)
-            if tabIndex ~= activeTab then
-                self._label:SetTextColor(NAV_ENABLED_TEXT.r, NAV_ENABLED_TEXT.g, NAV_ENABLED_TEXT.b, NAV_ENABLED_TEXT.a)
-            end
-        end)
-        btn:SetScript("OnClick", function()
-            SelectTab(tabIndex)
-        end)
-
-        tabButtons[i] = btn
-        x = x + textW + 24
-    end
-end
-
-local function SetupTabsForPage(pageName)
-    local group = addon.OptionGroupByPage and addon.OptionGroupByPage[pageName]
-    if group and group.pages and #group.pages > 0 then
-        subPages = group.pages
-        activeTab = 1
-        BuildTabButtons(group.pages)
-        tabBar:Show()
-        tabBarHeight = TAB_BAR_H
-        UpdateTabHighlight()
-    else
-        subPages = nil
-        activeTab = nil
-        for _, btn in ipairs(tabButtons) do btn:Hide(); btn:SetParent(nil) end
-        wipe(tabButtons)
-        tabBar:Hide()
-        tabBarHeight = 0
-    end
-    if UpdateContentLayout then UpdateContentLayout() end
-end
-
-local function SelectTab(tabIndex)
-    if not subPages or tabIndex == activeTab then return end
-    activeTab = tabIndex
-    UpdateTabHighlight()
-    -- Rebuild content for the new sub-page
-    ClearContent()
-    ClearContentHeader()
-
-    local e2 = EUI()
-    if e2 and e2.ResetRowCounters then e2.ResetRowCounters() end
-    ClearEUIRefreshList()
-
-    pageWrapper = CreateFrame("Frame", nil, contentScrollChild)
-    pageWrapper:SetAllPoints(contentScrollChild)
-
-    local subPageName = subPages[activeTab]
-    local startY = -6
-    local totalH = 0
-    if addon.BuildOptionsPage then
-        local ok, h = pcall(addon.BuildOptionsPage, activePage, pageWrapper, startY, subPageName)
-        if ok and type(h) == "number" then
-            totalH = h
-        else
-            totalH = 600
-        end
-    end
-
-    contentScrollChild:SetHeight(math_max(totalH + 30, 100))
-    SnapshotRefreshList()
-    CallRefreshList()
-
-    if contentScrollFrame and contentScrollFrame.SetVerticalScroll then
-        contentScrollFrame:SetVerticalScroll(0)
-    end
-end
-
 local function SelectPage(pageName)
     if not pageName or pageName == activePage then return end
 
@@ -538,9 +454,6 @@ local function SelectPage(pageName)
     activePage = pageName
     UpdateSidebarHighlight()
 
-    -- Setup tab bar (or hide it)
-    SetupTabsForPage(pageName)
-
     -- Build page content
     ClearContent()
     ClearContentHeader()
@@ -554,9 +467,8 @@ local function SelectPage(pageName)
 
     local startY = -6
     local totalH = 0
-    local subPageName = subPages and subPages[activeTab] or nil
     if addon.BuildOptionsPage then
-        local ok, h = pcall(addon.BuildOptionsPage, pageName, pageWrapper, startY, subPageName)
+        local ok, h = pcall(addon.BuildOptionsPage, pageName, pageWrapper, startY)
         if ok and type(h) == "number" then
             totalH = h
         else
@@ -595,13 +507,8 @@ local function RefreshPage(force)
 
     -- Slow path: full rebuild
     local currentPage = activePage
-    local savedTab = activeTab
     activePage = nil  -- force SelectPage to rebuild
     SelectPage(currentPage)
-    -- Restore tab position if there was one
-    if savedTab and savedTab > 1 and subPages then
-        SelectTab(savedTab)
-    end
 end
 
 -------------------------------------------------------------------------------
@@ -1043,20 +950,6 @@ local function BuildContentArea()
     -- Footer offset
     contentScrollBottom = FOOTER_H + 8
 
-    -- Tab bar (optional, between title and content header)
-    tabBar = CreateFrame("Frame", nil, clickArea)
-    tabBar:SetWidth(contentW)
-    tabBar:SetHeight(TAB_BAR_H)
-    tabBar:SetPoint("TOPLEFT", clickArea, "TOPLEFT", SIDEBAR_W, -HEADER_H)
-    tabBar:SetFrameLevel(clickArea:GetFrameLevel() + 2)
-    tabBar:Hide()
-
-    -- Subtle bottom divider for the tab bar
-    local tabDiv = SolidTex(tabBar, "BORDER", 1, 1, 1, 0.06)
-    tabDiv:SetHeight(1)
-    tabDiv:SetPoint("BOTTOMLEFT", tabBar, "BOTTOMLEFT", 0, 0)
-    tabDiv:SetPoint("BOTTOMRIGHT", tabBar, "BOTTOMRIGHT", 0, 0)
-
     -- Scroll frame (position and height managed by UpdateContentLayout)
     contentScrollFrame = CreateFrame("ScrollFrame", "WindToolsOptionsScrollFrame", clickArea)
     contentScrollFrame:SetWidth(contentW)
@@ -1141,16 +1034,14 @@ local function BuildContentArea()
     end)
 
     -- Layout updater: repositions content header + scroll frame based on
-    -- tab bar visibility and contentHeaderHeight
+    -- contentHeaderHeight
     UpdateContentLayout = function()
         if not contentScrollFrame then return end
-        -- Reposition content header below tab bar
         if contentHeaderFrame then
             contentHeaderFrame:ClearAllPoints()
-            contentHeaderFrame:SetPoint("TOPLEFT", clickArea, "TOPLEFT", SIDEBAR_W,
-                -(HEADER_H + tabBarHeight))
+            contentHeaderFrame:SetPoint("TOPLEFT", clickArea, "TOPLEFT", SIDEBAR_W, -HEADER_H)
         end
-        local scrollTop = HEADER_H + tabBarHeight + contentHeaderHeight + 8
+        local scrollTop = HEADER_H + contentHeaderHeight + 8
         contentScrollFrame:ClearAllPoints()
         contentScrollFrame:SetPoint("TOPLEFT", clickArea, "TOPLEFT", SIDEBAR_W, -scrollTop)
         local scrollH = FRAME_H - scrollTop - contentScrollBottom
