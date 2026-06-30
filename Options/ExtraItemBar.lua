@@ -50,6 +50,17 @@ local function DeepCopy(t)
 	return r
 end
 
+local function DeepEqual(a, b)
+	if type(a) ~= "table" or type(b) ~= "table" then return a == b end
+	for k, v in pairs(a) do
+		if not DeepEqual(v, b[k]) then return false end
+	end
+	for k in pairs(b) do
+		if a[k] == nil then return false end
+	end
+	return true
+end
+
 local _selectedBar = 1
 
 local OUTLINE_VALUES = { ["none"]="Drop Shadow", ["outline"]="Outline", ["thick"]="Thick Outline" }
@@ -124,13 +135,13 @@ addon.RegisterOptionBuilder("extraItemsBar", function(parent, y, cat)
 		local barDB = SB()
 		if not barDB then activePreview = nil; return 0 end
 
-		local bw = barDB.buttonWidth or 35; local bh = barDB.buttonHeight or 30
+		local bsz = barDB.buttonSize or 34
 		local nb = barDB.numButtons or 12; local bpr = barDB.buttonsPerRow or 12
 		local sp = barDB.spacing or 3; local bs = barDB.backdropSpacing or 3
 
 		local rows = ceil(nb / bpr); local cols = nb < bpr and nb or bpr
-		local gw = 2 * bs + cols * bw + (cols - 1) * sp
-		local gh = 2 * bs + rows * bh + (rows - 1) * sp
+		local gw = 2 * bs + cols * bsz + (cols - 1) * sp
+		local gh = 2 * bs + rows * bsz + (rows - 1) * sp
 
 		local scale = UIParent:GetEffectiveScale() / hdr:GetEffectiveScale()
 		if gw * scale > maxW then scale = maxW / gw end
@@ -158,11 +169,11 @@ addon.RegisterOptionBuilder("extraItemsBar", function(parent, y, cat)
 		local PP = EllesmereUI.PP or EllesmereUI.PanelPP
 		for i = 1, 12 do
 			local bf = CreateFrame("Frame", nil, pf)
-			bf:SetSize(bw, bh); bf:Hide()
+			bf:SetSize(bsz, bsz); bf:Hide()
 			local icon = bf:CreateTexture(nil, "ARTWORK")
 			icon:SetAllPoints()
 			icon:SetColorTexture(0.06, 0.08, 0.10, 1)
-			SetPreviewTexCoords(icon, bw, bh)
+			SetPreviewTexCoords(icon, bsz, bsz)
 			if PP and PP.CreateBorder then
 				PP.CreateBorder(bf, 0, 0, 0, 1, 1, "BORDER", 0)
 			end
@@ -226,13 +237,13 @@ addon.RegisterOptionBuilder("extraItemsBar", function(parent, y, cat)
 
 		pf.Update = function(self)
 			local bdb = SB(); if not bdb then return end
-			local _bw = bdb.buttonWidth or 35; local _bh = bdb.buttonHeight or 30
+			local _bsz = bdb.buttonSize or 34
 			local _nb = bdb.numButtons or 12; local _bpr = bdb.buttonsPerRow or 12
 			local _sp = bdb.spacing or 3; local _bs = bdb.backdropSpacing or 3
 			local anchor = bdb.anchor or "TOPLEFT"
 			local _rows = ceil(_nb / _bpr); local _cols = _nb < _bpr and _nb or _bpr
-			local _gw = 2 * _bs + _cols * _bw + (_cols - 1) * _sp
-			local _gh = 2 * _bs + _rows * _bh + (_rows - 1) * _sp
+			local _gw = 2 * _bs + _cols * _bsz + (_cols - 1) * _sp
+			local _gh = 2 * _bs + _rows * _bsz + (_rows - 1) * _sp
 			local s = self._origScale
 			if _gw * s > self._maxW then s = self._maxW / _gw end
 			local newWrapperH = floor(math.min(_gh * s, self._PREVIEW_MAX_H))
@@ -245,22 +256,22 @@ addon.RegisterOptionBuilder("extraItemsBar", function(parent, y, cat)
 				local e = self._buttons[i]
 				if i <= _nb then
 					local idx = i - 1; local col = idx % _bpr; local row = floor(idx / _bpr)
-					local x = _bs + col * (_bw + _sp); local _y
+				local x = _bs + col * (_bsz + _sp); local _y
 					if anchor == "TOPLEFT" or anchor == "TOPRIGHT" then
-						_y = -(_bs + row * (_bh + _sp))
+						_y = -(_bs + row * (_bsz + _sp))
 					else
-						_y = -(_gh - _bs - (row + 1) * _bh - row * _sp)
+						_y = -(_gh - _bs - (row + 1) * _bsz - row * _sp)
 					end
 					if anchor == "TOPRIGHT" or anchor == "BOTTOMRIGHT" then
-						x = _gw - _bs - (col + 1) * _bw - col * _sp
+						x = _gw - _bs - (col + 1) * _bsz - col * _sp
 					end
-					e.frame:SetSize(_bw, _bh); e.frame:ClearAllPoints()
+					e.frame:SetSize(_bsz, _bsz); e.frame:ClearAllPoints()
 					e.frame:SetPoint("TOPLEFT", self, "TOPLEFT", floor(x), floor(_y))
-					SetPreviewTexCoords(e.icon, _bw, _bh)
+					SetPreviewTexCoords(e.icon, _bsz, _bsz)
 					local realBtn = realBar and realBar.buttons and realBar.buttons[i]
 					if realBtn and realBtn:IsShown() and realBtn.tex then
 						local tex = realBtn.tex:GetTexture()
-						if tex then e.icon:SetTexture(tex); SetPreviewTexCoords(e.icon, _bw, _bh)
+						if tex then e.icon:SetTexture(tex); SetPreviewTexCoords(e.icon, _bsz, _bsz)
 						else e.icon:SetColorTexture(0.06, 0.08, 0.10, 1) end
 						e.count:SetText(realBtn.count and realBtn.count:GetText() or "")
 					else
@@ -400,6 +411,12 @@ addon.RegisterOptionBuilder("extraItemsBar", function(parent, y, cat)
 			  getValue=SGet("backdrop"), setValue=SSet("backdrop"),
 			  tooltip="Show a backdrop behind the bar.", disabled=barDis }
 		); y = y - h
+		if lr0 and lr0._rightRegion then EllesmereUI.BuildSyncIcon({
+			region=lr0._rightRegion, tooltip="Apply backdrop to all Bars",
+			onClick=function() for i=1,5 do local d=db["bar"..i]; if d then d.backdrop=SB().backdrop end end; updateBars(); addon.RefreshOptions() end,
+			isSynced=function() local v=SB().backdrop; for i=1,5 do if db["bar"..i].enable and db["bar"..i].backdrop~=v then return false end end; return true end,
+			multiApply={ elementKeys={1,2,3,4,5}, elementLabels={[1]="Bar 1",[2]="Bar 2",[3]="Bar 3",[4]="Bar 4",[5]="Bar 5"}, getCurrentKey=function() return selectedBar end, onApply=function(keys) for _,i in ipairs(keys) do local d=db["bar"..i]; if d then d.backdrop=SB().backdrop end end; updateBars(); addon.RefreshOptions() end },
+		}) end
 
 		local lr1, lr2, lr3
 		lr1, h = Widgets:DualRow(parent, y,
@@ -431,16 +448,15 @@ addon.RegisterOptionBuilder("extraItemsBar", function(parent, y, cat)
 		}) end
 
 		lr3, h = Widgets:DualRow(parent, y,
-			{ type="slider", text="Button Width", min=2, max=80, step=1,
-			  getValue=SGet("buttonWidth"), setValue=SSet("buttonWidth", updateBars), disabled=barDis },
-			{ type="slider", text="Button Height", min=2, max=60, step=1,
-			  getValue=SGet("buttonHeight"), setValue=SSet("buttonHeight", updateBars), disabled=barDis }
+			{ type="slider", text="Button Size", min=2, max=80, step=1,
+			  getValue=SGet("buttonSize"), setValue=SSet("buttonSize", updateBars), disabled=barDis },
+			{ type="spacer" }
 		); y = y - h
 		if lr3 and lr3._leftRegion then EllesmereUI.BuildSyncIcon({
 			region=lr3._leftRegion, tooltip="Apply size to all Bars",
-			onClick=function() for i=1,5 do local d=db["bar"..i]; if d then d.buttonWidth=SB().buttonWidth; d.buttonHeight=SB().buttonHeight end end; updateBars(); addon.RefreshOptions() end,
-			isSynced=function() local vw=SB().buttonWidth; local vh=SB().buttonHeight; for i=1,5 do if db["bar"..i].enable and (db["bar"..i].buttonWidth~=vw or db["bar"..i].buttonHeight~=vh) then return false end end; return true end,
-			multiApply={ elementKeys={1,2,3,4,5}, elementLabels={[1]="Bar 1",[2]="Bar 2",[3]="Bar 3",[4]="Bar 4",[5]="Bar 5"}, getCurrentKey=function() return selectedBar end, onApply=function(keys) for _,i in ipairs(keys) do local d=db["bar"..i]; if d then d.buttonWidth=SB().buttonWidth; d.buttonHeight=SB().buttonHeight end end; updateBars(); addon.RefreshOptions() end },
+			onClick=function() for i=1,5 do local d=db["bar"..i]; if d then d.buttonSize=SB().buttonSize end end; updateBars(); addon.RefreshOptions() end,
+			isSynced=function() local v=SB().buttonSize; for i=1,5 do if db["bar"..i].enable and db["bar"..i].buttonSize~=v then return false end end; return true end,
+			multiApply={ elementKeys={1,2,3,4,5}, elementLabels={[1]="Bar 1",[2]="Bar 2",[3]="Bar 3",[4]="Bar 4",[5]="Bar 5"}, getCurrentKey=function() return selectedBar end, onApply=function(keys) for _,i in ipairs(keys) do local d=db["bar"..i]; if d then d.buttonSize=SB().buttonSize end end; updateBars(); addon.RefreshOptions() end },
 		}) end
 
 		local anchorRow
@@ -528,6 +544,12 @@ addon.RegisterOptionBuilder("extraItemsBar", function(parent, y, cat)
 			  getValue=SGet("tooltip"), setValue=SSet("tooltip"), disabled=barDis },
 			{ type="spacer" }
 		); y = y - h
+		if vr2 and vr2._leftRegion then EllesmereUI.BuildSyncIcon({
+			region=vr2._leftRegion, tooltip="Apply tooltip to all Bars",
+			onClick=function() for i=1,5 do local d=db["bar"..i]; if d then d.tooltip=SB().tooltip end end; updateBars(); addon.RefreshOptions() end,
+			isSynced=function() local v=SB().tooltip; for i=1,5 do if db["bar"..i].enable and db["bar"..i].tooltip~=v then return false end end; return true end,
+			multiApply={ elementKeys={1,2,3,4,5}, elementLabels={[1]="Bar 1",[2]="Bar 2",[3]="Bar 3",[4]="Bar 4",[5]="Bar 5"}, getCurrentKey=function() return selectedBar end, onApply=function(keys) for _,i in ipairs(keys) do local d=db["bar"..i]; if d then d.tooltip=SB().tooltip end end; updateBars(); addon.RefreshOptions() end },
+		}) end
 	end
 
 	-- =========================================================================
@@ -570,6 +592,12 @@ addon.RegisterOptionBuilder("extraItemsBar", function(parent, y, cat)
 		); y = y - h
 		AttachCog(fr1 and fr1._leftRegion, "Count Text", fontCogRows("countFont"))
 		AttachCog(fr1 and fr1._rightRegion, "Bind Text", fontCogRows("bindFont"))
+		if fr1 and fr1._leftRegion then EllesmereUI.BuildSyncIcon({
+			region=fr1._leftRegion, tooltip="Apply fonts to all Bars",
+			onClick=function() for i=1,5 do local d=db["bar"..i]; if d then d.countFont=DeepCopy(SB().countFont); d.bindFont=DeepCopy(SB().bindFont) end end; updateBars(); addon.RefreshOptions() end,
+			isSynced=function() local cf=SB().countFont; local bf=SB().bindFont; for i=1,5 do if db["bar"..i].enable and (not DeepEqual(db["bar"..i].countFont,cf) or not DeepEqual(db["bar"..i].bindFont,bf)) then return false end end; return true end,
+			multiApply={ elementKeys={1,2,3,4,5}, elementLabels={[1]="Bar 1",[2]="Bar 2",[3]="Bar 3",[4]="Bar 4",[5]="Bar 5"}, getCurrentKey=function() return selectedBar end, onApply=function(keys) for _,i in ipairs(keys) do local d=db["bar"..i]; if d then d.countFont=DeepCopy(SB().countFont); d.bindFont=DeepCopy(SB().bindFont) end end; updateBars(); addon.RefreshOptions() end },
+		}) end
 
 		local fr2
 		fr2, h = Widgets:DualRow(parent, y,
@@ -588,6 +616,12 @@ addon.RegisterOptionBuilder("extraItemsBar", function(parent, y, cat)
 			  get=function() return SB().qualityTier.yOffset or 0 end,
 			  set=function(v) SB().qualityTier.yOffset = v; updateBars() end },
 		})
+		if fr2 and fr2._leftRegion then EllesmereUI.BuildSyncIcon({
+			region=fr2._leftRegion, tooltip="Apply quality tier to all Bars",
+			onClick=function() for i=1,5 do local d=db["bar"..i]; if d then d.qualityTier=DeepCopy(SB().qualityTier) end end; updateBars(); addon.RefreshOptions() end,
+			isSynced=function() local qt=SB().qualityTier; for i=1,5 do if db["bar"..i].enable and not DeepEqual(db["bar"..i].qualityTier,qt) then return false end end; return true end,
+			multiApply={ elementKeys={1,2,3,4,5}, elementLabels={[1]="Bar 1",[2]="Bar 2",[3]="Bar 3",[4]="Bar 4",[5]="Bar 5"}, getCurrentKey=function() return selectedBar end, onApply=function(keys) for _,i in ipairs(keys) do local d=db["bar"..i]; if d then d.qualityTier=DeepCopy(SB().qualityTier) end end; updateBars(); addon.RefreshOptions() end },
+		}) end
 	end
 
 	return y

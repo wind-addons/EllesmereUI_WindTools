@@ -214,8 +214,7 @@ local DEFAULT_BAR_DB = {
 	numButtons = 12,
 	backdrop = true,
 	backdropSpacing = 3,
-	buttonWidth = 35,
-	buttonHeight = 30,
+	buttonSize = 34,
 	buttonsPerRow = 12,
 	anchor = "TOPLEFT",
 	spacing = 3,
@@ -266,6 +265,12 @@ local function FillDefaults(db, defaults)
 end
 
 local function EnsureBarDB(barDB)
+	if barDB.buttonSize == nil and (barDB.buttonWidth or barDB.buttonHeight) then
+		barDB.buttonSize = barDB.buttonWidth or barDB.buttonHeight
+	end
+	barDB.buttonWidth = nil
+	barDB.buttonHeight = nil
+
 	FillDefaults(barDB, DEFAULT_BAR_DB)
 	if barDB.countFont and (barDB.countFont.name == "Montserrat" or barDB.countFont.name == "Montserrat (en)") then
 		barDB.countFont.name = "__global"
@@ -275,8 +280,7 @@ local function EnsureBarDB(barDB)
 	end
 	barDB.numButtons = math.max(1, math.min(12, tonumber(barDB.numButtons) or DEFAULT_BAR_DB.numButtons))
 	barDB.buttonsPerRow = math.max(1, math.min(12, tonumber(barDB.buttonsPerRow) or DEFAULT_BAR_DB.buttonsPerRow))
-	barDB.buttonWidth = math.max(1, tonumber(barDB.buttonWidth) or DEFAULT_BAR_DB.buttonWidth)
-	barDB.buttonHeight = math.max(1, tonumber(barDB.buttonHeight) or DEFAULT_BAR_DB.buttonHeight)
+	barDB.buttonSize = math.max(1, tonumber(barDB.buttonSize) or DEFAULT_BAR_DB.buttonSize)
 	barDB.backdropSpacing = math.max(0, tonumber(barDB.backdropSpacing) or DEFAULT_BAR_DB.backdropSpacing)
 	barDB.spacing = math.max(0, tonumber(barDB.spacing) or DEFAULT_BAR_DB.spacing)
 	barDB.fadeTime = tonumber(barDB.fadeTime) or DEFAULT_BAR_DB.fadeTime
@@ -313,7 +317,7 @@ end
 
 function EB:CreateButton(name, barDB)
 	local button = _G[name] or CreateFrame("Button", name, E.UIParent, "SecureActionButtonTemplate, BackdropTemplate")
-	button:SetSize(barDB.buttonWidth, barDB.buttonHeight)
+	button:SetSize(barDB.buttonSize, barDB.buttonSize)
 	button:SetClampedToScreen(true)
 	button:SetAttribute("type", "item")
 	button:EnableMouse(false)
@@ -322,7 +326,7 @@ function EB:CreateButton(name, barDB)
 	local tex = button:CreateTexture(nil, "OVERLAY", nil)
 	tex:SetPoint("TOPLEFT", button, "TOPLEFT", 1, -1)
 	tex:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", -1, 1)
-	SetIconTexCoords(tex, barDB.buttonWidth, barDB.buttonHeight)
+	SetIconTexCoords(tex, barDB.buttonSize, barDB.buttonSize)
 
 	local qualityTier = button:CreateFontString(nil, "OVERLAY")
 	qualityTier:SetTextColor(1, 1, 1, 1)
@@ -521,8 +525,8 @@ function EB:SetUpButton(button, itemData, slotID, waitGroup)
 end
 
 function EB:UpdateButtonSize(button, barDB)
-	button:SetSize(barDB.buttonWidth, barDB.buttonHeight)
-	SetIconTexCoords(button.tex, barDB.buttonWidth, barDB.buttonHeight)
+	button:SetSize(barDB.buttonSize, barDB.buttonSize)
+	SetIconTexCoords(button.tex, barDB.buttonSize, barDB.buttonSize)
 end
 
 function EB:SetEmptyButton(button)
@@ -925,8 +929,8 @@ function EB:UpdateBar(id)
 	if displayButtons > 12 then displayButtons = 12 end
 	local numRows = ceil(displayButtons / barDB.buttonsPerRow)
 	local numCols = displayButtons > barDB.buttonsPerRow and barDB.buttonsPerRow or displayButtons
-	local newBarWidth = 2 * barDB.backdropSpacing + numCols * barDB.buttonWidth + (numCols - 1) * barDB.spacing
-	local newBarHeight = 2 * barDB.backdropSpacing + numRows * barDB.buttonHeight + (numRows - 1) * barDB.spacing
+	local newBarWidth = 2 * barDB.backdropSpacing + numCols * barDB.buttonSize + (numCols - 1) * barDB.spacing
+	local newBarHeight = 2 * barDB.backdropSpacing + numRows * barDB.buttonSize + (numRows - 1) * barDB.spacing
 	bar:SetSize(newBarWidth, newBarHeight)
 	NotifyBarResized(id)
 
@@ -1204,8 +1208,7 @@ function EB:GetDebugState()
 			include = bd and bd.include,
 			numButtons = bd and bd.numButtons,
 			buttonsPerRow = bd and bd.buttonsPerRow,
-			buttonWidth = bd and bd.buttonWidth,
-			buttonHeight = bd and bd.buttonHeight,
+			buttonSize = bd and bd.buttonSize,
 			backdropSpacing = bd and bd.backdropSpacing,
 			spacing = bd and bd.spacing,
 			anchor = bd and bd.anchor,
