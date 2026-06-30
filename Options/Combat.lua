@@ -22,6 +22,14 @@ local SOUND_CHANNEL_VALUES = {
 }
 local SOUND_CHANNEL_ORDER = { "Master", "Music", "SFX", "Ambience", "Dialog" }
 
+local function DBGetDefault(t, k, default)
+	return function()
+		local v = t and t[k]
+		if v == nil then return default end
+		return v
+	end
+end
+
 local function BuildRaidMarkers(parent, y, cat)
 	local Widgets = EllesmereUI.Widgets
 	local MH = function(mod, sub) return addon.MakeHeader(cat, mod, sub) end
@@ -35,7 +43,7 @@ local function BuildRaidMarkers(parent, y, cat)
 	_, h = Widgets:SectionHeader(parent, MH("Raid Markers", "Visibility"), y); y = y - h
 	_, h = Widgets:Dropdown(parent, "Visibility", y,
 		VISIBILITY_VALUES, VISIBILITY_ORDER,
-		DBGet(rm, "visibility"), DBSet(rm, "visibility"), nil, rmDis); y = y - h
+		DBGetDefault(rm, "visibility", "DEFAULT"), DBSet(rm, "visibility"), nil, rmDis); y = y - h
 	_, h = Widgets:DualRow(parent, y,
 		{ type = "toggle", text = "Mouse Over", tooltip = "Only show raid markers bar when you mouse over it.",
 		  getValue = DBGet(rm, "mouseOver"), setValue = DBSet(rm, "mouseOver"), disabled = rmDis },
@@ -52,10 +60,10 @@ local function BuildRaidMarkers(parent, y, cat)
 		"Show a backdrop of the bar.", rmDis); y = y - h
 	_, h = Widgets:DualRow(parent, y,
 		{ type = "slider", text = "Backdrop Spacing", min = 1, max = 30, step = 1,
-		  getValue = DBGet(rm, "backdropSpacing"), setValue = DBSet(rm, "backdropSpacing"), disabled = rmDis },
+		  getValue = DBGetDefault(rm, "backdropSpacing", 3), setValue = DBSet(rm, "backdropSpacing"), disabled = rmDis },
 		{ type = "dropdown", text = "Orientation",
 		  values = ORIENTATION_VALUES, order = ORIENTATION_ORDER,
-		  getValue = DBGet(rm, "orientation"), setValue = DBSet(rm, "orientation"), disabled = rmDis }
+		  getValue = DBGetDefault(rm, "orientation", "HORIZONTAL"), setValue = DBSet(rm, "orientation"), disabled = rmDis }
 	); y = y - h
 	_, h = Widgets:SectionHeader(parent, MH("Raid Markers", "Buttons"), y); y = y - h
 	_, h = Widgets:Toggle(parent, "Ready Check / Advanced Combat Logging", y,
@@ -64,15 +72,15 @@ local function BuildRaidMarkers(parent, y, cat)
 		{ type = "toggle", text = "Count Down",
 		  getValue = DBGet(rm, "countDown"), setValue = DBSet(rm, "countDown"), disabled = rmDis },
 		{ type = "slider", text = "Count Down Time", min = 1, max = 10, step = 1,
-		  getValue = DBGet(rm, "countDownTime"), setValue = DBSet(rm, "countDownTime"),
+		  getValue = DBGetDefault(rm, "countDownTime", 5), setValue = DBSet(rm, "countDownTime"),
 		  tooltip = "Count down time in seconds.", disabled = rmDis }
 	); y = y - h
 	_, h = Widgets:SectionHeader(parent, MH("Raid Markers", "Button Layout"), y); y = y - h
 	_, h = Widgets:DualRow(parent, y,
 		{ type = "slider", text = "Button Size", min = 15, max = 60, step = 1,
-		  getValue = DBGet(rm, "buttonSize"), setValue = DBSet(rm, "buttonSize"), disabled = rmDis },
+		  getValue = DBGetDefault(rm, "buttonSize", 30), setValue = DBSet(rm, "buttonSize"), disabled = rmDis },
 		{ type = "slider", text = "Button Spacing", min = 1, max = 30, step = 1,
-		  getValue = DBGet(rm, "spacing"), setValue = DBSet(rm, "spacing"), disabled = rmDis }
+		  getValue = DBGetDefault(rm, "spacing", 4), setValue = DBSet(rm, "spacing"), disabled = rmDis }
 	); y = y - h
 	_, h = Widgets:DualRow(parent, y,
 		{ type = "toggle", text = "Button Backdrop",
@@ -83,9 +91,9 @@ local function BuildRaidMarkers(parent, y, cat)
 	if rm.buttonAnimation then
 		_, h = Widgets:DualRow(parent, y,
 			{ type = "slider", text = "Animation Duration", min = 0.01, max = 2, step = 0.01,
-			  getValue = DBGet(rm, "buttonAnimationDuration"), setValue = DBSet(rm, "buttonAnimationDuration"), disabled = rmDis },
+			  getValue = DBGetDefault(rm, "buttonAnimationDuration", 0.2), setValue = DBSet(rm, "buttonAnimationDuration"), disabled = rmDis },
 			{ type = "slider", text = "Animation Scale", min = 0.01, max = 5, step = 0.01,
-			  getValue = DBGet(rm, "buttonAnimationScale"), setValue = DBSet(rm, "buttonAnimationScale"), disabled = rmDis }
+			  getValue = DBGetDefault(rm, "buttonAnimationScale", 1.33), setValue = DBSet(rm, "buttonAnimationScale"), disabled = rmDis }
 		); y = y - h
 	end
 	return y
@@ -100,22 +108,22 @@ local function BuildCombatAlert(parent, y, cat)
 	_, h = Widgets:SectionHeader(parent, MH("Combat Alert"), y); y = y - h
 	_, h = Widgets:DualRow(parent, y,
 		{ type = "slider", text = "Speed", min = 0.1, max = 4, step = 0.01,
-		  getValue = DBGet(ca, "speed"), setValue = DBSet(ca, "speed"),
+		  getValue = DBGetDefault(ca, "speed", 1), setValue = DBSet(ca, "speed"),
 		  tooltip = "The speed of the alert.", disabled = caDis },
 		{ type = "spacer" }
 	); y = y - h
 	_, h = Widgets:SectionHeader(parent, MH("Combat Alert", "Animation"), y); y = y - h
 	_, h = Widgets:DualRow(parent, y,
 		{ type = "toggle", text = "Enable", tooltip = "Display an animation when you enter or leave combat.",
-		  getValue = DBGet2(ca, "animationConfig", "animation"),
-		  setValue = DBSet2(ca, "animationConfig", "animation"), disabled = caDis },
+		  getValue = DBGetDefault(ca, "animation", true),
+		  setValue = DBSet(ca, "animation"), disabled = caDis },
 		{ type = "slider", text = "Animation Size", min = 0.1, max = 3, step = 0.01,
-		  getValue = DBGet2(ca, "animationConfig", "animationSize"),
-		  setValue = DBSet2(ca, "animationConfig", "animationSize"), disabled = caDis }
+		  getValue = DBGetDefault(ca, "animationSize", 1),
+		  setValue = DBSet(ca, "animationSize"), disabled = caDis }
 	); y = y - h
 	_, h = Widgets:SectionHeader(parent, MH("Combat Alert", "Text"), y); y = y - h
 	_, h = Widgets:Toggle(parent, "Enable", y,
-		DBGet2(ca, "textConfig", "text"), DBSet2(ca, "textConfig", "text"),
+		DBGetDefault(ca, "text", true), DBSet(ca, "text"),
 		"Display a text when you enter or leave combat.", caDis); y = y - h
 	_, h = Widgets:SectionHeader(parent, MH("Combat Alert", "Enter Text"), y); y = y - h
 	_, h = Widgets:ColorPicker(parent, "Gradient Color 1", y,
@@ -142,13 +150,15 @@ local function BuildCombatAlert(parent, y, cat)
 		DBGet2(ca, "enterSound", "enable"), DBSet2(ca, "enterSound", "enable")); y = y - h
 	_, h = Widgets:Dropdown(parent, "Sound Channel", y,
 		SOUND_CHANNEL_VALUES, SOUND_CHANNEL_ORDER,
-		DBGet2(ca, "enterSound", "channel"), DBSet2(ca, "enterSound", "channel")); y = y - h
+		function() return ca.enterSound and ca.enterSound.channel or "Master" end,
+		DBSet2(ca, "enterSound", "channel")); y = y - h
 	_, h = Widgets:SectionHeader(parent, MH("Combat Alert", "Sound - Leave"), y); y = y - h
 	_, h = Widgets:Toggle(parent, "Enable", y,
 		DBGet2(ca, "leaveSound", "enable"), DBSet2(ca, "leaveSound", "enable")); y = y - h
 	_, h = Widgets:Dropdown(parent, "Sound Channel", y,
 		SOUND_CHANNEL_VALUES, SOUND_CHANNEL_ORDER,
-		DBGet2(ca, "leaveSound", "channel"), DBSet2(ca, "leaveSound", "channel")); y = y - h
+		function() return ca.leaveSound and ca.leaveSound.channel or "Master" end,
+		DBSet2(ca, "leaveSound", "channel")); y = y - h
 	return y
 end
 

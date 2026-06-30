@@ -67,7 +67,7 @@ local PageEnableConfig = {
     ["Extra Items Bar"] = {
         get = function() local t = Edb(); t = t and t.item and t.item.extraItemsBar; return t and t.enable ~= false end,
         set = function(v) local t = Edb(); if t and t.item and t.item.extraItemsBar then t.item.extraItemsBar.enable = v end end,
-        refresh = function() addon.SafeModuleCall(addon[1].Modules.ExtraItemsBar, "UpdateBars") end,
+        refresh = function() addon.SafeModuleCall(addon[1].Modules.ExtraItemsBar, "ProfileUpdate") end,
     },
     ["Announcement"] = {
         get = function() local t = Edb(); t = t and t.announcement; return t and t.enable ~= false end,
@@ -515,6 +515,13 @@ end
 --  child height and resets scroll to top.
 -------------------------------------------------------------------------------
 local groupHeaders = {}  -- groupLabel -> Frame row
+local SIDEBAR_PAD = 20
+local SPECIAL_ROW_H = 36
+local GROUP_ROW_H = 28
+local CHILD_ROW_H = 28
+local CHILD_INDENT = 16
+local GROUP_GAP = 10
+local SEARCH_GAP = 14
 
 local function ApplySearch(text)
     text = text and strlower(text) or ""
@@ -577,14 +584,6 @@ end
 --    4. Group headers + child page rows (scrollable area)
 --    5. Version text at bottom
 -------------------------------------------------------------------------------
-local SIDEBAR_PAD = 20
-local SPECIAL_ROW_H = 36
-local GROUP_ROW_H = 28
-local CHILD_ROW_H = 28
-local CHILD_INDENT = 16
-local GROUP_GAP = 10
-local SEARCH_GAP = 14
-
 local function CreateSidebarButton(parent, y, pageName, indent, rowH)
     local btn = CreateFrame("Button", nil, parent)
     btn:SetSize(SIDEBAR_W, rowH)

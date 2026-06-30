@@ -290,17 +290,22 @@ function ST:Initialize()
 	self.db = E.db.WT.social.smartTab
 	self.private = E.private.WT.social.smartTab
 
-	self:SecureHook("ChatEdit_CustomTabPressed", "TabPressed")
-
-	for _, frameName in ipairs(_G.CHAT_FRAMES) do
-		local chat = _G[frameName]
-		if chat and chat.editBox then
-			self:SecureHook(chat.editBox, "SecureTabPressed", "SecureTabPressed")
-		end
-	end
-
 	if not self.db.enable then
 		return
+	end
+
+	-- The old ElvUI implementation hooks ChatEditBox:SecureTabPressed and writes
+	-- secure attributes on Blizzard's chat edit box. In modern clients this taints
+	-- ChatFrame1EditBox:SetAttribute() and can block normal chat sending. Keep the
+	-- module's saved settings/events, but do not install the unsafe hook path.
+	if self.private and self.private.allowUnsafeChatEditHooks then
+		self:SecureHook("ChatEdit_CustomTabPressed", "TabPressed")
+		for _, frameName in ipairs(_G.CHAT_FRAMES) do
+			local chat = _G[frameName]
+			if chat and chat.editBox then
+				self:SecureHook(chat.editBox, "SecureTabPressed", "SecureTabPressed")
+			end
+		end
 	end
 
 	self:RefreshWhisperTargets()

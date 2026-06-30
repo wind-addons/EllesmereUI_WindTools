@@ -50,6 +50,24 @@ local function SafeModuleCall(module, method, ...)
 end
 addon.SafeModuleCall = SafeModuleCall
 
+-- WindTools option files were originally written against helper signatures that
+-- take dropdown order before get/set. EllesmereUI.Widgets:Dropdown expects
+-- values, getValue, setValue, order. Normalize both forms in one place so pages
+-- do not crash when a legacy call reaches EUI's widget factory.
+do
+	local Widgets = _G.EllesmereUI and _G.EllesmereUI.Widgets
+	if Widgets and not Widgets._windToolsDropdownCompat then
+		local originalDropdown = Widgets.Dropdown
+		Widgets.Dropdown = function(self, parent, text, yOffset, values, a, b, c, d)
+			if type(a) == "table" and type(b) == "function" then
+				return originalDropdown(self, parent, text, yOffset, values, b, c, a, d)
+			end
+			return originalDropdown(self, parent, text, yOffset, values, a, b, c, d)
+		end
+		Widgets._windToolsDropdownCompat = true
+	end
+end
+
 local function DBGet(t, k)
 	return function() return t and t[k] end
 end
@@ -753,7 +771,7 @@ local function CVarSetNum(name)
 	return function(v) C_CVar_SetCVar(name, tostring(v)) end
 end
 local function CVarGetStr(name)
-	return function() return C_CVar_GetCVar(name) end
+	return function() return C_CVar_GetCVar(name) or "" end
 end
 local function CVarSetStr(name)
 	return function(v) C_CVar_SetCVar(name, tostring(v)) end
