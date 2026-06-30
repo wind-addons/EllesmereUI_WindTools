@@ -235,7 +235,7 @@ end
 
 ---Apply a transparent black backdrop + 1px border to a frame, EllesmereUI style.
 ---@param frame Frame The frame to style
-local function ApplyBackdrop(frame)
+local function ApplyBackdrop(frame, createBorder)
 	if not PP then
 		return
 	end
@@ -249,8 +249,12 @@ local function ApplyBackdrop(frame)
 		bg:SetTexelSnappingBias(0)
 	end
 	frame.bg = bg
-	-- 1px border via EllesmereUI PP system
-	PP.CreateBorder(frame, 0, 0, 0, 1, 1, "BORDER", 0)
+	-- 1px border via EllesmereUI PP system. Buttons defer border creation to
+	-- BLOCK style only (see UpdateButton), so TEXT mode never has a border
+	-- object at all instead of relying on hiding one after the fact.
+	if createBorder ~= false then
+		PP.CreateBorder(frame, 0, 0, 0, 1, 1, "BORDER", 0)
+	end
 end
 
 ---Set border color on a frame styled with ApplyBackdrop.
@@ -299,7 +303,7 @@ function CB:UpdateButton(name, func, anchorPoint, x, y, color, tex, tooltip, tip
 
 		button.colorBlock = button:CreateTexture(nil, "ARTWORK")
 		button.colorBlock:SetAllPoints()
-		ApplyBackdrop(button)
+		ApplyBackdrop(button, false)
 
 		button.text = button:CreateFontString(nil, "OVERLAY")
 		button.text:SetPoint("CENTER", button, "CENTER", 0, 0)
@@ -365,6 +369,14 @@ function CB:UpdateButton(name, func, anchorPoint, x, y, color, tex, tooltip, tip
 
 		self.bar[name].colorBlock:Show()
 		self.bar[name].bg:Show()
+		if PP then
+			if PP.GetBorders and not PP.GetBorders(self.bar[name]) and PP.CreateBorder then
+				PP.CreateBorder(self.bar[name], 0, 0, 0, 1, 1, "BORDER", 0)
+			end
+			if PP.ShowBorder then
+				PP.ShowBorder(self.bar[name])
+			end
+		end
 		self.bar[name].text:Hide()
 	else
 		local buttonText = self.db.color and color and C.StringWithRGB(abbr, color) or abbr
@@ -375,6 +387,9 @@ function CB:UpdateButton(name, func, anchorPoint, x, y, color, tex, tooltip, tip
 
 		self.bar[name].colorBlock:Hide()
 		self.bar[name].bg:Hide()
+		if PP and PP.HideBorder then
+			PP.HideBorder(self.bar[name])
+		end
 	end
 
 	-- Update size and position (EllesmereUI PP for pixel-perfect scaling)
@@ -420,14 +435,32 @@ function CB:GetWorldChannelID()
 end
 
 function CB:UpdateBar()
-	if not self.bar then
+	-- Honor the enable flag: this is the single refresh entry used by the
+	-- options panel (afterCB), so toggling Enable must show/hide the bar live.
+	if not self.db.enable then
+		if self.bar then
+			self.bar:Hide()
+		end
 		return
+	end
+
+	-- Lazily create the bar if it does not exist yet (e.g. user just flipped
+	-- Enable on from the options panel; Initialize() may not have run).
+	if not self.bar then
+		CB:CreateBar()
+		CB:RegisterMover()
+		if self.db.autoHide then
+			self:RegisterEvent("GROUP_ROSTER_UPDATE", "UpdateBar")
+			self:RegisterEvent("PLAYER_GUILD_UPDATE", "UpdateBar")
+		end
 	end
 
 	if InCombatLockdown() then
 		F.TaskManager:AfterCombat(self.UpdateBar, self)
 		return
 	end
+
+	self.bar:Show()
 
 	local numberOfButtons = 0
 	local orientation, hasBackdrop, backdropSpacing = self.db.orientation, self.db.backdrop, self.db.backdropSpacing
@@ -624,8 +657,14 @@ function CB:UpdateBar()
 
 	if self.db.backdrop then
 		self.bar.bg:Show()
+		if PP and PP.ShowBorder then
+			PP.ShowBorder(self.bar)
+		end
 	else
 		self.bar.bg:Hide()
+		if PP and PP.HideBorder then
+			PP.HideBorder(self.bar)
+		end
 	end
 end
 
@@ -664,16 +703,30 @@ end
 ---cannot fail with a nil anchor (which would silently break the whole module
 ---inside SafeCall).
 local function ResolveDefaultAnchor()
-	-- EllesmereUIChat stores per-frame data via EllesmereUI._chatCFD(cf).bg
 	local chatFrame = _G.ChatFrame1
+	-- Prefer EllesmereUIChat's unified background panel when it is actually
+	-- driving the chat (it spans chat + edit box as one panel). We MUST verify
+	-- the panel is live, because a third-party chat addon (e.g. Chattynator)
+	-- can leave a stale/hidden bg around whose SetAllPoints no longer reflects
+	-- the real chat area.
 	if chatFrame and EUI and EUI._chatCFD then
 		local ok, data = pcall(EUI._chatCFD, chatFrame)
 		if ok and data and data.bg then
-			-- Anchor above the chat background's top-left corner
-			return data.bg, "TOPLEFT", "TOPLEFT", 6, 30
+			local bg = data.bg
+			local live = bg.IsShown and bg:IsShown() and bg.GetWidth and bg:GetWidth() > 0
+			if live then
+				-- bar.BOTTOMLEFT on bg.TOPLEFT => bar sits just above the panel.
+				return bg, "TOPLEFT", "TOPLEFT", 6, 30
+			end
 		end
 	end
-	-- Fallback: bottom-left of screen, a bit above the very bottom
+	-- ChatFrame1 is the Blizzard chat frame every chat addon is built on, so it
+	-- is the most reliable anchor when EllesmereUIChat's panel is absent or
+	-- stale (e.g. Chattynator active).
+	if chatFrame and chatFrame.GetWidth and chatFrame:GetWidth() > 0 then
+		return chatFrame, "TOPLEFT", "TOPLEFT", 6, 30
+	end
+	-- Last-resort fallback.
 	return _G.UIParent, "BOTTOMLEFT", "BOTTOMLEFT", 6, 180
 end
 
