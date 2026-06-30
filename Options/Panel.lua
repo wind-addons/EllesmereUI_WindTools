@@ -514,13 +514,13 @@ end
 --  visible items sequentially within sidebarScrollChild. Adjusts scroll
 --  child height and resets scroll to top.
 -------------------------------------------------------------------------------
-local groupHeaders = {}  -- groupLabel -> fontstring
+local groupHeaders = {}  -- groupLabel -> Frame row
 
 local function ApplySearch(text)
     text = text and strlower(text) or ""
     if not sidebarScrollChild then return end
 
-    local y = 0
+    local y = 6  -- top padding
     local firstVisibleGroup = true
 
     for _, group in ipairs(addon.SidebarGroups or {}) do
@@ -547,14 +547,14 @@ local function ApplySearch(text)
 
             if header then
                 header:ClearAllPoints()
-                header:SetPoint("TOPLEFT", sidebarScrollChild, "TOPLEFT", SIDEBAR_PAD, -y)
+                header:SetPoint("TOPLEFT", sidebarScrollChild, "TOPLEFT", 0, -y)
                 header:Show()
                 y = y + GROUP_ROW_H
             end
 
             for _, btn in ipairs(visibleChildren) do
                 btn:ClearAllPoints()
-                btn:SetPoint("TOPLEFT", sidebarScrollChild, "TOPLEFT", SIDEBAR_PAD, -y)
+                btn:SetPoint("TOPLEFT", sidebarScrollChild, "TOPLEFT", 0, -y)
                 btn:Show()
                 y = y + CHILD_ROW_H
             end
@@ -587,8 +587,8 @@ local SEARCH_GAP = 14
 
 local function CreateSidebarButton(parent, y, pageName, indent, rowH)
     local btn = CreateFrame("Button", nil, parent)
-    btn:SetSize(SIDEBAR_W - SIDEBAR_PAD, rowH)
-    btn:SetPoint("TOPLEFT", parent, "TOPLEFT", SIDEBAR_PAD, y)
+    btn:SetSize(SIDEBAR_W, rowH)
+    btn:SetPoint("TOPLEFT", parent, "TOPLEFT", 0, y)
     btn:SetFrameLevel(parent:GetFrameLevel() + 1)
 
     DecorateSidebarButton(btn)
@@ -598,8 +598,8 @@ local function CreateSidebarButton(parent, y, pageName, indent, rowH)
     btn._notEnabled = false
 
     local label = MakeFont(btn, 14, nil, NAV_ENABLED_TEXT.r, NAV_ENABLED_TEXT.g, NAV_ENABLED_TEXT.b, NAV_ENABLED_TEXT.a)
-    local labelRightPad = hasEnable and 28 or 0
-    label:SetPoint("LEFT", btn, "LEFT", indent, 0)
+    local labelRightPad = hasEnable and 38 or 0
+    label:SetPoint("LEFT", btn, "LEFT", SIDEBAR_PAD + indent, 0)
     label:SetPoint("RIGHT", btn, "RIGHT", -labelRightPad, 0)
     label:SetText(L(pageName))
     label:SetJustifyH("LEFT")
@@ -612,7 +612,7 @@ local function CreateSidebarButton(parent, y, pageName, indent, rowH)
     if hasEnable then
         local pwrBtn = CreateFrame("Button", nil, btn)
         pwrBtn:SetSize(20, 20)
-        pwrBtn:SetPoint("RIGHT", btn, "RIGHT", -4, 0)
+        pwrBtn:SetPoint("RIGHT", btn, "RIGHT", -18, 0)
         pwrBtn:SetFrameLevel(btn:GetFrameLevel() + 5)
 
         local pwrTex = pwrBtn:CreateTexture(nil, "OVERLAY")
@@ -870,18 +870,22 @@ local function BuildSidebar(sidebar)
     end)
 
     -- 5. Group headers + child buttons (on sidebarScrollChild)
-    local contentY = 0
+    local contentY = 6  -- top padding before first group
     local sidebarGroups = addon.SidebarGroups or {}
     for gi, group in ipairs(sidebarGroups) do
         if gi > 1 then
             contentY = contentY + GROUP_GAP
         end
 
-        local headerLabel = MakeFont(sidebarScrollChild, 15, nil, eg.r, eg.g, eg.b, 0.85)
-        headerLabel:SetPoint("TOPLEFT", sidebarScrollChild, "TOPLEFT", SIDEBAR_PAD, -contentY)
+        -- Group header as a full-width Frame row (like EUI)
+        local headerRow = CreateFrame("Frame", nil, sidebarScrollChild)
+        headerRow:SetSize(SIDEBAR_W, GROUP_ROW_H)
+        headerRow:SetPoint("TOPLEFT", sidebarScrollChild, "TOPLEFT", 0, -contentY)
+        local headerLabel = MakeFont(headerRow, 15, nil, eg.r, eg.g, eg.b, 0.85)
+        headerLabel:SetPoint("LEFT", headerRow, "LEFT", SIDEBAR_PAD, 0)
         headerLabel:SetText(L(group.label))
         headerLabel:SetJustifyH("LEFT")
-        groupHeaders[group.label] = headerLabel
+        groupHeaders[group.label] = headerRow
         contentY = contentY + GROUP_ROW_H
 
         for _, pageName in ipairs(group.pages) do
