@@ -15,12 +15,6 @@ local pairs = pairs
 local ipairs = ipairs
 local strsplit = strsplit
 
-local ANCHOR_CORNER_VALUES = {
-	TOPLEFT = "TOPLEFT", TOPRIGHT = "TOPRIGHT",
-	BOTTOMLEFT = "BOTTOMLEFT", BOTTOMRIGHT = "BOTTOMRIGHT",
-}
-local ANCHOR_CORNER_ORDER = { "TOPLEFT", "TOPRIGHT", "BOTTOMLEFT", "BOTTOMRIGHT" }
-
 local BAR_LABELS = { [1]="Bar 1", [2]="Bar 2", [3]="Bar 3", [4]="Bar 4", [5]="Bar 5" }
 local BAR_ORDER = { 1, 2, 3, 4, 5 }
 
@@ -60,6 +54,23 @@ local _selectedBar = 1
 
 local OUTLINE_VALUES = { ["none"]="Drop Shadow", ["outline"]="Outline", ["thick"]="Thick Outline" }
 local OUTLINE_ORDER = { "none", "outline", "thick" }
+
+local function SetPreviewTexCoords(tex, width, height)
+	if not tex then return end
+	local left, right, top, bottom = 0.08, 0.92, 0.08, 0.92
+	width = width or 1
+	height = height or 1
+	if width > height then
+		local offset = (bottom - top) * (1 - height / width) / 2
+		top = top + offset
+		bottom = bottom - offset
+	elseif width < height then
+		local offset = (right - left) * (1 - width / height) / 2
+		left = left + offset
+		right = right - offset
+	end
+	tex:SetTexCoord(left, right, top, bottom)
+end
 
 local function AttachCog(rgn, popupTitle, popupRows)
 	if not rgn or not EllesmereUI.BuildCogPopup then return end
@@ -144,12 +155,17 @@ addon.RegisterOptionBuilder("extraItemsBar", function(parent, y, cat)
 
 		-- Pre-create 12 button frames
 		local buttons = {}
+		local PP = EllesmereUI.PP or EllesmereUI.PanelPP
 		for i = 1, 12 do
 			local bf = CreateFrame("Frame", nil, pf)
 			bf:SetSize(bw, bh); bf:Hide()
 			local icon = bf:CreateTexture(nil, "ARTWORK")
 			icon:SetAllPoints()
 			icon:SetColorTexture(0.06, 0.08, 0.10, 1)
+			SetPreviewTexCoords(icon, bw, bh)
+			if PP and PP.CreateBorder then
+				PP.CreateBorder(bf, 0, 0, 0, 1, 1, "BORDER", 0)
+			end
 			local countFS = bf:CreateFontString(nil, "OVERLAY")
 			countFS:SetFont("Fonts\\FRIZQT__.TTF", 10, "OUTLINE")
 			countFS:SetTextColor(1, 1, 1, 0.8)
@@ -240,10 +256,11 @@ addon.RegisterOptionBuilder("extraItemsBar", function(parent, y, cat)
 					end
 					e.frame:SetSize(_bw, _bh); e.frame:ClearAllPoints()
 					e.frame:SetPoint("TOPLEFT", self, "TOPLEFT", floor(x), floor(_y))
+					SetPreviewTexCoords(e.icon, _bw, _bh)
 					local realBtn = realBar and realBar.buttons and realBar.buttons[i]
 					if realBtn and realBtn:IsShown() and realBtn.tex then
 						local tex = realBtn.tex:GetTexture()
-						if tex then e.icon:SetTexture(tex); e.icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+						if tex then e.icon:SetTexture(tex); SetPreviewTexCoords(e.icon, _bw, _bh)
 						else e.icon:SetColorTexture(0.06, 0.08, 0.10, 1) end
 						e.count:SetText(realBtn.count and realBtn.count:GetText() or "")
 					else
@@ -428,17 +445,14 @@ addon.RegisterOptionBuilder("extraItemsBar", function(parent, y, cat)
 
 		local anchorRow
 		anchorRow, h = Widgets:DualRow(parent, y,
-			{ type="dropdown", text="Anchor Point",
-			  values = ANCHOR_CORNER_VALUES, order = ANCHOR_CORNER_ORDER,
-			  getValue=SGet("anchor"), setValue=SSet("anchor"),
-			  tooltip="The first button anchors itself to this point on the bar.", disabled=barDis },
 			{ type="dropdown", text="Button Groups",
 			  values={ ["_placeholder"]="..." }, order={ "_placeholder" },
 			  getValue=function() return "_placeholder" end,
-			  setValue=function() end, disabled=barDis }
+			  setValue=function() end, disabled=barDis },
+			{ type="spacer" }
 		); y = y - h
 		do
-			local rgn = anchorRow and anchorRow._rightRegion
+			local rgn = anchorRow and anchorRow._leftRegion
 			if rgn and rgn._control then rgn._control:Hide() end
 			local PP = EllesmereUI.PP or EllesmereUI.PanelPP
 			local function includeHas(key)
