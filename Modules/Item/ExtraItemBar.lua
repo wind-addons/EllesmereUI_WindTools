@@ -25,6 +25,7 @@ local GameTooltip = _G.GameTooltip
 local GetBindingKey = GetBindingKey
 local GetInventoryItemCooldown = GetInventoryItemCooldown
 local GetInventoryItemID = GetInventoryItemID
+local GetInventoryItemTexture = GetInventoryItemTexture
 local GetQuestLogSpecialItemCooldown = GetQuestLogSpecialItemCooldown
 local GetQuestLogSpecialItemInfo = GetQuestLogSpecialItemInfo
 local GetTime = GetTime
@@ -297,8 +298,35 @@ local function SafeRegisterEvent(module, event, method)
 	pcall(module.RegisterEvent, module, event, method)
 end
 
+-- 把存档里的锚点 point 规范化为左对齐，保证 bar 向右增长。
+-- 水平强制 LEFT，垂直分量保留（BOTTOM→BOTTOMLEFT, TOP→TOPLEFT）。
+local function NormalizeAnchorLeft(point)
+	if not point or point == "" then
+		return "BOTTOMLEFT"
+	end
+	if point == "CENTER" then
+		return "LEFT"
+	end
+	if point == "BOTTOM" then
+		return "BOTTOMLEFT"
+	end
+	if point == "TOP" then
+		return "TOPLEFT"
+	end
+	if point == "RIGHT" then
+		return "LEFT"
+	end
+	if point == "TOPRIGHT" then
+		return "TOPLEFT"
+	end
+	if point == "BOTTOMRIGHT" then
+		return "BOTTOMLEFT"
+	end
+	return point
+end
+
 local function SetDefaultBarPosition(bar, id)
-	bar:SetPoint("BOTTOM", E.UIParent, "BOTTOM", 0, 220 + (id - 1) * 42)
+	bar:SetPoint("BOTTOMLEFT", E.UIParent, "BOTTOMLEFT", 0, 220 + (id - 1) * 42)
 end
 
 do
@@ -401,10 +429,22 @@ function EB:SetUpButton(button, itemData, slotID, waitGroup)
 	elseif slotID then
 		button.slotID = slotID
 
+		-- 同步取装备槽图标：首次加载时立即可用，规避 item:GetItemIcon() 在
+		-- itemInfo 未完全缓存时返回 nil（图标发黑，需 reload 才恢复）的问题。
+		local slotIcon = GetInventoryItemTexture("player", slotID)
+		if slotIcon then
+			button.tex:SetTexture(slotIcon)
+		end
+
 		waitGroup.count = waitGroup.count + 1
 		async.WithItemSlotID(slotID, function(item)
 			button.itemName = item:GetItemName()
-			button.tex:SetTexture(item:GetItemIcon())
+			if not slotIcon then
+				local icon = item:GetItemIcon()
+				if icon then
+					button.tex:SetTexture(icon)
+				end
+			end
 
 			local color = item:GetItemQualityColor()
 
@@ -1152,7 +1192,9 @@ function EB:RegisterMover(id)
 				local pos = E.global.WT.item.extraItemsBar["bar" .. id].position
 				bar:ClearAllPoints()
 				if pos and pos.point and pos.x and pos.y then
-					bar:SetPoint(pos.point, E.UIParent, pos.relPoint or pos.point, pos.x, pos.y)
+					local pt = NormalizeAnchorLeft(pos.point)
+					local relPt = NormalizeAnchorLeft(pos.relPoint or pos.point)
+					bar:SetPoint(pt, E.UIParent, relPt, pos.x, pos.y)
 				else
 					SetDefaultBarPosition(bar, id)
 				end
@@ -1277,7 +1319,9 @@ function EB:ApplyDefaultPosition(id)
 	local pos = E.global.WT.item.extraItemsBar["bar" .. id].position
 	bar:ClearAllPoints()
 	if pos and pos.point and pos.x and pos.y then
-		bar:SetPoint(pos.point, E.UIParent, pos.relPoint or pos.point, pos.x, pos.y)
+		local pt = NormalizeAnchorLeft(pos.point)
+		local relPt = NormalizeAnchorLeft(pos.relPoint or pos.point)
+		bar:SetPoint(pt, E.UIParent, relPt, pos.x, pos.y)
 	else
 		SetDefaultBarPosition(bar, id)
 	end
