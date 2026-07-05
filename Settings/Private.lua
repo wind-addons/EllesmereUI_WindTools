@@ -868,6 +868,7 @@ V.social = {
 	---@class PrivateDB.social.smartTab
 	smartTab = {
 		whisperTargets = {},
+		allowUnsafeChatEditHooks = true,
 	},
 }
 

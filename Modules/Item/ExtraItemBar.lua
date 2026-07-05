@@ -189,12 +189,6 @@ local function SetIconTexCoords(tex, width, height)
 	tex:SetTexCoord(left, right, top, bottom)
 end
 
-local function NotifyBarResized(id)
-	if EUI and EUI.NotifyElementResized then
-		EUI.NotifyElementResized("WTExtraItemsBar" .. id)
-	end
-end
-
 local function NormalizeVisibility(visibility)
 	visibility = visibility or "show"
 	-- Old WindTools defaults used strings like "[petbattle]hide;show". Blizzard's
@@ -296,33 +290,6 @@ end
 local function SafeRegisterEvent(module, event, method)
 	if not module or not event then return end
 	pcall(module.RegisterEvent, module, event, method)
-end
-
--- 把存档里的锚点 point 规范化为左对齐，保证 bar 向右增长。
--- 水平强制 LEFT，垂直分量保留（BOTTOM→BOTTOMLEFT, TOP→TOPLEFT）。
-local function NormalizeAnchorLeft(point)
-	if not point or point == "" then
-		return "BOTTOMLEFT"
-	end
-	if point == "CENTER" then
-		return "LEFT"
-	end
-	if point == "BOTTOM" then
-		return "BOTTOMLEFT"
-	end
-	if point == "TOP" then
-		return "TOPLEFT"
-	end
-	if point == "RIGHT" then
-		return "LEFT"
-	end
-	if point == "TOPRIGHT" then
-		return "TOPLEFT"
-	end
-	if point == "BOTTOMRIGHT" then
-		return "BOTTOMLEFT"
-	end
-	return point
 end
 
 local function SetDefaultBarPosition(bar, id)
@@ -972,7 +939,6 @@ function EB:UpdateBar(id)
 	local newBarWidth = 2 * barDB.backdropSpacing + numCols * barDB.buttonSize + (numCols - 1) * barDB.spacing
 	local newBarHeight = 2 * barDB.backdropSpacing + numRows * barDB.buttonSize + (numRows - 1) * barDB.spacing
 	bar:SetSize(newBarWidth, newBarHeight)
-	NotifyBarResized(id)
 
 	if displayButtons < 12 then
 		for hideButtonID = displayButtons + 1, 12 do
@@ -1164,14 +1130,29 @@ function EB:RegisterMover(id)
 				return EB.bars[id]:GetWidth(), EB.bars[id]:GetHeight()
 			end,
 			savePos = function(_, point, relPoint, x, y)
-				if point and x and y then
-					E.global.WT.item.extraItemsBar["bar" .. id].position = {
-						point = point,
-						relPoint = relPoint or point,
-						x = x,
-						y = y,
-					}
+				if not point or x == nil or y == nil then
+					return
 				end
+				-- EllesmereUI 的 SaveBarPosition 会先把坐标转成 CENTER/CENTER
+				-- （bar 中心相对 UIParent CENTER 的偏移，UIParent scale 下）。这里
+				-- 再转成 BOTTOMLEFT（bar 左下角相对 UIParent 左下角），让 SetSize
+				-- 时 bar 左下角固定、向右上增长，而非从中心向四周扩展。
+				local bar = EB.bars[id]
+				local uiS = UIParent:GetEffectiveScale()
+				local bS = bar and bar:GetEffectiveScale() or uiS
+				local ratio = bS / uiS
+				local w = (bar and bar:GetWidth() or 0) * ratio
+				local h = (bar and bar:GetHeight() or 0) * ratio
+				local uiW = UIParent:GetWidth()
+				local uiH = UIParent:GetHeight()
+				local blX = uiW / 2 + x - w / 2
+				local blY = uiH / 2 + y - h / 2
+				E.global.WT.item.extraItemsBar["bar" .. id].position = {
+					point = "BOTTOMLEFT",
+					relPoint = "BOTTOMLEFT",
+					x = blX,
+					y = blY,
+				}
 			end,
 			loadPos = function()
 				local pos = E.global.WT.item.extraItemsBar["bar" .. id].position
@@ -1191,11 +1172,10 @@ function EB:RegisterMover(id)
 				if not bar then return end
 				local pos = E.global.WT.item.extraItemsBar["bar" .. id].position
 				bar:ClearAllPoints()
-				if pos and pos.point and pos.x and pos.y then
-					local pt = NormalizeAnchorLeft(pos.point)
-					local relPt = NormalizeAnchorLeft(pos.relPoint or pos.point)
-					bar:SetPoint(pt, E.UIParent, relPt, pos.x, pos.y)
+				if pos and pos.point == "BOTTOMLEFT" and pos.x and pos.y then
+					bar:SetPoint("BOTTOMLEFT", E.UIParent, "BOTTOMLEFT", pos.x, pos.y)
 				else
+					E.global.WT.item.extraItemsBar["bar" .. id].position = nil
 					SetDefaultBarPosition(bar, id)
 				end
 			end,
@@ -1318,11 +1298,11 @@ function EB:ApplyDefaultPosition(id)
 
 	local pos = E.global.WT.item.extraItemsBar["bar" .. id].position
 	bar:ClearAllPoints()
-	if pos and pos.point and pos.x and pos.y then
-		local pt = NormalizeAnchorLeft(pos.point)
-		local relPt = NormalizeAnchorLeft(pos.relPoint or pos.point)
-		bar:SetPoint(pt, E.UIParent, relPt, pos.x, pos.y)
+	if pos and pos.point == "BOTTOMLEFT" and pos.x and pos.y then
+		bar:SetPoint("BOTTOMLEFT", E.UIParent, "BOTTOMLEFT", pos.x, pos.y)
 	else
+		-- 旧存档（CENTER 等）的 x/y 与 BOTTOMLEFT 不兼容，清除并重置默认。
+		E.global.WT.item.extraItemsBar["bar" .. id].position = nil
 		SetDefaultBarPosition(bar, id)
 	end
 end

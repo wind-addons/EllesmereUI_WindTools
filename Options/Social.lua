@@ -155,6 +155,15 @@ local function BuildSmartTab(parent, y, cat)
 	local st = E.db.WT.social.smartTab
 	local stDis = function() return not st.enable end
 	_, h = Widgets:SectionHeader(parent, L("SmartTab"), y); y = y - h
+	local stPriv = E.private and E.private.WT and E.private.WT.social
+		and E.private.WT.social.smartTab or {}
+	_, h = Widgets:Toggle(parent, "Enable Tab Switching", y,
+		function() return stPriv.allowUnsafeChatEditHooks ~= false end,
+		function(v)
+			stPriv.allowUnsafeChatEditHooks = v and true or false
+			print("|cFFFF6030[WindTools]|r SmartTab Tab-switching changed — /reload to apply.")
+		end,
+		"Cycle chat channels with Tab. WARNING: hooks Blizzard's chat edit box; in modern clients this can taint it and block sending chat. Disable if you get chat send failures."); y = y - h
 	_, h = Widgets:SectionHeader(parent, L("Channel"), y); y = y - h
 	do
 		local channelItems = {
