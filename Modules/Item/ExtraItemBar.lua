@@ -200,6 +200,7 @@ end
 
 local DEFAULT_BAR_DB = {
 	enable = true,
+	hideWhenEmpty = true,
 	mouseOver = false,
 	globalFade = false,
 	visibility = "[petbattle] hide; show",
@@ -932,6 +933,26 @@ function EB:UpdateBar(id)
 	end
 
 	local populatedButtons = buttonID - 1
+
+	if populatedButtons == 0 and barDB.hideWhenEmpty then
+		if bar.waitGroup and bar.waitGroup.ticker then
+			bar.waitGroup.ticker:Cancel()
+			bar.waitGroup = nil
+		end
+		if bar.register then
+			UnregisterStateDriver(bar, "visibility")
+			bar.register = false
+			bar.registeredVisibility = nil
+		end
+		for i = 1, 12 do
+			if bar.buttons and bar.buttons[i] then
+				bar.buttons[i]:Hide()
+			end
+		end
+		bar:Hide()
+		return
+	end
+
 	local displayButtons = populatedButtons > 0 and populatedButtons or (barDB.numButtons or 1)
 	if displayButtons > 12 then displayButtons = 12 end
 	local numRows = ceil(displayButtons / barDB.buttonsPerRow)

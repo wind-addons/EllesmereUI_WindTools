@@ -542,13 +542,20 @@ addon.RegisterOptionBuilder("extraItemsBar", function(parent, y, cat)
 		vr2, h = Widgets:DualRow(parent, y,
 			{ type="toggle", text="Tooltip",
 			  getValue=SGet("tooltip"), setValue=SSet("tooltip"), disabled=barDis },
-			{ type="spacer" }
+			{ type="toggle", text="Hide When Empty", tooltip="Hide the bar when there are no matching items to show.",
+			  getValue=SGet("hideWhenEmpty"), setValue=SSet("hideWhenEmpty"), disabled=barDis }
 		); y = y - h
 		if vr2 and vr2._leftRegion then EllesmereUI.BuildSyncIcon({
 			region=vr2._leftRegion, tooltip="Apply tooltip to all Bars",
 			onClick=function() for i=1,5 do local d=db["bar"..i]; if d then d.tooltip=SB().tooltip end end; updateBars(); addon.RefreshOptions() end,
 			isSynced=function() local v=SB().tooltip; for i=1,5 do if db["bar"..i].enable and db["bar"..i].tooltip~=v then return false end end; return true end,
 			multiApply={ elementKeys={1,2,3,4,5}, elementLabels={[1]="Bar 1",[2]="Bar 2",[3]="Bar 3",[4]="Bar 4",[5]="Bar 5"}, getCurrentKey=function() return selectedBar end, onApply=function(keys) for _,i in ipairs(keys) do local d=db["bar"..i]; if d then d.tooltip=SB().tooltip end end; updateBars(); addon.RefreshOptions() end },
+		}) end
+		if vr2 and vr2._rightRegion then EllesmereUI.BuildSyncIcon({
+			region=vr2._rightRegion, tooltip="Apply hide-when-empty to all Bars",
+			onClick=function() for i=1,5 do local d=db["bar"..i]; if d then d.hideWhenEmpty=SB().hideWhenEmpty end end; updateBars(); addon.RefreshOptions() end,
+			isSynced=function() local v=SB().hideWhenEmpty; for i=1,5 do if db["bar"..i].enable and db["bar"..i].hideWhenEmpty~=v then return false end end; return true end,
+			multiApply={ elementKeys={1,2,3,4,5}, elementLabels={[1]="Bar 1",[2]="Bar 2",[3]="Bar 3",[4]="Bar 4",[5]="Bar 5"}, getCurrentKey=function() return selectedBar end, onApply=function(keys) for _,i in ipairs(keys) do local d=db["bar"..i]; if d then d.hideWhenEmpty=SB().hideWhenEmpty end end; updateBars(); addon.RefreshOptions() end },
 		}) end
 	end
 
