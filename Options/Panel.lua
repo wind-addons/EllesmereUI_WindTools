@@ -139,6 +139,30 @@ local function IsPageEnabled(pageName)
     return result
 end
 
+------------------------------------------------------------------------------
+--  Page availability
+--  A page is only available when the module that backs it is actually loaded
+--  (see Modules/Load_Modules.xml). Pages for modules that have not been
+--  ported yet stay visible in the sidebar but are disabled: they render
+--  grayed out and cannot be selected.
+--  Information/Advanced are not feature pages: they only display info or
+--  drive core behavior that lives in Core.lua, so they stay available.
+------------------------------------------------------------------------------
+local PAGE_MODULES = {
+    ["Extra Items Bar"] = "ExtraItemsBar",
+    ["Chat Bar"]         = "ChatBar",
+    ["Smart Tab"]        = "SmartTab",
+}
+
+local function IsPageAvailable(pageName)
+    if pageName == "Information" or pageName == "Advanced" then return true end
+    local moduleName = PAGE_MODULES[pageName]
+    if not moduleName then return false end
+    local W = addon[1]
+    local mod = W and W.Modules and W.Modules[moduleName]
+    return mod ~= nil and type(mod.Initialize) == "function"
+end
+
 -------------------------------------------------------------------------------
 --  State
 -------------------------------------------------------------------------------
@@ -417,8 +441,14 @@ end
 -------------------------------------------------------------------------------
 local function RefreshSidebarStates()
     for pageName, btn in pairs(sidebarButtons) do
-        if PageEnableConfig[pageName] then
-            btn._notEnabled = not IsPageEnabled(pageName)
+        if btn._available then
+            if PageEnableConfig[pageName] then
+                btn._notEnabled = not IsPageEnabled(pageName)
+            else
+                btn._notEnabled = false
+            end
+        else
+            btn._notEnabled = true
         end
     end
     UpdateSidebarHighlight()
@@ -429,6 +459,7 @@ end
 -------------------------------------------------------------------------------
 local function SelectPage(pageName)
     if not pageName or pageName == activePage then return end
+    if not IsPageAvailable(pageName) then return end
 
     local group = addon.OptionGroupByPage and addon.OptionGroupByPage[pageName]
     if not group then return end
@@ -592,9 +623,11 @@ local function CreateSidebarButton(parent, y, pageName, indent, rowH)
 
     DecorateSidebarButton(btn)
 
-    local hasEnable = PageEnableConfig[pageName] ~= nil
+    local available = IsPageAvailable(pageName)
+    local hasEnable = available and PageEnableConfig[pageName] ~= nil
+    btn._available = available
     btn._hasEnable = hasEnable
-    btn._notEnabled = false
+    btn._notEnabled = not available
 
     local label = MakeFont(btn, 14, nil, NAV_ENABLED_TEXT.r, NAV_ENABLED_TEXT.g, NAV_ENABLED_TEXT.b, NAV_ENABLED_TEXT.a)
     local labelRightPad = hasEnable and 38 or 0
@@ -663,7 +696,15 @@ local function CreateSidebarButton(parent, y, pageName, indent, rowH)
     end
 
     btn:SetScript("OnEnter", function(self)
-        if self._notEnabled then return end
+        if self._notEnabled then
+            if not self._available then
+                local ee = EUI()
+                if ee and ee.ShowWidgetTooltip then
+                    ee.ShowWidgetTooltip(self, L("This feature is not available yet."))
+                end
+            end
+            return
+        end
         if activePage ~= pageName then
             hlTex:SetAlpha(0.06)
             self._hoverGlow:Show()
@@ -672,6 +713,8 @@ local function CreateSidebarButton(parent, y, pageName, indent, rowH)
         end
     end)
     btn:SetScript("OnLeave", function(self)
+        local ee = EUI()
+        if ee and ee.HideWidgetTooltip then ee.HideWidgetTooltip(self) end
         hlTex:SetAlpha(0)
         self._hoverGlow:Hide()
         self._hoverIndicator:Hide()
@@ -1282,16 +1325,33 @@ function W:ShowOptions(page)
     RefreshSidebarStates()
 
     local target = ResolvePage(page)
-    if target and IsPageEnabled(target) then
+    if target and IsPageAvailable(target) and IsPageEnabled(target) then
         -- Force selection even if same page (first open)
         activePage = nil
         SelectPage(target)
     elseif not activePage then
-        -- Default to first special page (Information), or first grouped page
+        -- Default to first available special page, or first available
+        -- grouped page (skips pages whose modules are not loaded).
         local specialPages = addon.SpecialPages or {}
         local sidebarGroups = addon.SidebarGroups or {}
-        local firstPage = specialPages[1]
-            or (sidebarGroups[1] and sidebarGroups[1].pages and sidebarGroups[1].pages[1])
+        local firstPage
+        for _, name in ipairs(specialPages) do
+            if IsPageAvailable(name) then
+                firstPage = name
+                break
+            end
+        end
+        if not firstPage then
+            for _, group in ipairs(sidebarGroups) do
+                for _, name in ipairs(group.pages or {}) do
+                    if IsPageAvailable(name) then
+                        firstPage = name
+                        break
+                    end
+                end
+                if firstPage then break end
+            end
+        end
         if firstPage then
             SelectPage(firstPage)
         end
