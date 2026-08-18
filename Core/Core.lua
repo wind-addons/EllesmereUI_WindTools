@@ -199,8 +199,16 @@ end
 
 -- Check install version, show changelog and run update scripts
 function W:ChangelogReadAlert()
-	local readVer = E.global.WT.changelogRead and tonumber(E.global.WT.changelogRead) or 0
-	local currentVer = tonumber(W.Version)
+	local function versionValue(version)
+		local major, minor, patch = tostring(version):match("^(%d+)%.(%d+)%.?(%d*)")
+		if not major then
+			return tonumber(version) or 0
+		end
+		return tonumber(major) * 1000000 + tonumber(minor) * 1000 + (tonumber(patch) or 0)
+	end
+
+	local readVer = versionValue(E.global.WT.changelogRead)
+	local currentVer = versionValue(W.Version)
 	if readVer < currentVer then
 		if E.global.WT.core.changlogPopup and not InCombatLockdown() then
 			E:StaticPopup_Show("WINDTOOLS_OPEN_CHANGELOG")

@@ -2,18 +2,21 @@ import os
 import re
 from slpp import slpp as lua
 
-# 找到最新的更新文档
-latest_version = 0
-for _, _, files in os.walk("Core/Changelog", topdown=False):
-    for file in files:
-        version = re.sub(r"(\.lua)|(^.*\.xml)", "", file)
-        if version and not version == "_template":
-            version = float(version)
-            if version > latest_version:
-                latest_version = version
+# Only root-level semantic-version files are current releases; Previous/ contains historical records.
+latest_version = None
+for file in os.listdir("Core/Changelog"):
+    if not file.endswith(".lua") or file == "_template.lua":
+        continue
+    match = re.fullmatch(r"(\d+)\.(\d+)\.(\d+)", os.path.splitext(file)[0])
+    if not match:
+        continue
+    version = tuple(int(part) for part in match.groups())
+    if latest_version is None or version > latest_version:
+        latest_version = version
 
 # 提取更新记录的 lua 字符串
-changelog_path = "Core/Changelog/{:.2f}.lua".format(latest_version)
+changelog_version = ".".join(str(part) for part in latest_version)
+changelog_path = "Core/Changelog/{}.lua".format(changelog_version)
 with open(changelog_path, "r", encoding="utf8") as f:
     changelog_lua_string = f.read().replace("\n", "")
 
@@ -83,7 +86,7 @@ parts = [
 
 with open("CHANGELOG.md", "w", encoding="utf8") as f:
     for locale in locales:
-        f.write("# {}: {:.2f}\n".format(locale["VERSION"], latest_version))
+        f.write("# {}: {}\n".format(locale["VERSION"], changelog_version))
         f.write(locale["RELEASED_STRING"].format(changelog["RELEASE_DATE"]) + "\n")
 
         for part in parts:
