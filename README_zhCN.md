@@ -1,4 +1,5 @@
 <div align="center">
+<img width="128" alt="EllesmereUI WindTools" src="https://raw.githubusercontent.com/wind-addons/EllesmereUI_WindTools/main/Media/Textures/WindToolsAddonIcon.png"/><br><br>
 ![版本](https://img.shields.io/badge/%E7%89%88%E6%9C%AC-0.1.0-538AED.svg?longCache=true&style=for-the-badge)
 
 [![Discord](https://img.shields.io/discord/747075771213807707?color=7289DA&label=DISCORD&logo=discord&style=for-the-badge)](https://discord.gg/CMDsBmhvyW) [![GitHub Stars](https://img.shields.io/github/stars/wind-addons/EllesmereUI_WindTools?style=for-the-badge&label=GitHub%20Stars%20%E2%AD%90&logo=github&color=yellow)](https://github.com/wind-addons/EllesmereUI_WindTools)
