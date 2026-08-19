@@ -876,7 +876,7 @@ V.social = {
 V.unitFrames = {
 	---@class PrivateDB.unitFrames.quickFocus
 	quickFocus = {
-		enable = false,
+		enable = true,
 		modifier = "shift",
 		button = "BUTTON1",
 		setMark = false,

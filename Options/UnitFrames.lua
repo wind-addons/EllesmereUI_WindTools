@@ -15,6 +15,10 @@ local BUTTON_VALUES = {
 }
 local BUTTON_ORDER = { "BUTTON1", "BUTTON2", "BUTTON3", "BUTTON4", "BUTTON5" }
 
+local function UpdateQuickFocus()
+	addon.SafeModuleCall(W.Modules.QuickFocus, "ProfileUpdate")
+end
+
 local MARK_VALUES = {
 	[1] = "Star", [2] = "Circle", [3] = "Diamond", [4] = "Triangle",
 	[5] = "Moon", [6] = "Square", [7] = "Cross", [8] = "Skull",
@@ -31,17 +35,17 @@ local function BuildQuickFocus(parent, y, cat)
 	_, h = Widgets:DualRow(parent, y,
 		{ type = "dropdown", text = "Modifier Key",
 		  values = MODIFIER_VALUES, order = MODIFIER_ORDER,
-		  getValue = DBGet(qf, "modifier"), setValue = DBSet(qf, "modifier"), disabled = qfDis },
+		  getValue = DBGet(qf, "modifier"), setValue = DBSet(qf, "modifier", UpdateQuickFocus), disabled = qfDis },
 		{ type = "dropdown", text = "Button",
 		  values = BUTTON_VALUES, order = BUTTON_ORDER,
-		  getValue = DBGet(qf, "button"), setValue = DBSet(qf, "button"), disabled = qfDis }
+		  getValue = DBGet(qf, "button"), setValue = DBSet(qf, "button", UpdateQuickFocus), disabled = qfDis }
 	); y = y - h
 	_, h = Widgets:DualRow(parent, y,
 		{ type = "toggle", text = "Set Mark", tooltip = "Set the raid marker on the quick focused target if possible.",
-		  getValue = DBGet(qf, "setMark"), setValue = DBSet(qf, "setMark"), disabled = qfDis },
+		  getValue = DBGet(qf, "setMark"), setValue = DBSet(qf, "setMark", UpdateQuickFocus), disabled = qfDis },
 		{ type = "dropdown", text = "Mark",
 		  values = MARK_VALUES, order = MARK_ORDER,
-		  getValue = DBGet(qf, "markNumber"), setValue = DBSet(qf, "markNumber"), disabled = qfDis }
+		  getValue = DBGet(qf, "markNumber"), setValue = DBSet(qf, "markNumber", UpdateQuickFocus), disabled = qfDis }
 	); y = y - h
 	return y
 end

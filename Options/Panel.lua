@@ -75,7 +75,13 @@ local PageEnableConfig = {
     },
     ["Raid Markers"] = {
         get = function() local t = Edb(); t = t and t.combat and t.combat.raidMarkers; return t and t.enable ~= false end,
-        set = function(v) local t = Edb(); if t and t.combat and t.combat.raidMarkers then t.combat.raidMarkers.enable = v end end,
+        set = function(v)
+            local t = Edb()
+            if t and t.combat and t.combat.raidMarkers then
+                t.combat.raidMarkers.enable = v
+                addon.SafeModuleCall(W.Modules.RaidMarkers, "ProfileUpdate")
+            end
+        end,
     },
     ["Combat Alert"] = {
         get = function() local t = Edb(); t = t and t.combat and t.combat.combatAlert; return t and t.enable ~= false end,
@@ -119,7 +125,13 @@ local PageEnableConfig = {
     },
     ["Quick Focus"] = {
         get = function() local t = Epdb(); t = t and t.unitFrames and t.unitFrames.quickFocus; return t and t.enable ~= false end,
-        set = function(v) local t = Epdb(); if t and t.unitFrames and t.unitFrames.quickFocus then t.unitFrames.quickFocus.enable = v end end,
+        set = function(v)
+            local t = Epdb()
+            if t and t.unitFrames and t.unitFrames.quickFocus then
+                t.unitFrames.quickFocus.enable = v
+                addon.SafeModuleCall(W.Modules.QuickFocus, "ProfileUpdate")
+            end
+        end,
     },
     ["Absorb"] = {
         get = function() local t = Edb(); t = t and t.unitFrames and t.unitFrames.absorb; return t and t.enable ~= false end,

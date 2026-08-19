@@ -30,6 +30,10 @@ local function DBGetDefault(t, k, default)
 	end
 end
 
+local function UpdateRaidMarkers()
+	addon.SafeModuleCall(W.Modules.RaidMarkers, "ProfileUpdate")
+end
+
 local function BuildRaidMarkers(parent, y, cat)
 	local Widgets = EllesmereUI.Widgets
 	local MH = function(mod, sub) return addon.MakeHeader(cat, mod, sub) end
@@ -38,62 +42,62 @@ local function BuildRaidMarkers(parent, y, cat)
 	local rmDis = function() return not rm.enable end
 	_, h = Widgets:SectionHeader(parent, MH("Raid Markers"), y); y = y - h
 	_, h = Widgets:Toggle(parent, "Inverse Mode", y,
-		DBGet(rm, "inverse"), DBSet(rm, "inverse"),
+		DBGet(rm, "inverse"), DBSet(rm, "inverse", UpdateRaidMarkers),
 		"Swap the functionality of normal click and click with modifier keys.", rmDis); y = y - h
 	_, h = Widgets:SectionHeader(parent, MH("Raid Markers", "Visibility"), y); y = y - h
 	_, h = Widgets:Dropdown(parent, "Visibility", y,
 		VISIBILITY_VALUES, VISIBILITY_ORDER,
-		DBGetDefault(rm, "visibility", "DEFAULT"), DBSet(rm, "visibility"), nil, rmDis); y = y - h
+		DBGetDefault(rm, "visibility", "DEFAULT"), DBSet(rm, "visibility", UpdateRaidMarkers), nil, rmDis); y = y - h
 	_, h = Widgets:DualRow(parent, y,
 		{ type = "toggle", text = "Mouse Over", tooltip = "Only show raid markers bar when you mouse over it.",
-		  getValue = DBGet(rm, "mouseOver"), setValue = DBSet(rm, "mouseOver"), disabled = rmDis },
+		  getValue = DBGet(rm, "mouseOver"), setValue = DBSet(rm, "mouseOver", UpdateRaidMarkers), disabled = rmDis },
 		{ type = "toggle", text = "Tooltip", tooltip = "Show the tooltip when you mouse over the button.",
-		  getValue = DBGet(rm, "tooltip"), setValue = DBSet(rm, "tooltip"), disabled = rmDis }
+		  getValue = DBGet(rm, "tooltip"), setValue = DBSet(rm, "tooltip", UpdateRaidMarkers), disabled = rmDis }
 	); y = y - h
 	_, h = Widgets:Dropdown(parent, "Modifier Key", y,
 		MODIFIER_VALUES, MODIFIER_ORDER,
-		DBGet(rm, "modifier"), DBSet(rm, "modifier"),
+		DBGet(rm, "modifier"), DBSet(rm, "modifier", UpdateRaidMarkers),
 		"Set the modifier key for placing world markers.", rmDis); y = y - h
 	_, h = Widgets:SectionHeader(parent, MH("Raid Markers", "Bar"), y); y = y - h
 	_, h = Widgets:Toggle(parent, "Bar Backdrop", y,
-		DBGet(rm, "backdrop"), DBSet(rm, "backdrop"),
+		DBGet(rm, "backdrop"), DBSet(rm, "backdrop", UpdateRaidMarkers),
 		"Show a backdrop of the bar.", rmDis); y = y - h
 	_, h = Widgets:DualRow(parent, y,
 		{ type = "slider", text = "Backdrop Spacing", min = 1, max = 30, step = 1,
-		  getValue = DBGetDefault(rm, "backdropSpacing", 3), setValue = DBSet(rm, "backdropSpacing"), disabled = rmDis },
+		  getValue = DBGetDefault(rm, "backdropSpacing", 3), setValue = DBSet(rm, "backdropSpacing", UpdateRaidMarkers), disabled = rmDis },
 		{ type = "dropdown", text = "Orientation",
 		  values = ORIENTATION_VALUES, order = ORIENTATION_ORDER,
-		  getValue = DBGetDefault(rm, "orientation", "HORIZONTAL"), setValue = DBSet(rm, "orientation"), disabled = rmDis }
+		  getValue = DBGetDefault(rm, "orientation", "HORIZONTAL"), setValue = DBSet(rm, "orientation", UpdateRaidMarkers), disabled = rmDis }
 	); y = y - h
 	_, h = Widgets:SectionHeader(parent, MH("Raid Markers", "Buttons"), y); y = y - h
 	_, h = Widgets:Toggle(parent, "Ready Check / Advanced Combat Logging", y,
-		DBGet(rm, "readyCheck"), DBSet(rm, "readyCheck"), nil, rmDis); y = y - h
+		DBGet(rm, "readyCheck"), DBSet(rm, "readyCheck", UpdateRaidMarkers), nil, rmDis); y = y - h
 	_, h = Widgets:DualRow(parent, y,
 		{ type = "toggle", text = "Count Down",
-		  getValue = DBGet(rm, "countDown"), setValue = DBSet(rm, "countDown"), disabled = rmDis },
+		  getValue = DBGet(rm, "countDown"), setValue = DBSet(rm, "countDown", UpdateRaidMarkers), disabled = rmDis },
 		{ type = "slider", text = "Count Down Time", min = 1, max = 10, step = 1,
-		  getValue = DBGetDefault(rm, "countDownTime", 5), setValue = DBSet(rm, "countDownTime"),
+		  getValue = DBGetDefault(rm, "countDownTime", 5), setValue = DBSet(rm, "countDownTime", UpdateRaidMarkers),
 		  tooltip = "Count down time in seconds.", disabled = rmDis }
 	); y = y - h
 	_, h = Widgets:SectionHeader(parent, MH("Raid Markers", "Button Layout"), y); y = y - h
 	_, h = Widgets:DualRow(parent, y,
 		{ type = "slider", text = "Button Size", min = 15, max = 60, step = 1,
-		  getValue = DBGetDefault(rm, "buttonSize", 30), setValue = DBSet(rm, "buttonSize"), disabled = rmDis },
+		  getValue = DBGetDefault(rm, "buttonSize", 30), setValue = DBSet(rm, "buttonSize", UpdateRaidMarkers), disabled = rmDis },
 		{ type = "slider", text = "Button Spacing", min = 1, max = 30, step = 1,
-		  getValue = DBGetDefault(rm, "spacing", 4), setValue = DBSet(rm, "spacing"), disabled = rmDis }
+		  getValue = DBGetDefault(rm, "spacing", 4), setValue = DBSet(rm, "spacing", UpdateRaidMarkers), disabled = rmDis }
 	); y = y - h
 	_, h = Widgets:DualRow(parent, y,
 		{ type = "toggle", text = "Button Backdrop",
-		  getValue = DBGet(rm, "buttonBackdrop"), setValue = DBSet(rm, "buttonBackdrop"), disabled = rmDis },
+		  getValue = DBGet(rm, "buttonBackdrop"), setValue = DBSet(rm, "buttonBackdrop", UpdateRaidMarkers), disabled = rmDis },
 		{ type = "toggle", text = "Button Animation",
-		  getValue = DBGet(rm, "buttonAnimation"), setValue = DBSet(rm, "buttonAnimation"), disabled = rmDis }
+		  getValue = DBGet(rm, "buttonAnimation"), setValue = DBSet(rm, "buttonAnimation", UpdateRaidMarkers), disabled = rmDis }
 	); y = y - h
 	if rm.buttonAnimation then
 		_, h = Widgets:DualRow(parent, y,
 			{ type = "slider", text = "Animation Duration", min = 0.01, max = 2, step = 0.01,
-			  getValue = DBGetDefault(rm, "buttonAnimationDuration", 0.2), setValue = DBSet(rm, "buttonAnimationDuration"), disabled = rmDis },
+			  getValue = DBGetDefault(rm, "buttonAnimationDuration", 0.2), setValue = DBSet(rm, "buttonAnimationDuration", UpdateRaidMarkers), disabled = rmDis },
 			{ type = "slider", text = "Animation Scale", min = 0.01, max = 5, step = 0.01,
-			  getValue = DBGetDefault(rm, "buttonAnimationScale", 1.33), setValue = DBSet(rm, "buttonAnimationScale"), disabled = rmDis }
+			  getValue = DBGetDefault(rm, "buttonAnimationScale", 1.33), setValue = DBSet(rm, "buttonAnimationScale", UpdateRaidMarkers), disabled = rmDis }
 		); y = y - h
 	end
 	return y

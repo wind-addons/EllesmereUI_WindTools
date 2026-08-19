@@ -1,7 +1,5 @@
 local W, F, E, L = unpack((select(2, ...))) ---@type WindTools, Functions, ElvUI, LocaleTable
 local RM = W:NewModule("RaidMarkers", "AceEvent-3.0")
-local S = W.Modules.Skins ---@type Skins
-local C = W.Utilities.Color
 
 local _G = _G
 local GameTooltip = _G.GameTooltip
@@ -18,6 +16,33 @@ local RegisterStateDriver = RegisterStateDriver
 local UnregisterStateDriver = UnregisterStateDriver
 
 local C_AddOns_IsAddOnLoaded = C_AddOns.IsAddOnLoaded
+
+local function SetSize(frame, width, height)
+	frame:SetSize(width, height or width)
+end
+
+local function SetPoint(frame, ...)
+	frame:SetPoint(...)
+end
+
+local function CreateBackdrop(frame)
+	if frame.CreateBackdrop then
+		return frame:CreateBackdrop("Transparent")
+	end
+
+	local backdrop = CreateFrame("Frame", nil, frame, "BackdropTemplate")
+	backdrop:SetAllPoints()
+	backdrop:SetBackdrop({
+		bgFile = "Interface\\Buttons\\WHITE8x8",
+		edgeFile = "Interface\\Buttons\\WHITE8x8",
+		edgeSize = 1,
+		insets = { left = 1, right = 1, top = 1, bottom = 1 },
+	})
+	backdrop:SetBackdropColor(0.04, 0.05, 0.06, 0.92)
+	backdrop:SetBackdropBorderColor(0, 0, 0, 1)
+	frame.backdrop = backdrop
+	return backdrop
+end
 
 local TargetToWorld = {
 	[1] = 5,
@@ -46,8 +71,8 @@ function RM:UpdateBar()
 	for i = 1, 11 do
 		local button = self.bar.buttons[i]
 		button:ClearAllPoints()
-		button:Size(self.db.buttonSize, self.db.buttonSize)
-		button.tex:Size(self.db.buttonSize, self.db.buttonSize)
+		SetSize(button, self.db.buttonSize)
+		SetSize(button.tex, self.db.buttonSize)
 		button.animGroup:Stop()
 
 		if (i == 10 and not self.db.readyCheck) or (i == 11 and not self.db.countDown) then
@@ -56,15 +81,15 @@ function RM:UpdateBar()
 			button:Show()
 			if self.db.orientation == "VERTICAL" then
 				if i == 1 then
-					button:Point("TOP", 0, -self.db.backdropSpacing)
+					SetPoint(button, "TOP", 0, -self.db.backdropSpacing)
 				else
-					button:Point("TOP", previousButton, "BOTTOM", 0, -self.db.spacing)
+					SetPoint(button, "TOP", previousButton, "BOTTOM", 0, -self.db.spacing)
 				end
 			else
 				if i == 1 then
-					button:Point("LEFT", self.db.backdropSpacing, 0)
+					SetPoint(button, "LEFT", self.db.backdropSpacing, 0)
 				else
-					button:Point("LEFT", previousButton, "RIGHT", self.db.spacing, 0)
+					SetPoint(button, "LEFT", previousButton, "RIGHT", self.db.spacing, 0)
 				end
 			end
 			previousButton = button
@@ -80,8 +105,8 @@ function RM:UpdateBar()
 	end
 
 	self.bar:Show()
-	self.bar:Size(width, height)
-	self.barAnchor:Size(width, height)
+	SetSize(self.bar, width, height)
+	SetSize(self.barAnchor, width, height)
 
 	if self.db.backdrop then
 		self.bar.backdrop:Show()
@@ -188,7 +213,11 @@ function RM:CreateBar()
 	end
 
 	local frame = CreateFrame("Frame", nil, E.UIParent, "SecureHandlerStateTemplate")
-	frame:Point("BOTTOMRIGHT", _G.RightChatPanel, "TOPRIGHT", -1, 3)
+	if _G.RightChatPanel then
+		SetPoint(frame, "BOTTOMRIGHT", _G.RightChatPanel, "TOPRIGHT", -1, 3)
+	else
+		SetPoint(frame, "BOTTOMRIGHT", E.UIParent, "BOTTOMRIGHT", -20, 180)
+	end
 	frame:SetFrameStrata("DIALOG")
 	self.barAnchor = frame
 
@@ -196,30 +225,15 @@ function RM:CreateBar()
 	frame:SetResizable(false)
 	frame:SetClampedToScreen(true)
 	frame:SetFrameStrata("LOW")
-	frame:CreateBackdrop("Transparent")
+	CreateBackdrop(frame)
 	frame:ClearAllPoints()
-	frame:Point("CENTER", self.barAnchor, "CENTER", 0, 0)
+	SetPoint(frame, "CENTER", self.barAnchor, "CENTER", 0, 0)
 	frame.buttons = {}
 	self.bar = frame
 
 	self:CreateButtons()
 	self:ToggleSettings()
 
-	S:CreateShadowModule(self.bar.backdrop)
-
-	E:CreateMover(
-		self.barAnchor,
-		"WTRaidMarkersBarAnchor",
-		L["Raid Markers Bar"],
-		nil,
-		nil,
-		nil,
-		"ALL,WINDTOOLS",
-		function()
-			return E.db.WT.combat.raidMarkers.enable
-		end,
-		"WindTools,combat,raidMarkers"
-	)
 end
 
 function RM:UpdateCountDownButton()
@@ -236,7 +250,7 @@ function RM:UpdateCountDownButton()
 		button:SetAttribute("macrotext2", "/dbm pull 0")
 	else
 		button:SetAttribute("macrotext1", _G.SLASH_COUNTDOWN1 .. " " .. self.db.countDownTime)
-		button:SetAttribute("macrotext1", _G.SLASH_COUNTDOWN1 .. " " .. 0)
+		button:SetAttribute("macrotext2", _G.SLASH_COUNTDOWN1 .. " " .. 0)
 	end
 end
 
@@ -247,17 +261,13 @@ function RM:CreateButtons()
 		local button = self.bar.buttons[i]
 		if not button then
 			button = CreateFrame("Button", nil, self.bar, "SecureActionButtonTemplate, BackdropTemplate") --[[@as Button]]
-			button:CreateBackdrop("Transparent")
+			CreateBackdrop(button)
 		end
-		button:Size(self.db.buttonSize)
-
-		if E.private.WT.skins.enable and E.private.WT.skins.windtools and E.private.WT.skins.shadow then
-			S:CreateBackdropShadow(button)
-		end
+		SetSize(button, self.db.buttonSize)
 
 		local tex = button:CreateTexture(nil, "ARTWORK")
-		tex:Size(self.db.buttonSize)
-		tex:Point("CENTER")
+		SetSize(tex, self.db.buttonSize)
+		SetPoint(tex, "CENTER")
 		button.tex = tex
 
 		if i < 9 then -- Markers
@@ -383,7 +393,7 @@ function RM:CreateButtons()
 			end
 
 			local icon = F.GetIconString(W.Media.Textures.smallLogo, 14)
-			btn:SetBackdropBorderColor(0.7, 0.7, 0)
+			btn.backdrop:SetBackdropBorderColor(0.7, 0.7, 0)
 			if RM.db.tooltip then
 				GameTooltip:SetOwner(btn, "ANCHOR_BOTTOM")
 				GameTooltip:SetText(tooltipTitle .. " " .. icon)
@@ -410,7 +420,7 @@ function RM:CreateButtons()
 				animGroup:Play()
 			end
 
-			btn:SetBackdropBorderColor(0, 0, 0)
+			btn.backdrop:SetBackdropBorderColor(0, 0, 0)
 			if RM.db.tooltip then
 				GameTooltip:Hide()
 			end
@@ -422,7 +432,7 @@ function RM:CreateButtons()
 				return
 			end
 			self.bar:SetAlpha(1)
-			button:SetBackdropBorderColor(0.7, 0.7, 0)
+			button.backdrop:SetBackdropBorderColor(0.7, 0.7, 0)
 		end)
 
 		button:HookScript("OnLeave", function()
@@ -430,7 +440,7 @@ function RM:CreateButtons()
 				return
 			end
 			self.bar:SetAlpha(0)
-			button:SetBackdropBorderColor(0, 0, 0)
+			button.backdrop:SetBackdropBorderColor(0, 0, 0)
 		end)
 
 		self.bar.buttons[i] = button

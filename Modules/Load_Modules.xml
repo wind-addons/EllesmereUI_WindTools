@@ -1,4 +1,6 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/">
 	<Include file="Item\Load_Item.xml"/>
 	<Include file="Social\Load_Social.xml"/>
+	<Script file="Combat\RaidMarkers.lua"/>
+	<Script file="UnitFrames\QuickFocus.lua"/>
 </Ui>

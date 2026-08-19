@@ -25,13 +25,15 @@
 | **Chat Bar** | ✅ Done | Channel switching bar, block/text styles, auto-hide, mouseover |
 | **Smart Tab** | ✅ Done | Tab channel cycling, whisper history, channel toggles |
 | Item (Fast Loot, Trade, Inspect, Item Level, Contacts, Delete Item, Already Known, Merchant Pages) | ❌ Not ported | |
-| Combat (Raid Markers, Combat Alert, Quick Keystone) | ❌ Not ported | |
+| Combat (Raid Markers) | ✅ Done | Target/world markers, ready check, combat log, and pull countdown |
+| Combat (Combat Alert, Quick Keystone) | ❌ Not ported | |
 | Maps (Super Tracker, Minimap Buttons, Rectangle Minimap, World Map, Instance Difficulty, Event Tracker) | ❌ Not ported | |
 | Quest (Objective Tracker, Turn In, Switch Buttons) | ❌ Not ported | |
 | Social (Chat Link, Chat Text, Context Menu, Emote, Friend List) | ❌ Not ported | |
 | Announcement | ❌ Not ported | |
 | Tooltip (Progression, Keystone, Group Info, Objective Progress) | ❌ Not ported | |
-| Unit Frames (Quick Focus, Absorb, Role Icon, Tags) | ❌ Not ported | |
+| Unit Frames (Quick Focus) | ✅ Done | Modifier-click focus with optional target marking |
+| Unit Frames (Absorb, Role Icon, Tags) | ❌ Not ported | |
 | Skins | ❌ Not ported | |
 | Misc (Move Frames, Game Bar, Mute, Automation, etc.) | ❌ Not ported | |
 

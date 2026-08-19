@@ -1,9 +1,7 @@
 local W, F, E, L = unpack((select(2, ...))) ---@type WindTools, Functions, ElvUI, LocaleTable
-local UF = E:GetModule("UnitFrames")
 local QF = W:NewModule("QuickFocus", "AceHook-3.0", "AceEvent-3.0")
 
 local next = next
-local pairs = pairs
 local strjoin = strjoin
 local strmatch = strmatch
 local strsub = strsub
@@ -11,13 +9,15 @@ local tAppendAll = tAppendAll
 local unpack = unpack
 
 local CreateFrame = CreateFrame
+local EnumerateFrames = EnumerateFrames
+local ClearOverrideBindings = ClearOverrideBindings
 local InCombatLockdown = InCombatLockdown
 local SetOverrideBindingClick = SetOverrideBindingClick
 
 local pending = {}
 
 function QF:SetupFrame(frame)
-	if not frame or frame.windQuickFocus then
+	if not frame or not frame.GetAttribute or not frame.SetAttribute or frame.windQuickFocus then
 		return
 	end
 
@@ -25,12 +25,50 @@ function QF:SetupFrame(frame)
 		return
 	end
 
+	if not frame.unit and not frame:GetAttribute("unit") then
+		return
+	end
+
 	if not InCombatLockdown() then
 		frame:SetAttribute(self.db.modifier .. "-type" .. strsub(self.db.button, 7, 7), "focus")
-		frame.windQuickFocus = true
+		frame.windQuickFocus = {
+			modifier = self.db.modifier,
+			button = self.db.button,
+		}
 		pending[frame] = nil
 	else
 		pending[frame] = true
+	end
+end
+
+function QF:ScanFrames()
+	local frame
+	while true do
+		frame = EnumerateFrames(frame)
+		if not frame then
+			break
+		end
+		self:SetupFrame(frame)
+	end
+end
+
+function QF:ClearFrames()
+	if InCombatLockdown() then
+		self:RegisterEvent("PLAYER_REGEN_ENABLED", "ClearFrames")
+		return
+	end
+
+	local frame
+	while true do
+		frame = EnumerateFrames(frame)
+		if not frame then
+			break
+		end
+		if frame.windQuickFocus then
+			local binding = frame.windQuickFocus
+			frame:SetAttribute(binding.modifier .. "-type" .. strsub(binding.button, 7, 7), nil)
+			frame.windQuickFocus = nil
+		end
 	end
 end
 
@@ -43,37 +81,11 @@ function QF:PLAYER_REGEN_ENABLED()
 end
 
 function QF:GROUP_ROSTER_UPDATE()
-	if not UF or not UF.units then
+	if not self.db or not self.db.enable then
 		return
 	end
 
-	for unit in pairs(UF.units) do
-		local frame = UF[unit]
-		if frame and not frame.windQuickFocus then
-			self:SetupFrame(frame)
-		end
-	end
-
-	for unit in pairs(UF.groupunits) do
-		local frame = UF[unit]
-		if frame and not frame.windQuickFocus then
-			self:SetupFrame(frame)
-		end
-	end
-
-	for _, header in pairs(UF.headers) do
-		if header.GetChildren and header:GetNumChildren() > 0 then
-			for _, child in pairs({ header:GetChildren() }) do
-				if child.groupName and child.GetChildren and child:GetNumChildren() > 0 then
-					for _, subChild in pairs({ child:GetChildren() }) do
-						if subChild and not subChild.windQuickFocus then
-							self:SetupFrame(subChild)
-						end
-					end
-				end
-			end
-		end
-	end
+	self:ScanFrames()
 end
 
 function QF:WaitUnitframesLoad(triedTimes)
@@ -84,11 +96,7 @@ function QF:WaitUnitframesLoad(triedTimes)
 		return
 	end
 
-	if not UF.unitstoload and not UF.unitgroupstoload and not UF.headerstoload then
-		self:GROUP_ROSTER_UPDATE()
-	else
-		E:Delay(0.5, self.WaitUnitframesLoad, self, triedTimes + 1)
-	end
+	self:GROUP_ROSTER_UPDATE()
 end
 
 function QF:GetMacroText()
@@ -116,8 +124,17 @@ function QF:Initialize()
 	if not self.db or not self.db.enable then
 		return
 	end
+	if self.initialized then
+		return
+	end
 
-	local button = CreateFrame("Button", "WTQuickFocusButton", E.UIParent, "SecureActionButtonTemplate")
+	local button = self.button
+	if not button then
+		button = CreateFrame("Button", "WTQuickFocusButton", E.UIParent, "SecureActionButtonTemplate")
+		self.button = button
+	else
+		button:Show()
+	end
 	button:SetAttribute("type*", "macro")
 	button:SetAttribute("macrotext", self:GetMacroText())
 	button:RegisterForClicks(W.UseKeyDown and "AnyDown" or "AnyUp")
@@ -126,6 +143,37 @@ function QF:Initialize()
 	self:RegisterEvent("PLAYER_REGEN_ENABLED")
 	self:RegisterEvent("GROUP_ROSTER_UPDATE")
 	self:WaitUnitframesLoad()
+	self.initialized = true
+end
+
+function QF:ProfileUpdate()
+	self.db = E.private.WT.unitFrames.quickFocus
+	if not self.db or not self.db.enable then
+		if self.initialized then
+			self:ClearFrames()
+			if self.button and not InCombatLockdown() then
+				ClearOverrideBindings(self.button)
+				self.button:Hide()
+			end
+			self.initialized = false
+		end
+		return
+	end
+
+	if not self.initialized then
+		self:Initialize()
+		return
+	end
+
+	if InCombatLockdown() then
+		self:RegisterEvent("PLAYER_REGEN_ENABLED", "ProfileUpdate")
+		return
+	end
+
+	self.button:SetAttribute("macrotext", self:GetMacroText())
+	ClearOverrideBindings(self.button)
+	SetOverrideBindingClick(self.button, true, self.db.modifier .. "-" .. self.db.button, "WTQuickFocusButton")
+	self:ScanFrames()
 end
 
 W:RegisterModule(QF:GetName())
