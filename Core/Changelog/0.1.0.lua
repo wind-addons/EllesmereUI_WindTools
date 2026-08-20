@@ -5,23 +5,23 @@ W.Changelog[100] = {
 	IMPORTANT = {
 		["zhCN"] = {
 			"这是 EllesmereUI WindTools 首个迁移版本，需要安装 EllesmereUI。",
-			"本版本仅启用已完成迁移的选项面板、额外物品条、聊天条、Smart Tab、快速标记和快速焦点，未迁移页面已禁用。",
+			"本版本仅启用已完成迁移的选项面板、额外物品条、聊天条和 Smart Tab，未迁移页面已禁用。",
 		},
 		["zhTW"] = {
 			"這是 EllesmereUI WindTools 首個遷移版本，需要安裝 EllesmereUI。",
-			"本版本僅啟用已完成遷移的選項面板、額外物品條、聊天條、Smart Tab、快速標記和快速焦點，未遷移頁面已停用。",
+			"本版本僅啟用已完成遷移的選項面板、額外物品條、聊天條和 Smart Tab，未遷移頁面已停用。",
 		},
 		["enUS"] = {
 			"This is the first migration release of EllesmereUI WindTools and requires EllesmereUI.",
-			"Only the migrated options panel, Extra Item Bar, Chat Bar, Smart Tab, Raid Markers, and QuickFocus are enabled; unported pages are disabled.",
+			"Only the migrated options panel, Extra Item Bar, Chat Bar, and Smart Tab are enabled; unported pages are disabled.",
 		},
 		["koKR"] = {
 			"EllesmereUI WindTools의 첫 번째 마이그레이션 릴리스이며 EllesmereUI가 필요합니다.",
-			"마이그레이션된 옵션 패널, Extra Item Bar, Chat Bar, Smart Tab, Raid Markers 및 QuickFocus만 활성화되며 포팅되지 않은 페이지는 비활성화됩니다.",
+			"마이그레이션된 옵션 패널, Extra Item Bar, Chat Bar 및 Smart Tab만 활성화되며 포팅되지 않은 페이지는 비활성화됩니다.",
 		},
 		["ruRU"] = {
 			"Это первый выпуск миграции EllesmereUI WindTools; требуется EllesmereUI.",
-			"Включены только перенесённые панель настроек, Extra Item Bar, Chat Bar, Smart Tab, Raid Markers и QuickFocus; неперенесённые страницы отключены.",
+			"Включены только перенесённые панель настроек, Extra Item Bar, Chat Bar и Smart Tab; неперенесённые страницы отключены.",
 		},
 	},
 	NEW = {
@@ -31,8 +31,6 @@ W.Changelog[100] = {
 			"完成聊天条迁移：支持频道切换、Block/Text 样式、自动隐藏和鼠标悬停显示。",
 			"完成 Smart Tab 迁移：支持频道循环、密语历史和频道开关。",
 			"新增动态选项弹窗编辑器和锚定下拉选择器。",
-			"完成快速标记迁移：支持目标/世界标记、清除标记、就位确认、战斗日志和拉怪倒计时。",
-			"完成快速焦点迁移：支持修饰键点击聚焦鼠标指向目标，并可选自动设置目标标记。",
 		},
 		["zhTW"] = {
 			"新增獨立的 EllesmereUI 風格選項面板，支援側邊欄導覽、搜尋、子頁面和模組啟用開關。",
@@ -40,8 +38,6 @@ W.Changelog[100] = {
 			"完成聊天條遷移：支援頻道切換、Block/Text 樣式、自動隱藏和滑鼠懸停顯示。",
 			"完成 Smart Tab 遷移：支援頻道循環、密語歷史和頻道開關。",
 			"新增動態選項彈窗編輯器和錨定下拉選擇器。",
-			"完成快速標記遷移：支援目標/世界標記、清除標記、就位確認、戰鬥記錄和拉怪倒數。",
-			"完成快速焦點遷移：支援修飾鍵點擊聚焦滑鼠指向目標，並可選自動設定目標標記。",
 		},
 		["enUS"] = {
 			"Added a standalone EllesmereUI-style options panel with sidebar navigation, search, sub-pages, and module power toggles.",
@@ -49,8 +45,6 @@ W.Changelog[100] = {
 			"Ported Chat Bar with channel switching, Block/Text styles, auto-hide, and mouseover display.",
 			"Ported Smart Tab with channel cycling, whisper history, and channel toggles.",
 			"Added popup editors for dynamic options and an anchored dropdown selector.",
-			"Ported Raid Markers with target/world markers, clear actions, ready check, combat logging, and pull countdown.",
-			"Ported QuickFocus for modifier-click focus on mouseover units, with optional target marking.",
 		},
 		["koKR"] = {
 			"사이드바 탐색, 검색, 하위 페이지 및 모듈 전원 토글을 지원하는 EllesmereUI 스타일 옵션 패널을 추가했습니다.",
@@ -58,8 +52,6 @@ W.Changelog[100] = {
 			"채널 전환, Block/Text 스타일, 자동 숨김 및 마우스오버 표시를 지원하는 Chat Bar를 포팅했습니다.",
 			"채널 순환, 귓속말 기록 및 채널 토글을 지원하는 Smart Tab을 포팅했습니다.",
 			"동적 옵션용 팝업 편집기와 앵커 드롭다운 선택기를 추가했습니다.",
-			"대상/월드 마커, 마커 지우기, 준비 확인, 전투 기록 및 풀 카운트다운을 지원하는 Raid Markers를 포팅했습니다.",
-			"마우스오버 유닛에 수정 키 클릭으로 집중하고 선택적으로 대상을 표시하는 QuickFocus를 포팅했습니다.",
 		},
 		["ruRU"] = {
 			"Добавлена отдельная панель настроек в стиле EllesmereUI с навигацией по боковой панели, поиском, подстраницами и переключателями модулей.",
@@ -67,8 +59,6 @@ W.Changelog[100] = {
 			"Перенесён Chat Bar с переключением каналов, стилями Block/Text, автоскрытием и отображением при наведении.",
 			"Перенесён Smart Tab с циклическим переключением каналов, историей шёпота и переключателями каналов.",
 			"Добавлены редакторы динамических настроек и закреплённый выпадающий список.",
-			"Перенесены Raid Markers: метки цели/мира, очистка меток, проверка готовности, журнал боя и обратный отсчёт пула.",
-			"Перенесён QuickFocus для фокусировки на наведённом юните по клику с модификатором и опциональной установкой метки.",
 		},
 	},
 	IMPROVEMENT = {
