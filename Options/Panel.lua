@@ -164,6 +164,8 @@ local PAGE_MODULES = {
     ["Extra Items Bar"] = "ExtraItemsBar",
     ["Chat Bar"]         = "ChatBar",
     ["Smart Tab"]        = "SmartTab",
+    ["Raid Markers"]     = "RaidMarkers",
+    ["Quick Focus"]      = "QuickFocus",
 }
 
 local function IsPageAvailable(pageName)
