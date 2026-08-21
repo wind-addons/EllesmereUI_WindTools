@@ -1,7 +1,7 @@
 ## Interface: 120100
 ## Author: fang2hou, XanaHopper
 ## Version: @project-version@
-## X-Version: 0.2.0
+## X-Version: 0.2.1
 ## Title: |cff0cd29fEllesmereUI|r |cff5385edW|r|cff5094eai|r|cff4da4e7n|r|cff4ab4e4d|r|cff47c0e1T|r|cff44cbdfo|r|cff41d7ddo|r|cff41d7ddl|r|cff41d7dds|r
 ## Notes: Migration shell for WindTools on EllesmereUI. Most original WindTools modules are intentionally disconnected.
 ## X-Curse-Project-ID: 1657612
