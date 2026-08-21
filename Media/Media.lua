@@ -3,6 +3,12 @@ local F ---@class Functions
 local E ---@type ElvUI
 W, F, E = unpack((select(2, ...)))
 local LSM = E.Libs.LSM
+if not LSM and LibStub then
+	LSM = LibStub:GetLibrary("LibSharedMedia-3.0", true)
+end
+if not LSM then
+	LSM = { Register = function() end }
+end
 
 local _G = _G
 local ceil = ceil

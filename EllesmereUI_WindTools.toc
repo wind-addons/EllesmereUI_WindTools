@@ -15,6 +15,7 @@ Locales\Load_Locales.xml
 Libraries\Load_Libraries.xml
 Core\Load_Compat.xml
 Initialize.lua
+Media\Load_Media.xml
 Core\Metadata.lua
 Core\Load_Core.xml
 Settings\Load_Settings.xml
