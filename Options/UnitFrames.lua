@@ -17,6 +17,9 @@ local BUTTON_ORDER = { "BUTTON1", "BUTTON2", "BUTTON3", "BUTTON4", "BUTTON5" }
 
 local function UpdateQuickFocus()
 	addon.SafeModuleCall(W.Modules.QuickFocus, "ProfileUpdate")
+	if addon.RefreshOptions then
+		addon.RefreshOptions()
+	end
 end
 
 local MARK_VALUES = {
@@ -32,6 +35,13 @@ local function BuildQuickFocus(parent, y, cat)
 	local qf = E.private.WT.unitFrames.quickFocus
 	local qfDis = function() return not qf.enable end
 	_, h = Widgets:SectionHeader(parent, MH("Quick Focus"), y); y = y - h
+	_, h = Widgets:Toggle(parent, "Enable", y,
+		DBGet(qf, "enable"), DBSet(qf, "enable", UpdateQuickFocus),
+		"Focus the mouseover unit with a modifier key + mouse button.")
+	if not qf.enable then
+		_, h = Widgets:Button(parent, "Quick Focus is disabled. Turn it on to configure the binding.", y, function() end)
+	end
+	y = y - h
 	_, h = Widgets:DualRow(parent, y,
 		{ type = "dropdown", text = "Modifier Key",
 		  values = MODIFIER_VALUES, order = MODIFIER_ORDER,

@@ -25,23 +25,14 @@ local function SetPoint(frame, ...)
 	frame:SetPoint(...)
 end
 
+-- Backdrops are BACKGROUND-layer textures (not child frames) so that button
+-- icons layered at ARTWORK stay visible above them.
 local function CreateBackdrop(frame)
-	if frame.CreateBackdrop then
-		return frame:CreateBackdrop("Transparent")
-	end
-
-	local backdrop = CreateFrame("Frame", nil, frame, "BackdropTemplate")
-	backdrop:SetAllPoints()
-	backdrop:SetBackdrop({
-		bgFile = "Interface\\Buttons\\WHITE8x8",
-		edgeFile = "Interface\\Buttons\\WHITE8x8",
-		edgeSize = 1,
-		insets = { left = 1, right = 1, top = 1, bottom = 1 },
-	})
-	backdrop:SetBackdropColor(0.04, 0.05, 0.06, 0.92)
-	backdrop:SetBackdropBorderColor(0, 0, 0, 1)
-	frame.backdrop = backdrop
-	return backdrop
+	local bg = frame:CreateTexture(nil, "BACKGROUND")
+	bg:SetColorTexture(0.04, 0.05, 0.06, 0.92)
+	bg:SetAllPoints()
+	frame.backdrop = bg
+	return bg
 end
 
 local TargetToWorld = {
@@ -221,7 +212,7 @@ function RM:CreateBar()
 	frame:SetFrameStrata("DIALOG")
 	self.barAnchor = frame
 
-	frame = CreateFrame("Frame", nil, E.UIParent, "BackdropTemplate")
+	frame = CreateFrame("Frame", nil, E.UIParent)
 	frame:SetResizable(false)
 	frame:SetClampedToScreen(true)
 	frame:SetFrameStrata("LOW")
@@ -260,7 +251,7 @@ function RM:CreateButtons()
 	for i = 1, 11 do
 		local button = self.bar.buttons[i]
 		if not button then
-			button = CreateFrame("Button", nil, self.bar, "SecureActionButtonTemplate, BackdropTemplate") --[[@as Button]]
+			button = CreateFrame("Button", nil, self.bar, "SecureActionButtonTemplate") --[[@as Button]]
 			CreateBackdrop(button)
 		end
 		SetSize(button, self.db.buttonSize)
@@ -393,7 +384,7 @@ function RM:CreateButtons()
 			end
 
 			local icon = F.GetIconString(W.Media.Textures.smallLogo, 14)
-			btn.backdrop:SetBackdropBorderColor(0.7, 0.7, 0)
+			btn.backdrop:SetVertexColor(0.7, 0.7, 0, 0.92)
 			if RM.db.tooltip then
 				GameTooltip:SetOwner(btn, "ANCHOR_BOTTOM")
 				GameTooltip:SetText(tooltipTitle .. " " .. icon)
@@ -420,10 +411,10 @@ function RM:CreateButtons()
 				animGroup:Play()
 			end
 
-			btn.backdrop:SetBackdropBorderColor(0, 0, 0)
-			if RM.db.tooltip then
-				GameTooltip:Hide()
-			end
+		btn.backdrop:SetVertexColor(0.04, 0.05, 0.06, 0.92)
+		if RM.db.tooltip then
+			GameTooltip:Hide()
+		end
 		end)
 
 		-- Fade in/out for mouseover
@@ -432,7 +423,7 @@ function RM:CreateButtons()
 				return
 			end
 			self.bar:SetAlpha(1)
-			button.backdrop:SetBackdropBorderColor(0.7, 0.7, 0)
+			button.backdrop:SetVertexColor(0.7, 0.7, 0, 0.92)
 		end)
 
 		button:HookScript("OnLeave", function()
@@ -440,7 +431,7 @@ function RM:CreateButtons()
 				return
 			end
 			self.bar:SetAlpha(0)
-			button.backdrop:SetBackdropBorderColor(0, 0, 0)
+			button.backdrop:SetVertexColor(0.04, 0.05, 0.06, 0.92)
 		end)
 
 		self.bar.buttons[i] = button

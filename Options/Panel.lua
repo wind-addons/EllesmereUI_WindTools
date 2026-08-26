@@ -428,7 +428,13 @@ local function UpdateSidebarHighlight()
             btn._glow:Hide()
             btn._glowTop:Hide()
             btn._glowBot:Hide()
-            btn._label:SetTextColor(NAV_DISABLED_TEXT.r, NAV_DISABLED_TEXT.g, NAV_DISABLED_TEXT.b, NAV_DISABLED_TEXT.a)
+            if btn._available then
+                -- Available but disabled: keep the label readable and the
+                -- power icon inviting so users can find how to re-enable.
+                btn._label:SetTextColor(1, 1, 1, 0.32)
+            else
+                btn._label:SetTextColor(NAV_DISABLED_TEXT.r, NAV_DISABLED_TEXT.g, NAV_DISABLED_TEXT.b, NAV_DISABLED_TEXT.a)
+            end
         else
             btn._indicator:Hide()
             btn._glow:Hide()
@@ -438,9 +444,16 @@ local function UpdateSidebarHighlight()
         end
         if btn._pwrTex then
             if isDisabled then
-                btn._pwrTex:SetVertexColor(0.4, 0.4, 0.4)
-                btn._pwrTex:SetAlpha(NAV_DISABLED_ICON_A)
-                btn._pwrTex:SetDesaturated(true)
+                if btn._available then
+                    -- Module off: green "click to enable" state.
+                    btn._pwrTex:SetVertexColor(0.212, 0.824, 0.325)
+                    btn._pwrTex:SetAlpha(0.55)
+                    btn._pwrTex:SetDesaturated(false)
+                else
+                    btn._pwrTex:SetVertexColor(0.4, 0.4, 0.4)
+                    btn._pwrTex:SetAlpha(NAV_DISABLED_ICON_A)
+                    btn._pwrTex:SetDesaturated(true)
+                end
             else
                 btn._pwrTex:SetVertexColor(eg.r, eg.g, eg.b)
                 btn._pwrTex:SetAlpha(isSelected and NAV_SELECTED_ICON_A or NAV_ENABLED_ICON_A)
@@ -741,7 +754,10 @@ local function CreateSidebarButton(parent, y, pageName, indent, rowH)
         end
     end)
     btn:SetScript("OnClick", function(self)
-        if self._notEnabled then return end
+        -- Unported (unavailable) pages cannot be opened; available pages can
+        -- be opened even when their module is disabled, so users can reach
+        -- the in-page Enable toggle.
+        if not self._available then return end
         SelectPage(pageName)
     end)
 
@@ -1339,7 +1355,7 @@ function W:ShowOptions(page)
     RefreshSidebarStates()
 
     local target = ResolvePage(page)
-    if target and IsPageAvailable(target) and IsPageEnabled(target) then
+    if target and IsPageAvailable(target) then
         -- Force selection even if same page (first open)
         activePage = nil
         SelectPage(target)

@@ -32,6 +32,9 @@ end
 
 local function UpdateRaidMarkers()
 	addon.SafeModuleCall(W.Modules.RaidMarkers, "ProfileUpdate")
+	if addon.RefreshOptions then
+		addon.RefreshOptions()
+	end
 end
 
 local function BuildRaidMarkers(parent, y, cat)
@@ -41,6 +44,13 @@ local function BuildRaidMarkers(parent, y, cat)
 	local rm = E.db.WT.combat.raidMarkers
 	local rmDis = function() return not rm.enable end
 	_, h = Widgets:SectionHeader(parent, MH("Raid Markers"), y); y = y - h
+	_, h = Widgets:Toggle(parent, "Enable", y,
+		DBGet(rm, "enable"), DBSet(rm, "enable", UpdateRaidMarkers),
+		"Enable the raid markers bar.")
+	if not rm.enable then
+		_, h = Widgets:Button(parent, "Raid Markers is disabled. Turn it on to configure the bar.", y, function() end)
+	end
+	y = y - h
 	_, h = Widgets:Toggle(parent, "Inverse Mode", y,
 		DBGet(rm, "inverse"), DBSet(rm, "inverse", UpdateRaidMarkers),
 		"Swap the functionality of normal click and click with modifier keys.", rmDis); y = y - h

@@ -2,6 +2,7 @@ local W, F, E, L = unpack((select(2, ...))) ---@type WindTools, Functions, ElvUI
 local QF = W:NewModule("QuickFocus", "AceHook-3.0", "AceEvent-3.0")
 
 local next = next
+local ipairs = ipairs
 local strjoin = strjoin
 local strmatch = strmatch
 local strsub = strsub
@@ -88,15 +89,20 @@ function QF:GROUP_ROSTER_UPDATE()
 	self:ScanFrames()
 end
 
-function QF:WaitUnitframesLoad(triedTimes)
-	triedTimes = triedTimes or 0
-
-	if triedTimes > 10 then
-		self:Log("debug", "Failed to load unitframes after 10 times, please try again later.")
+-- Host unit frames (e.g. EllesmereUI) may be created long after login, so
+-- keep scanning for a while instead of relying on a single pass.
+function QF:DelayedScan()
+	if not self.db or not self.db.enable then
 		return
 	end
 
-	self:GROUP_ROSTER_UPDATE()
+	self:ScanFrames()
+end
+
+function QF:ScheduleFrameScans()
+	for _, delay in ipairs({ 1, 3, 6, 10 }) do
+		self:ScheduleTimer("DelayedScan", delay)
+	end
 end
 
 function QF:GetMacroText()
@@ -142,7 +148,7 @@ function QF:Initialize()
 
 	self:RegisterEvent("PLAYER_REGEN_ENABLED")
 	self:RegisterEvent("GROUP_ROSTER_UPDATE")
-	self:WaitUnitframesLoad()
+	self:ScheduleFrameScans()
 	self.initialized = true
 end
 
