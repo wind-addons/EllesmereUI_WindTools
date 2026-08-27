@@ -41,6 +41,13 @@ G.item = {
 }
 
 G.combat = {
+	raidMarkers = {
+		-- Mover position saved at account level so layout is shared across
+		-- characters. Populated by EllesmereUI Unlock Mode via the
+		-- RegisterUnlockElements API. Nil = use default anchor (right side of
+		-- the screen, bottom-right area).
+		position = nil,
+	},
 	covenantHelper = {
 		soulbindRules = {
 			characters = {},

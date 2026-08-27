@@ -73,24 +73,6 @@ local PageEnableConfig = {
         get = function() local t = Edb(); t = t and t.announcement; return t and t.enable ~= false end,
         set = function(v) local t = Edb(); if t and t.announcement then t.announcement.enable = v end end,
     },
-    ["Raid Markers"] = {
-        get = function() local t = Edb(); t = t and t.combat and t.combat.raidMarkers; return t and t.enable ~= false end,
-        set = function(v)
-            local t = Edb()
-            if t and t.combat and t.combat.raidMarkers then
-                t.combat.raidMarkers.enable = v
-                addon.SafeModuleCall(W.Modules.RaidMarkers, "ProfileUpdate")
-            end
-        end,
-    },
-    ["Combat Alert"] = {
-        get = function() local t = Edb(); t = t and t.combat and t.combat.combatAlert; return t and t.enable ~= false end,
-        set = function(v) local t = Edb(); if t and t.combat and t.combat.combatAlert then t.combat.combatAlert.enable = v end end,
-    },
-    ["Damage Meter"] = {
-        get = function() local t = Edb(); t = t and t.combat and t.combat.damageMeterLayout; return t and t.enable ~= false end,
-        set = function(v) local t = Edb(); if t and t.combat and t.combat.damageMeterLayout then t.combat.damageMeterLayout.enable = v end end,
-    },
     ["Chat Bar"] = {
         get = function() local t = Edb(); t = t and t.social and t.social.chatBar; return t and t.enable ~= false end,
         set = function(v) local t = Edb(); if t and t.social and t.social.chatBar then t.social.chatBar.enable = v end end,
@@ -123,24 +105,6 @@ local PageEnableConfig = {
         get = function() local t = Epdb(); t = t and t.tooltips and t.tooltips.progression; return t and t.enable ~= false end,
         set = function(v) local t = Epdb(); if t and t.tooltips and t.tooltips.progression then t.tooltips.progression.enable = v end end,
     },
-    ["Quick Focus"] = {
-        get = function() local t = Epdb(); t = t and t.unitFrames and t.unitFrames.quickFocus; return t and t.enable ~= false end,
-        set = function(v)
-            local t = Epdb()
-            if t and t.unitFrames and t.unitFrames.quickFocus then
-                t.unitFrames.quickFocus.enable = v
-                addon.SafeModuleCall(W.Modules.QuickFocus, "ProfileUpdate")
-            end
-        end,
-    },
-    ["Absorb"] = {
-        get = function() local t = Edb(); t = t and t.unitFrames and t.unitFrames.absorb; return t and t.enable ~= false end,
-        set = function(v) local t = Edb(); if t and t.unitFrames and t.unitFrames.absorb then t.unitFrames.absorb.enable = v end end,
-    },
-    ["Name Clip"] = {
-        get = function() local t = Epdb(); t = t and t.unitFrames and t.unitFrames.nameClip; return t and t.enable ~= false end,
-        set = function(v) local t = Epdb(); if t and t.unitFrames and t.unitFrames.nameClip then t.unitFrames.nameClip.enable = v end end,
-    },
 }
 
 local function IsPageEnabled(pageName)
@@ -164,8 +128,11 @@ local PAGE_MODULES = {
     ["Extra Items Bar"] = "ExtraItemsBar",
     ["Chat Bar"]         = "ChatBar",
     ["Smart Tab"]        = "SmartTab",
-    ["Raid Markers"]     = "RaidMarkers",
-    ["Quick Focus"]      = "QuickFocus",
+    -- Category pages (original WindTools layout): available when any of the
+    -- category's modules is ported. Enable/disable is handled by each
+    -- module's in-page Enable toggle, not by a sidebar power icon.
+    ["Combat"]           = "RaidMarkers",
+    ["Unit Frames"]      = "QuickFocus",
 }
 
 local function IsPageAvailable(pageName)

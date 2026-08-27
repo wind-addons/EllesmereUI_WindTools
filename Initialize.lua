@@ -63,7 +63,7 @@ _WindTools = addon
 _G.WindTools = addon
 
 W.Title = "WindTools"
-W.DisplayVersion = C_AddOns.GetAddOnMetadata(addonName, "X-Version") or "0.2.2"
+W.DisplayVersion = C_AddOns.GetAddOnMetadata(addonName, "X-Version") or "0.2.3"
 W.Version = W.DisplayVersion
 W.Utilities = W.Utilities or {}
 W.CompatibleFont = false
@@ -162,13 +162,10 @@ local PAGE_GROUPS = {{
 }, {
     page = "Announcement",      categories = {"announcement"}
 }, {
-    page = "Raid Markers",      categories = {"combat"}
-}, {
-    page = "Combat Alert",      categories = {"combat"}
-}, {
-    page = "Quick Tools",       categories = {"combat"}
-}, {
-    page = "Damage Meter",      categories = {"combat"}
+    -- Original WindTools layout: a single Combat category page holding every
+    -- combat module group (Raid Markers, Combat Alert, Quick Tools, Damage
+    -- Meter Layout) inline.
+    page = "Combat",            categories = {"combat"}
 }, {
     page = "Chat Bar",          categories = {"social"}
 }, {
@@ -198,11 +195,9 @@ local PAGE_GROUPS = {{
 }, {
     page = "Tooltip Advanced",  categories = {"tooltips"}
 }, {
-    page = "Quick Focus",       categories = {"unitFrames"}
-}, {
-    page = "Absorb",            categories = {"unitFrames"}
-}, {
-    page = "Name Clip",         categories = {"unitFrames"}
+    -- Original WindTools layout: a single Unit Frames category page holding
+    -- every unitframe module group (Quick Focus, Absorb, Name Clip) inline.
+    page = "Unit Frames",       categories = {"unitFrames"}
 }, {
     page = "Skins",             categories = {"skins"}
 }, {
@@ -230,11 +225,11 @@ local SPECIAL_PAGES = { "Information", "Advanced" }
 local SIDEBAR_GROUPS = {
     { label = "General",      pages = { "General" } },
     { label = "Items",        pages = { "Loot & Trade", "Display", "Inspect", "Item Level", "Merchant", "Extra Items Bar" } },
-    { label = "Combat",       pages = { "Raid Markers", "Combat Alert", "Quick Tools", "Damage Meter" } },
+    { label = "Combat",       pages = { "Combat" } },
     { label = "Social",       pages = { "Chat Bar", "Smart Tab", "Announcement" } },
     { label = "Maps",         pages = { "Super Tracker", "Minimap", "World Map", "Difficulty & Events" } },
     { label = "Quest",        pages = { "Objective Tracker", "Automation", "Progress & Turn In", "Achievement" } },
-    { label = "UI Tweaks",    pages = { "Tooltip Info", "Progression", "Keystone & Group Info", "Tooltip Advanced", "Quick Focus", "Absorb", "Name Clip", "Skins" } },
+    { label = "UI Tweaks",    pages = { "Tooltip Info", "Progression", "Keystone & Group Info", "Tooltip Advanced", "Unit Frames", "Skins" } },
 }
 
 -- Build a single options page by invoking its registered category builders.

@@ -1,55 +1,65 @@
-# Version: 0.2.2
-2026/08/22 Released
+# Version: 0.2.3
+2026/08/27 Released
+## ❗ Important
+- The Raid Markers bar is now always visible (hidden only in pet battles).
 ## ✳️ New
-- Added an in-page Enable toggle to the Raid Markers and Quick Focus option pages.
-- Disabled pages of ported modules can now be opened directly for re-enabling.
+- The Raid Markers bar can now be dragged in EllesmereUI's Unlock Mode; the position is saved account-wide and defaults to above the chat panel.
+- Added Button Size and Button Spacing controls at the top of the Raid Markers page.
 ## 💪 Improvement
-- Fixed Raid Markers button icons being hidden behind their backdrops (shown as black squares).
-- Fixed Quick Focus not applying to host unit frames created late after login; delayed rescan is now scheduled after enabling.
-- Sidebar labels and power icons for disabled modules are now more visible.
+- Options pages now match the original WindTools category layout: Combat and Unit Frames are single pages with module groups inline; unported module options render disabled.
+- Chat Bar TEXT style buttons now auto-size to their labels.
+- Quick Focus now works immediately after login without toggling it off and on.
 
 ------
-# 版本: 0.2.2
-2026/08/22 发布
+# 版本: 0.2.3
+2026/08/27 发布
+## ❗ 重要
+- 快速标记栏现在始终可见（仅宠物战斗中隐藏）。
 ## ✳️ 新增
-- 快速标记和快速焦点选项页面新增页面内的启用开关。
-- 已禁用但已迁移的选项页面现在可以直接打开，便于重新启用。
+- 快速标记栏支持在 EllesmereUI 解锁模式下拖动定位，位置保存在账号级别，默认位置在聊天面板上方。
+- 快速标记页面顶部新增按钮大小和按钮间距设置。
 ## 💪 改善
-- 修复快速标记按钮图标被背景遮挡而显示为黑色方块的问题。
-- 修复快速焦点在宿主单位框体创建较晚时无法生效的问题，启用后会自动延迟重试扫描。
-- 侧边栏中已禁用模块的标签和电源图标改为更醒目的样式。
+- 选项页面与原版 WindTools 分类结构对齐：战斗和单位框体各为一个页面，模块分组内联展示，未移植模块的选项以禁用状态显示。
+- 聊天条文字样式按钮现在根据文字自动调整宽高。
+- 快速焦点登录后立即生效，无需重新开关。
 
 ------
-# 版本: 0.2.2
-2026/08/22 發布
+# 版本: 0.2.3
+2026/08/27 發布
+## ❗ 重要
+- 快速標記欄現在始終可見（僅寵物戰鬥中隱藏）。
 ## ✳️ 新增
-- 快速標記和快速焦點選項頁面新增頁面內的啟用開關。
-- 已停用但已遷移的選項頁面現在可以直接開啟，便於重新啟用。
+- 快速標記欄支援在 EllesmereUI 解鎖模式下拖動定位，位置儲存在帳號層級，預設位置在聊天面板上方。
+- 快速標記頁面頂部新增按鈕大小和按鈕間距設定。
 ## 💪 改善
-- 修復快速標記按鈕圖示被背景遮擋而顯示為黑色方塊的問題。
-- 修復快速焦點在宿主單位框體建立較晚時無法生效的問題，啟用後會自動延遲重試掃描。
-- 側邊欄中已停用模組的標籤和電源圖示改為更醒目的樣式。
+- 選項頁面與原版 WindTools 分類結構對齊：戰鬥和單位框架各為一個頁面，模組分組內聯展示，未移植模組的選項以停用狀態顯示。
+- 聊天條文字樣式按鈕現在根據文字自動調整寬高。
+- 快速焦點登入後立即生效，無需重新開關。
 
 ------
-# 버전: 0.2.2
-2026/08/22 Released
+# 버전: 0.2.3
+2026/08/27 Released
+## ❗ 중요 사항
+- Raid Markers 바가 항상 표시됩니다(애완동물 전투에서만 숨겨짐).
 ## ✳️ 신규 사항
-- Raid Markers 및 Quick Focus 옵션 페이지에 페이지 내 활성화 토글을 추가했습니다.
-- 포팅된 모듈의 비활성화된 페이지를 다시 활성화하기 위해 직접 열 수 있습니다.
+- Raid Markers 바를 EllesmereUI 잠금 해제 모드에서 드래그하여 배치할 수 있습니다. 위치는 계정 수준으로 저장되며 기본 위치는 채팅 패널 위입니다.
+- Raid Markers 페이지 상단에 버튼 크기와 버튼 간격 설정을 추가했습니다.
 ## 💪 개선 사항
-- 버튼 아이콘이 배경에 가려 검은 사각형으로 표시되는 Raid Markers 문제를 수정했습니다.
-- 로그인 후 늦게 생성되는 호스트 유닛 프레임에 Quick Focus가 적용되지 않는 문제를 수정했습니다. 활성화 후 지연 재스캔이 예약됩니다.
-- 비활성화된 모듈의 사이드바 레이블과 전원 아이콘이 더 잘 보이도록 개선했습니다.
+- 옵션 페이지가 원본 WindTools 범주 레이아웃과 일치합니다: 전투와 유닛 프레임이 각각 하나의 페이지이며 모듈 그룹이 인라인으로 표시되고 포팅되지 않은 모듈 옵션은 비활성화 상태로 표시됩니다.
+- 채팅 바 TEXT 스타일 버튼이 레이블에 맞게 크기를 자동 조정합니다.
+- Quick Focus가 로그인 후 다시 켜고 끌 필요 없이 즉시 작동합니다.
 
 ------
-# Версия: 0.2.2
-2026/08/22 Релиз
+# Версия: 0.2.3
+2026/08/27 Релиз
+## ❗ Важные
+- Панель Raid Markers теперь всегда видна (скрывается только в битвах питомцев).
 ## ✳️ Новые
-- На страницы настроек Raid Markers и Quick Focus добавлен переключатель включения.
-- Отключённые страницы перенесённых модулей теперь можно открыть напрямую для повторного включения.
+- Панель Raid Markers теперь можно перетаскивать в режиме разблокировки EllesmereUI; позиция сохраняется на уровне аккаунта, по умолчанию — над панелью чата.
+- В начало страницы Raid Markers добавлены настройки размера кнопок и отступов между ними.
 ## 💪 Улучшения
-- Исправлено скрытие значков кнопок Raid Markers за фонами (отображались чёрными квадратами).
-- Исправлено применение Quick Focus к юнит-фреймам хоста, создаваемым с задержкой после входа; теперь планируется отложенное повторное сканирование.
-- Метки боковой панели и значки питания отключённых модулей стали заметнее.
+- Страницы настроек соответствуют оригинальной структуре категорий WindTools: «Бой» и «Юнит-фреймы» — по одной странице со встроенными группами модулей; настройки неперенесённых модулей отображаются отключёнными.
+- Кнопки панели чата в стиле TEXT автоматически подстраивают размер под текст.
+- Quick Focus теперь работает сразу после входа, без повторного переключения.
 
 ------

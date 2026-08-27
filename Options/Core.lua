@@ -815,15 +815,15 @@ do
 	local FOV = addon.FONT_OUTLINE_VALUES
 	local FOO = addon.FONT_OUTLINE_ORDER
 
-	function addon.FontSection(Widgets, parent, y, dbTable, after)
+	function addon.FontSection(Widgets, parent, y, dbTable, after, disabled)
 		local _, h
 		local fonts = GetLSMFonts2()
 		local fontOrder = {}
 		for k in pairs(fonts) do fontOrder[#fontOrder + 1] = k end
 		table.sort(fontOrder)
-		_, h = Widgets:Dropdown(parent, "Font", y, fonts, addon.DBGet(dbTable, "name"), addon.DBSet(dbTable, "name", after), fontOrder); y = y - h
-		_, h = Widgets:Dropdown(parent, "Outline", y, FOV, addon.DBGet(dbTable, "style"), addon.DBSet(dbTable, "style", after), FOO); y = y - h
-		_, h = Widgets:Slider(parent, "Size", y, 5, 60, 1, addon.DBGet(dbTable, "size"), addon.DBSet(dbTable, "size", after)); y = y - h
+		_, h = Widgets:Dropdown(parent, "Font", y, fonts, addon.DBGet(dbTable, "name"), addon.DBSet(dbTable, "name", after), fontOrder, disabled); y = y - h
+		_, h = Widgets:Dropdown(parent, "Outline", y, FOV, addon.DBGet(dbTable, "style"), addon.DBSet(dbTable, "style", after), FOO, disabled); y = y - h
+		_, h = Widgets:Slider(parent, "Size", y, 5, 60, 1, addon.DBGet(dbTable, "size"), addon.DBSet(dbTable, "size", after), nil, disabled); y = y - h
 		return y
 	end
 end

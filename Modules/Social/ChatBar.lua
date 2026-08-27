@@ -8,6 +8,7 @@ local EUI = _G.EllesmereUI
 local PP = EUI and EUI.PP
 
 local _G = _G
+local ceil = ceil
 local format = format
 local ipairs = ipairs
 local pairs = pairs
@@ -42,6 +43,12 @@ local LE_PARTY_CATEGORY_INSTANCE = LE_PARTY_CATEGORY_INSTANCE
 
 local BUTTON_HOVER_FONT_SIZE_INCREASE = 4
 local MOUSE_OVER_HEIGHT_PADDING = 6
+-- Horizontal padding added on both sides of the label when the bar uses the
+-- TEXT style (buttons shrink to fit their text instead of buttonWidth).
+local TEXT_WIDTH_PADDING = 4
+-- Vertical padding added above/below the label in TEXT style so the button
+-- height also follows the font instead of the BLOCK buttonHeight.
+local TEXT_HEIGHT_PADDING = 2
 local NORMAL_CHANNELS = { "SAY", "YELL", "PARTY", "INSTANCE", "RAID", "RAID_WARNING", "GUILD", "OFFICER", "EMOTE" }
 
 -- Fallback texture path (ElvUI's normTex is not available in CompatE)
@@ -125,48 +132,6 @@ local function CalculateNextOffset(anchor, offsetX, offsetY, buttonWidth, button
 	else
 		return offsetX, offsetY - buttonHeight - spacing
 	end
-end
-
----Calculate the total size of the chat bar
----@param orientation string Bar orientation ("HORIZONTAL" or "VERTICAL")
----@param numberOfButtons number Total number of buttons
----@param spacing number Spacing between buttons
----@param buttonWidth number Width of each button
----@param buttonHeight number Height of each button
----@param hasBackdrop boolean Whether the bar has a backdrop
----@param backdropSpacing number Spacing for the backdrop
----@return number width The calculated bar width
----@return number height The calculated bar height
-local function CalculateBarSize(
-	orientation,
-	numberOfButtons,
-	spacing,
-	buttonWidth,
-	buttonHeight,
-	hasBackdrop,
-	backdropSpacing
-)
-	local width, height
-
-	if hasBackdrop then
-		if orientation == "HORIZONTAL" then
-			width = backdropSpacing * 2 + buttonWidth * numberOfButtons + spacing * (numberOfButtons - 1)
-			height = backdropSpacing * 2 + buttonHeight
-		else
-			width = backdropSpacing * 2 + buttonWidth
-			height = backdropSpacing * 2 + buttonHeight * numberOfButtons + spacing * (numberOfButtons - 1)
-		end
-	else
-		if orientation == "HORIZONTAL" then
-			width = buttonWidth * numberOfButtons + spacing * (numberOfButtons - 1)
-			height = buttonHeight
-		else
-			width = buttonWidth
-			height = buttonHeight * numberOfButtons + spacing * (numberOfButtons - 1)
-		end
-	end
-
-	return width, height
 end
 
 ---Get the initial offset for button positioning
@@ -393,12 +358,20 @@ function CB:UpdateButton(name, func, anchorPoint, x, y, color, tex, tooltip, tip
 	end
 
 	-- Update size and position (EllesmereUI PP for pixel-perfect scaling)
+	-- TEXT style shrinks each button to fit its label; BLOCK keeps the
+	-- configured size.
+	local width = CB.db.buttonWidth
+	local height = CB.db.buttonHeight
+	if CB.db.style == "TEXT" then
+		width = ceil(self.bar[name].text:GetStringWidth()) + TEXT_WIDTH_PADDING * 2
+		height = ceil(self.bar[name].text:GetStringHeight()) + TEXT_HEIGHT_PADDING * 2
+	end
 	if PP then
-		PP.Size(self.bar[name], CB.db.buttonWidth, CB.db.buttonHeight)
+		PP.Size(self.bar[name], width, height)
 		self.bar[name]:ClearAllPoints()
 		PP.Point(self.bar[name], anchorPoint, CB.bar, anchorPoint, x, y)
 	else
-		self.bar[name]:SetSize(CB.db.buttonWidth, CB.db.buttonHeight)
+		self.bar[name]:SetSize(width, height)
 		self.bar[name]:ClearAllPoints()
 		self.bar[name]:SetPoint(anchorPoint, CB.bar, anchorPoint, x, y)
 	end
@@ -464,9 +437,30 @@ function CB:UpdateBar()
 
 	local numberOfButtons = 0
 	local orientation, hasBackdrop, backdropSpacing = self.db.orientation, self.db.backdrop, self.db.backdropSpacing
-	local buttonWidth, buttonHeight, spacing = self.db.buttonWidth, self.db.buttonHeight, self.db.spacing
+	local spacing = self.db.spacing
 	local anchor = self.db.orientation == "HORIZONTAL" and "LEFT" or "TOP"
 	local offsetX, offsetY = GetInitialOffset(hasBackdrop, backdropSpacing, anchor)
+
+	local totalButtonWidth, maxButtonWidth = 0, 0
+	local totalButtonHeight, maxButtonHeight = 0, 0
+
+	-- Advance the layout offset using the button's rendered size so
+	-- TEXT-style buttons (auto-sized to their label) pack tightly instead of
+	-- keeping the configured BLOCK dimensions.
+	local function AdvanceOffset(name)
+		local btn = self.bar[name]
+		local width = btn and btn:IsShown() and btn:GetWidth() or self.db.buttonWidth
+		local height = btn and btn:IsShown() and btn:GetHeight() or self.db.buttonHeight
+		offsetX, offsetY = CalculateNextOffset(anchor, offsetX, offsetY, width, height, spacing)
+		totalButtonWidth = totalButtonWidth + width
+		totalButtonHeight = totalButtonHeight + height
+		if width > maxButtonWidth then
+			maxButtonWidth = width
+		end
+		if height > maxButtonHeight then
+			maxButtonHeight = height
+		end
+	end
 
 	for _, name in ipairs(NORMAL_CHANNELS) do
 		local db = self.db.channels[name]
@@ -490,7 +484,7 @@ function CB:UpdateBar()
 
 			self:UpdateButton(name, chatFunc, anchor, offsetX, offsetY, db.color, self.db.tex, nil, nil, db.abbr)
 			numberOfButtons = numberOfButtons + 1
-			offsetX, offsetY = CalculateNextOffset(anchor, offsetX, offsetY, buttonWidth, buttonHeight, spacing)
+			AdvanceOffset(name)
 		else
 			self:DisableButton(name)
 		end
@@ -541,7 +535,7 @@ function CB:UpdateBar()
 			}, db.abbr)
 
 			numberOfButtons = numberOfButtons + 1
-			offsetX, offsetY = CalculateNextOffset(anchor, offsetX, offsetY, buttonWidth, buttonHeight, spacing)
+			AdvanceOffset("WORLD")
 		end
 	else
 		self:DisableButton("WORLD")
@@ -571,7 +565,7 @@ function CB:UpdateBar()
 			self:UpdateButton("CLUB", chatFunc, anchor, offsetX, offsetY, db.color, self.db.tex, name, nil, db.abbr)
 
 			numberOfButtons = numberOfButtons + 1
-			offsetX, offsetY = CalculateNextOffset(anchor, offsetX, offsetY, buttonWidth, buttonHeight, spacing)
+			AdvanceOffset("CLUB")
 		end
 	else
 		self:DisableButton("CLUB")
@@ -610,8 +604,7 @@ function CB:UpdateBar()
 			abbr
 		)
 		numberOfButtons = numberOfButtons + 1
-		offsetX, offsetY =
-			CalculateNextOffset(anchor, offsetX, offsetY, self.db.buttonWidth, self.db.buttonHeight, self.db.spacing)
+		AdvanceOffset("WindEmote")
 	else
 		self:DisableButton("WindEmote")
 	end
@@ -630,15 +623,31 @@ function CB:UpdateBar()
 		self:UpdateButton("ROLL", chatFunc, anchor, offsetX, offsetY, db.color, self.db.tex, nil, nil, abbr)
 
 		numberOfButtons = numberOfButtons + 1
-		offsetX, offsetY =
-			CalculateNextOffset(anchor, offsetX, offsetY, self.db.buttonWidth, self.db.buttonHeight, self.db.spacing)
+		AdvanceOffset("ROLL")
 	else
 		self:DisableButton("ROLL")
 	end
 
-	-- Update the size of the bar
-	local width, height =
-		CalculateBarSize(orientation, numberOfButtons, spacing, buttonWidth, buttonHeight, hasBackdrop, backdropSpacing)
+	-- Update the size of the bar (from the actual rendered button sizes so
+	-- the frame shrinks/grows with the active style)
+	local width, height
+	if hasBackdrop then
+		if orientation == "HORIZONTAL" then
+			width = backdropSpacing * 2 + totalButtonWidth + spacing * (numberOfButtons - 1)
+			height = backdropSpacing * 2 + maxButtonHeight
+		else
+			width = backdropSpacing * 2 + maxButtonWidth
+			height = backdropSpacing * 2 + totalButtonHeight + spacing * (numberOfButtons - 1)
+		end
+	else
+		if orientation == "HORIZONTAL" then
+			width = totalButtonWidth + spacing * (numberOfButtons - 1)
+			height = maxButtonHeight
+		else
+			width = maxButtonWidth
+			height = totalButtonHeight + spacing * (numberOfButtons - 1)
+		end
+	end
 
 	if self.db.mouseOver then
 		self.bar:SetAlpha(0)

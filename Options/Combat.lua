@@ -32,10 +32,19 @@ end
 
 local function UpdateRaidMarkers()
 	addon.SafeModuleCall(W.Modules.RaidMarkers, "ProfileUpdate")
+end
+
+local function ToggleRaidMarkers()
+	UpdateRaidMarkers()
 	if addon.RefreshOptions then
 		addon.RefreshOptions()
 	end
 end
+
+-- Combat Alert / Quick Tools / Damage Meter Layout modules are not ported to
+-- EllesmereUI yet; their options render disabled on the merged Combat page
+-- (matching the original category layout: one page, module groups inline).
+local NOT_PORTED = function() return true end
 
 local function BuildRaidMarkers(parent, y, cat)
 	local Widgets = EllesmereUI.Widgets
@@ -45,15 +54,19 @@ local function BuildRaidMarkers(parent, y, cat)
 	local rmDis = function() return not rm.enable end
 	_, h = Widgets:SectionHeader(parent, MH("Raid Markers"), y); y = y - h
 	_, h = Widgets:Toggle(parent, "Enable", y,
-		DBGet(rm, "enable"), DBSet(rm, "enable", UpdateRaidMarkers),
-		"Enable the raid markers bar.")
-	if not rm.enable then
-		_, h = Widgets:Button(parent, "Raid Markers is disabled. Turn it on to configure the bar.", y, function() end)
-	end
-	y = y - h
+		DBGet(rm, "enable"), DBSet(rm, "enable", ToggleRaidMarkers),
+		"Enable the raid markers bar."); y = y - h
 	_, h = Widgets:Toggle(parent, "Inverse Mode", y,
 		DBGet(rm, "inverse"), DBSet(rm, "inverse", UpdateRaidMarkers),
 		"Swap the functionality of normal click and click with modifier keys.", rmDis); y = y - h
+	_, h = Widgets:DualRow(parent, y,
+		{ type = "slider", text = "Button Size", min = 15, max = 80, step = 1,
+		  getValue = DBGetDefault(rm, "buttonSize", 30), setValue = DBSet(rm, "buttonSize", UpdateRaidMarkers),
+		  tooltip = "Size of the marker buttons.", disabled = rmDis },
+		{ type = "slider", text = "Button Spacing", min = 1, max = 30, step = 1,
+		  getValue = DBGetDefault(rm, "spacing", 4), setValue = DBSet(rm, "spacing", UpdateRaidMarkers),
+		  tooltip = "Spacing between the marker buttons.", disabled = rmDis }
+	); y = y - h
 	_, h = Widgets:SectionHeader(parent, MH("Raid Markers", "Visibility"), y); y = y - h
 	_, h = Widgets:Dropdown(parent, "Visibility", y,
 		VISIBILITY_VALUES, VISIBILITY_ORDER,
@@ -91,12 +104,6 @@ local function BuildRaidMarkers(parent, y, cat)
 	); y = y - h
 	_, h = Widgets:SectionHeader(parent, MH("Raid Markers", "Button Layout"), y); y = y - h
 	_, h = Widgets:DualRow(parent, y,
-		{ type = "slider", text = "Button Size", min = 15, max = 60, step = 1,
-		  getValue = DBGetDefault(rm, "buttonSize", 30), setValue = DBSet(rm, "buttonSize", UpdateRaidMarkers), disabled = rmDis },
-		{ type = "slider", text = "Button Spacing", min = 1, max = 30, step = 1,
-		  getValue = DBGetDefault(rm, "spacing", 4), setValue = DBSet(rm, "spacing", UpdateRaidMarkers), disabled = rmDis }
-	); y = y - h
-	_, h = Widgets:DualRow(parent, y,
 		{ type = "toggle", text = "Button Backdrop",
 		  getValue = DBGet(rm, "buttonBackdrop"), setValue = DBSet(rm, "buttonBackdrop", UpdateRaidMarkers), disabled = rmDis },
 		{ type = "toggle", text = "Button Animation",
@@ -118,7 +125,7 @@ local function BuildCombatAlert(parent, y, cat)
 	local MH = function(mod, sub) return addon.MakeHeader(cat, mod, sub) end
 	local _, h
 	local ca = E.db.WT.combat.combatAlert
-	local caDis = function() return not ca.enable end
+	local caDis = NOT_PORTED
 	_, h = Widgets:SectionHeader(parent, MH("Combat Alert"), y); y = y - h
 	_, h = Widgets:DualRow(parent, y,
 		{ type = "slider", text = "Speed", min = 0.1, max = 4, step = 0.01,
@@ -158,21 +165,21 @@ local function BuildCombatAlert(parent, y, cat)
 		function(r, g, b) ca.leaveColor.right = ca.leaveColor.right or {}; ca.leaveColor.right.r, ca.leaveColor.right.g, ca.leaveColor.right.b = r, g, b end,
 		false); y = y - h
 	_, h = Widgets:SectionHeader(parent, MH("Combat Alert", "Font"), y); y = y - h
-	y = FontSection(Widgets, parent, y, ca.font)
+	y = FontSection(Widgets, parent, y, ca.font, nil, caDis)
 	_, h = Widgets:SectionHeader(parent, MH("Combat Alert", "Sound - Enter"), y); y = y - h
 	_, h = Widgets:Toggle(parent, "Enable", y,
-		DBGet2(ca, "enterSound", "enable"), DBSet2(ca, "enterSound", "enable")); y = y - h
+		DBGet2(ca, "enterSound", "enable"), DBSet2(ca, "enterSound", "enable"), nil, caDis); y = y - h
 	_, h = Widgets:Dropdown(parent, "Sound Channel", y,
 		SOUND_CHANNEL_VALUES, SOUND_CHANNEL_ORDER,
 		function() return ca.enterSound and ca.enterSound.channel or "Master" end,
-		DBSet2(ca, "enterSound", "channel")); y = y - h
+		DBSet2(ca, "enterSound", "channel"), nil, caDis); y = y - h
 	_, h = Widgets:SectionHeader(parent, MH("Combat Alert", "Sound - Leave"), y); y = y - h
 	_, h = Widgets:Toggle(parent, "Enable", y,
-		DBGet2(ca, "leaveSound", "enable"), DBSet2(ca, "leaveSound", "enable")); y = y - h
+		DBGet2(ca, "leaveSound", "enable"), DBSet2(ca, "leaveSound", "enable"), nil, caDis); y = y - h
 	_, h = Widgets:Dropdown(parent, "Sound Channel", y,
 		SOUND_CHANNEL_VALUES, SOUND_CHANNEL_ORDER,
 		function() return ca.leaveSound and ca.leaveSound.channel or "Master" end,
-		DBSet2(ca, "leaveSound", "channel")); y = y - h
+		DBSet2(ca, "leaveSound", "channel"), nil, caDis); y = y - h
 	return y
 end
 
@@ -187,14 +194,14 @@ local function BuildQuickTools(parent, y, cat)
 		local dt = pdb.destroyTotem
 		_, h = Widgets:Toggle(parent, "Enable", y,
 			DBGet(dt, "enable"), DBSet(dt, "enable"),
-			"Use key bindings or macro to destroy your totems quickly."); y = y - h
+			"Use key bindings or macro to destroy your totems quickly.", NOT_PORTED); y = y - h
 	end
 	_, h = Widgets:SectionHeader(parent, MH("Quick Keystone"), y); y = y - h
 	do
 		local qk = db.quickKeystone
 		_, h = Widgets:Toggle(parent, "Enable", y,
 			DBGet(qk, "enable"), DBSet(qk, "enable"),
-			"Put the keystone from bag automatically."); y = y - h
+			"Put the keystone from bag automatically.", NOT_PORTED); y = y - h
 	end
 	return y
 end
@@ -204,7 +211,7 @@ local function BuildDamageMeter(parent, y, cat)
 	local MH = function(mod, sub) return addon.MakeHeader(cat, mod, sub) end
 	local _, h
 	local dl = E.db.WT.combat.damageMeterLayout
-	local dlDis = function() return not dl.enable end
+	local dlDis = NOT_PORTED
 	_, h = Widgets:SectionHeader(parent, MH("Damage Meter Layout"), y); y = y - h
 	_, h = Widgets:SectionHeader(parent, MH("Damage Meter Layout", "Container"), y); y = y - h
 	_, h = Widgets:DualRow(parent, y,
@@ -232,11 +239,15 @@ local function BuildDamageMeter(parent, y, cat)
 	return y
 end
 
-addon.RegisterOptionBuilder("combat", function(parent, y, cat, subPage)
-	if     subPage == "Raid Markers"  then return BuildRaidMarkers(parent, y, cat)
-	elseif subPage == "Combat Alert"  then return BuildCombatAlert(parent, y, cat)
-	elseif subPage == "Quick Tools"   then return BuildQuickTools(parent, y, cat)
-	elseif subPage == "Damage Meter"  then return BuildDamageMeter(parent, y, cat)
-	end
-	return y
+-- Original WindTools layout: one Combat category page with every module
+-- group inline (Raid Markers, Combat Alert, Quick Tools, Damage Meter).
+addon.RegisterOptionBuilder("combat", function(parent, y, cat)
+	local Widgets = EllesmereUI.Widgets
+	y = BuildRaidMarkers(parent, y, cat)
+	local _, sh = Widgets:Spacer(parent, y, 8); y = y - sh
+	y = BuildCombatAlert(parent, y, cat)
+	_, sh = Widgets:Spacer(parent, y, 8); y = y - sh
+	y = BuildQuickTools(parent, y, cat)
+	_, sh = Widgets:Spacer(parent, y, 8); y = y - sh
+	return BuildDamageMeter(parent, y, cat)
 end)

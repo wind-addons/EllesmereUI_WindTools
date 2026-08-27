@@ -138,9 +138,11 @@ function QF:Initialize()
 	if not button then
 		button = CreateFrame("Button", "WTQuickFocusButton", E.UIParent, "SecureActionButtonTemplate")
 		self.button = button
-	else
-		button:Show()
 	end
+	-- Hidden frames never process binding clicks, so the override binding
+	-- only works after the button is shown (previously required an
+	-- off/on toggle to take effect).
+	button:Show()
 	button:SetAttribute("type*", "macro")
 	button:SetAttribute("macrotext", self:GetMacroText())
 	button:RegisterForClicks(W.UseKeyDown and "AnyDown" or "AnyUp")

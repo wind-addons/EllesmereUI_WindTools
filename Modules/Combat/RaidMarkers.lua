@@ -1,5 +1,6 @@
 local W, F, E, L = unpack((select(2, ...))) ---@type WindTools, Functions, ElvUI, LocaleTable
 local RM = W:NewModule("RaidMarkers", "AceEvent-3.0")
+local EUI = _G.EllesmereUI
 
 local _G = _G
 local GameTooltip = _G.GameTooltip
@@ -97,7 +98,6 @@ function RM:UpdateBar()
 
 	self.bar:Show()
 	SetSize(self.bar, width, height)
-	SetSize(self.barAnchor, width, height)
 
 	if self.db.backdrop then
 		self.bar.backdrop:Show()
@@ -171,13 +171,16 @@ function RM:ToggleSettings()
 	self:UpdateBar()
 
 	if self.bar and self.db and self.db.visibility then
-		RegisterStateDriver(
-			self.bar,
-			"visibility",
-			self.db.visibility == "DEFAULT" and "[noexists, nogroup] hide; show"
-				or self.db.visibility == "ALWAYS" and "[petbattle] hide; show"
-				or "[group] show; [petbattle] hide; hide"
-		)
+		-- The bar stays visible by default (hidden only in pet battles).
+		-- Upstream's "hide while solo without a target" behavior proved
+		-- surprising when placing world markers out of combat.
+		local driver
+		if self.db.visibility == "INPARTY" then
+			driver = "[group] show; [petbattle] hide; hide"
+		else
+			driver = "[petbattle] hide; show"
+		end
+		RegisterStateDriver(self.bar, "visibility", driver)
 	end
 
 	-- Fade in/out for mouseover
@@ -198,33 +201,136 @@ function RM:ToggleSettings()
 	end
 end
 
+---Resolve a sensible default anchor: the EllesmereUI chat background if it is
+---live, otherwise ChatFrame1 (the Blizzard chat frame every chat addon is
+---built on), otherwise UIParent. Mirrors the Chat Bar's anchor resolution;
+---the bar defaults to hovering just above the chat panel, right-aligned
+---(the Chat Bar occupies the left side above the same panel).
+---@return Frame frame the anchor frame (never nil)
+---@return string point
+---@return string relPoint
+---@return number x
+---@return number y
+local function ResolveDefaultAnchor()
+	local chatFrame = _G.ChatFrame1
+	if chatFrame and EUI and EUI._chatCFD then
+		local ok, data = pcall(EUI._chatCFD, chatFrame)
+		if ok and data and data.bg then
+			local bg = data.bg
+			local live = bg.IsShown and bg:IsShown() and bg.GetWidth and bg:GetWidth() > 0
+			if live then
+				-- bar.BOTTOMRIGHT on bg.TOPRIGHT => bar sits just above the panel.
+				return bg, "TOPRIGHT", "TOPRIGHT", -6, 30
+			end
+		end
+	end
+	if chatFrame and chatFrame.GetWidth and chatFrame:GetWidth() > 0 then
+		return chatFrame, "TOPRIGHT", "TOPRIGHT", -6, 30
+	end
+	-- Last-resort fallback.
+	return E.UIParent, "BOTTOMRIGHT", "BOTTOMRIGHT", -20, 180
+end
+
+---Apply the saved mover position, or the default anchor if none.
+function RM:ApplyDefaultPosition()
+	if not self.bar then
+		return
+	end
+
+	local pos = E.global.WT and E.global.WT.combat and E.global.WT.combat.raidMarkers
+		and E.global.WT.combat.raidMarkers.position
+
+	self.bar:ClearAllPoints()
+	if pos and pos.point and pos.x and pos.y then
+		SetPoint(self.bar, pos.point, _G.UIParent, pos.relPoint or pos.point, pos.x, pos.y)
+	else
+		local anchorFrame, point, relPoint, x, y = ResolveDefaultAnchor()
+		SetPoint(self.bar, point, anchorFrame, relPoint, x, y)
+	end
+end
+
+---Register the bar with EllesmereUI's Unlock Mode so it can be dragged and
+---positioned alongside all other EllesmereUI layout elements (same approach
+---as the Chat Bar and Extra Items Bar movers).
+function RM:RegisterMover()
+	if not EUI or not EUI.RegisterUnlockElements or not EUI.MakeUnlockElement then
+		return
+	end
+
+	local MK = EUI.MakeUnlockElement
+
+	local elements = {
+		MK({
+			key = "WTRaidMarkersBar",
+			label = L["Raid Markers Bar"],
+			group = "WindTools",
+			order = 906,
+			getFrame = function()
+				return RM.bar
+			end,
+			getSize = function()
+				if not RM.bar then
+					return 1, 1
+				end
+				return RM.bar:GetWidth(), RM.bar:GetHeight()
+			end,
+			savePos = function(_, point, relPoint, x, y)
+				if point and x and y then
+					E.global.WT.combat.raidMarkers.position = {
+						point = point,
+						relPoint = relPoint or point,
+						x = x,
+						y = y,
+					}
+				end
+			end,
+			loadPos = function()
+				local pos = E.global.WT and E.global.WT.combat and E.global.WT.combat.raidMarkers
+					and E.global.WT.combat.raidMarkers.position
+				if not pos then
+					return nil
+				end
+				return {
+					point = pos.point,
+					relPoint = pos.relPoint or pos.point,
+					x = pos.x,
+					y = pos.y,
+				}
+			end,
+			clearPos = function()
+				E.global.WT.combat.raidMarkers.position = nil
+			end,
+			applyPos = function()
+				RM:ApplyDefaultPosition()
+			end,
+			isHidden = function()
+				return not (RM.db and RM.db.enable)
+			end,
+		}),
+	}
+
+	EUI:RegisterUnlockElements(elements, "EllesmereUI_WindTools")
+end
+
 function RM:CreateBar()
 	if self.bar then
 		return
 	end
 
-	local frame = CreateFrame("Frame", nil, E.UIParent, "SecureHandlerStateTemplate")
-	if _G.RightChatPanel then
-		SetPoint(frame, "BOTTOMRIGHT", _G.RightChatPanel, "TOPRIGHT", -1, 3)
-	else
-		SetPoint(frame, "BOTTOMRIGHT", E.UIParent, "BOTTOMRIGHT", -20, 180)
-	end
-	frame:SetFrameStrata("DIALOG")
-	self.barAnchor = frame
+	-- SecureHandlerStateTemplate lets the visibility state driver run in a
+	-- secure context (same approach as the Chat Bar). A single frame keeps
+	-- the EllesmereUI mover registration straightforward.
+	local bar = CreateFrame("Frame", "WTRaidMarkersBar", E.UIParent, "SecureHandlerStateTemplate")
+	bar:SetResizable(false)
+	bar:SetClampedToScreen(true)
+	bar:SetFrameStrata("LOW")
+	CreateBackdrop(bar)
+	bar.buttons = {}
+	self.bar = bar
 
-	frame = CreateFrame("Frame", nil, E.UIParent)
-	frame:SetResizable(false)
-	frame:SetClampedToScreen(true)
-	frame:SetFrameStrata("LOW")
-	CreateBackdrop(frame)
-	frame:ClearAllPoints()
-	SetPoint(frame, "CENTER", self.barAnchor, "CENTER", 0, 0)
-	frame.buttons = {}
-	self.bar = frame
-
+	self:ApplyDefaultPosition()
 	self:CreateButtons()
 	self:ToggleSettings()
-
 end
 
 function RM:UpdateCountDownButton()
@@ -441,8 +547,22 @@ end
 function RM:ProfileUpdate()
 	self.db = E.db.WT.combat.raidMarkers
 
-	if self.db.enable and not self.bar then
-		self:CreateBar()
+	if not self.db.enable then
+		if self.bar then
+			self.bar:Hide()
+		end
+		return
+	end
+
+	if not self.bar then
+		-- Creating secure buttons and registering state drivers is prohibited
+		-- in combat; defer until the player leaves combat.
+		if InCombatLockdown() then
+			self:RegisterEvent("PLAYER_REGEN_ENABLED", "ProfileUpdate")
+			return
+		end
+
+		self:Initialize()
 		return
 	end
 
@@ -459,6 +579,7 @@ function RM:Initialize()
 	self.db = E.db.WT.combat.raidMarkers
 
 	self:CreateBar()
+	self:RegisterMover()
 end
 
 W:RegisterModule(RM:GetName())

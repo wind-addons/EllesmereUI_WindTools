@@ -17,10 +17,19 @@ local BUTTON_ORDER = { "BUTTON1", "BUTTON2", "BUTTON3", "BUTTON4", "BUTTON5" }
 
 local function UpdateQuickFocus()
 	addon.SafeModuleCall(W.Modules.QuickFocus, "ProfileUpdate")
+end
+
+local function ToggleQuickFocus()
+	UpdateQuickFocus()
 	if addon.RefreshOptions then
 		addon.RefreshOptions()
 	end
 end
+
+-- Absorb / Role Icon / Name Clip modules are not ported to EllesmereUI yet;
+-- their options render disabled on the merged Unit Frames page (matching the
+-- original category layout: one page, module groups inline).
+local NOT_PORTED = function() return true end
 
 local MARK_VALUES = {
 	[1] = "Star", [2] = "Circle", [3] = "Diamond", [4] = "Triangle",
@@ -36,12 +45,8 @@ local function BuildQuickFocus(parent, y, cat)
 	local qfDis = function() return not qf.enable end
 	_, h = Widgets:SectionHeader(parent, MH("Quick Focus"), y); y = y - h
 	_, h = Widgets:Toggle(parent, "Enable", y,
-		DBGet(qf, "enable"), DBSet(qf, "enable", UpdateQuickFocus),
-		"Focus the mouseover unit with a modifier key + mouse button.")
-	if not qf.enable then
-		_, h = Widgets:Button(parent, "Quick Focus is disabled. Turn it on to configure the binding.", y, function() end)
-	end
-	y = y - h
+		DBGet(qf, "enable"), DBSet(qf, "enable", ToggleQuickFocus),
+		"Focus the mouseover unit with a modifier key + mouse button."); y = y - h
 	_, h = Widgets:DualRow(parent, y,
 		{ type = "dropdown", text = "Modifier Key",
 		  values = MODIFIER_VALUES, order = MODIFIER_ORDER,
@@ -70,17 +75,17 @@ local function BuildAbsorb(parent, y, cat)
 		local da = ab.damageAbsorb
 		_, h = Widgets:Toggle(parent, "Enable Texture Replacement", y,
 			DBGet(da, "enable"), DBSet(da, "enable"),
-			"Enable the replacing of ElvUI absorb bar textures."); y = y - h
+			"Enable the replacing of ElvUI absorb bar textures.", NOT_PORTED); y = y - h
 		_, h = Widgets:Toggle(parent, "Blizzard Style", y,
 			DBGet(da, "blizzardStyle"), DBSet(da, "blizzardStyle"),
-			"Use the texture from Blizzard Raid Frames."); y = y - h
+			"Use the texture from Blizzard Raid Frames.", NOT_PORTED); y = y - h
 	end
 	local ri = E.db.WT.unitFrames.roleIcon
 	if ri then
 		_, h = Widgets:SectionHeader(parent, MH("Role Icon"), y); y = y - h
 		_, h = Widgets:Toggle(parent, "Enable", y,
 			DBGet(ri, "enable"), DBSet(ri, "enable"),
-			"Replace the role icon texture on unit frames."); y = y - h
+			"Replace the role icon texture on unit frames.", NOT_PORTED); y = y - h
 	end
 	return y
 end
@@ -94,10 +99,13 @@ local function BuildNameClip(parent, y, cat)
 	return y
 end
 
-addon.RegisterOptionBuilder("unitFrames", function(parent, y, cat, subPage)
-	if     subPage == "Quick Focus" then return BuildQuickFocus(parent, y, cat)
-	elseif subPage == "Absorb"      then return BuildAbsorb(parent, y, cat)
-	elseif subPage == "Name Clip"   then return BuildNameClip(parent, y, cat)
-	end
-	return y
+-- Original WindTools layout: one Unit Frames category page with every module
+-- group inline (Quick Focus, Absorb, Name Clip).
+addon.RegisterOptionBuilder("unitFrames", function(parent, y, cat)
+	local Widgets = EllesmereUI.Widgets
+	y = BuildQuickFocus(parent, y, cat)
+	local _, sh = Widgets:Spacer(parent, y, 8); y = y - sh
+	y = BuildAbsorb(parent, y, cat)
+	_, sh = Widgets:Spacer(parent, y, 8); y = y - sh
+	return BuildNameClip(parent, y, cat)
 end)
