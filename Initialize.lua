@@ -63,7 +63,7 @@ _WindTools = addon
 _G.WindTools = addon
 
 W.Title = "WindTools"
-W.DisplayVersion = C_AddOns.GetAddOnMetadata(addonName, "X-Version") or "0.2.3"
+W.DisplayVersion = C_AddOns.GetAddOnMetadata(addonName, "X-Version") or "0.2.4"
 W.Version = W.DisplayVersion
 W.Utilities = W.Utilities or {}
 W.CompatibleFont = false
