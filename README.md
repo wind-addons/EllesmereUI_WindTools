@@ -32,6 +32,7 @@
 | Social (Chat Link, Chat Text, Context Menu, Emote, Friend List) | ❌ Not ported | |
 | Announcement | ❌ Not ported | |
 | Tooltip (Progression, Keystone, Group Info, Objective Progress) | ❌ Not ported | |
+| Unit Frames (Friendly Nameplate Outline) | ✅ Done | Sync Ellesmere nameplate outline to system fonts; follower-dungeon friendly plates (ported from EUI_Kogotool) |
 | Unit Frames (Quick Focus) | ✅ Done | Modifier-click focus with optional target marking |
 | Unit Frames (Absorb, Role Icon, Tags) | ❌ Not ported | |
 | Skins | ❌ Not ported | |

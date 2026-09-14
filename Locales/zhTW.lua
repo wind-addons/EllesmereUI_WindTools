@@ -753,6 +753,7 @@ L["Force to track the target even if it over 1000 yds."] = "強制追蹤超過 1
 L["Frame Level"] = "框架層次"
 L["Frame Strata"] = "框架層級"
 L["Friend List"] = "好友名單"
+L["Friendly Nameplate Outline"] = "友方姓名板描邊"
 L["Friends"] = "好友"
 L["Fully Complete"] = "全部完成"
 L["G"] = "公會"

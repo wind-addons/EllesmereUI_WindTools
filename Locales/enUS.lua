@@ -753,6 +753,7 @@ L["Force to track the target even if it over 1000 yds."] = true
 L["Frame Level"] = true
 L["Frame Strata"] = true
 L["Friend List"] = true
+L["Friendly Nameplate Outline"] = true
 L["Friends"] = true
 L["Fully Complete"] = true
 L["G"] = true

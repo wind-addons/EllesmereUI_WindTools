@@ -1229,6 +1229,10 @@ P.tooltips = {
 
 ---@class ProfileDB.unitFrames
 P.unitFrames = {
+	---@class ProfileDB.unitFrames.friendlyNameplateOutline
+	friendlyNameplateOutline = {
+		enable = false,
+	},
 	---@class ProfileDB.unitFrames.nameClip
 	nameClip = {
 		enable = false,

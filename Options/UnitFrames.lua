@@ -26,6 +26,10 @@ local function ToggleQuickFocus()
 	end
 end
 
+local function UpdateFriendlyNameplateOutline()
+	addon.SafeModuleCall(W.Modules.FriendlyNameplateOutline, "ProfileUpdate")
+end
+
 -- Absorb / Role Icon / Name Clip modules are not ported to EllesmereUI yet;
 -- their options render disabled on the merged Unit Frames page (matching the
 -- original category layout: one page, module groups inline).
@@ -65,6 +69,18 @@ local function BuildQuickFocus(parent, y, cat)
 	return y
 end
 
+local function BuildFriendlyNameplateOutline(parent, y, cat)
+	local MH = function(mod, sub) return addon.MakeHeader(cat, mod, sub) end
+	local Widgets = EllesmereUI.Widgets
+	local _, h
+	local fn = E.db.WT.unitFrames.friendlyNameplateOutline
+	_, h = Widgets:SectionHeader(parent, MH("Friendly Nameplate Outline"), y); y = y - h
+	_, h = Widgets:Toggle(parent, "Enable", y,
+		DBGet(fn, "enable"), DBSet(fn, "enable", UpdateFriendlyNameplateOutline),
+		"Sync the EllesmereUI friendly nameplate outline style to the system nameplate fonts, and keep friendly nameplates visible in follower dungeons. Requires the EllesmereUI nameplates module with friendly Name Only mode."); y = y - h
+	return y
+end
+
 local function BuildAbsorb(parent, y, cat)
 	local MH = function(mod, sub) return addon.MakeHeader(cat, mod, sub) end
 	local Widgets = EllesmereUI.Widgets
@@ -100,11 +116,13 @@ local function BuildNameClip(parent, y, cat)
 end
 
 -- Original WindTools layout: one Unit Frames category page with every module
--- group inline (Quick Focus, Absorb, Name Clip).
+-- group inline (Quick Focus, Friendly Nameplate Outline, Absorb, Name Clip).
 addon.RegisterOptionBuilder("unitFrames", function(parent, y, cat)
 	local Widgets = EllesmereUI.Widgets
 	y = BuildQuickFocus(parent, y, cat)
 	local _, sh = Widgets:Spacer(parent, y, 8); y = y - sh
+	y = BuildFriendlyNameplateOutline(parent, y, cat)
+	_, sh = Widgets:Spacer(parent, y, 8); y = y - sh
 	y = BuildAbsorb(parent, y, cat)
 	_, sh = Widgets:Spacer(parent, y, 8); y = y - sh
 	return BuildNameClip(parent, y, cat)
