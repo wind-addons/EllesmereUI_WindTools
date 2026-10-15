@@ -1,26 +1,66 @@
 local addonName, addon = ...
 
 local EUI = _G.EllesmereUI
-if not EUI or not EUI.Lite then
+
+local xpcall = xpcall
+local geterrorhandler = geterrorhandler
+
+local function L(text)
+    return EUI and EUI.L and EUI.L(text) or text
+end
+
+-- Later TOC files unpack addon[1..7] at file scope. Export the locale table
+-- before anything that can bail, so a failed init surfaces as one clear message
+-- instead of "attempt to index a nil value (local 'L')" in Metadata.lua.
+addon[4] = setmetatable({}, {
+    __index = function(_, key)
+        return L(key)
+    end
+})
+
+-- Stand-in for W/E when init bails: downstream file-scope code indexes nested
+-- fields and calls methods, so every lookup resolves to a stand-in that
+-- swallows any call. A dead load stays silent instead of erroring per file.
+local function InertStub()
+    local stub
+    stub = setmetatable({}, {
+        __index = function(t, key)
+            local value = InertStub()
+            rawset(t, key, value)
+            return value
+        end,
+        __call = function()
+            return stub
+        end
+    })
+    return stub
+end
+
+local function AbortWithMessage(message)
     local frame = _G.DEFAULT_CHAT_FRAME
     if frame then
-        frame:AddMessage("EllesmereUI_WindTools requires EllesmereUI to load first.")
+        frame:AddMessage(message)
     end
+    addon[1] = addon[1] or InertStub()
+    addon[2] = addon[2] or {}
+    addon[3] = addon[3] or InertStub()
+    addon[5] = addon[5] or {}
+    addon[6] = addon[6] or {}
+    addon[7] = addon[7] or {}
+end
+
+if not EUI or not EUI.Lite then
+    AbortWithMessage("EllesmereUI_WindTools requires EllesmereUI to load first.")
     return
 end
 
 local CreateCompatE = addon.CreateCompatE
 local InstallModuleSystem = addon.InstallModuleSystem
 if not CreateCompatE or not InstallModuleSystem then
-    local frame = _G.DEFAULT_CHAT_FRAME
-    if frame then
-        frame:AddMessage("EllesmereUI_WindTools compat layer did not load.")
-    end
+    AbortWithMessage("EllesmereUI_WindTools compat layer did not load.")
     return
 end
 
-local xpcall = xpcall
-local geterrorhandler = geterrorhandler
 local function SafeCall(func, ...)
     if type(func) == "function" then
         local args = {...}
@@ -32,24 +72,27 @@ local function SafeCall(func, ...)
     end
 end
 
-local function L(text)
-    return EUI.L and EUI.L(text) or text
-end
+-- A partial init (EllesmereUI present but broken by a new client patch) must not
+-- leave later files unpacking nil: report the root error once, then bail cleanly.
+local E, W
+local initOk = xpcall(function()
+    E = CreateCompatE()
+    W = EUI.Lite.NewAddon(addonName)
+    InstallModuleSystem(W)
+end, function(err)
+    return geterrorhandler()(err)
+end)
 
-local E = CreateCompatE()
-local W = EUI.Lite.NewAddon(addonName)
-InstallModuleSystem(W)
+if not initOk or not E or not W then
+    AbortWithMessage("EllesmereUI_WindTools failed to initialize; see the error above.")
+    return
+end
 
 local V, P, G = {}, {}, {}
 
 addon[1] = W
 addon[2] = {}
 addon[3] = E
-addon[4] = setmetatable({}, {
-    __index = function(_, key)
-        return L(key)
-    end
-})
 addon[5] = V
 addon[6] = P
 addon[7] = G
