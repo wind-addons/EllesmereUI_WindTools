@@ -1,4 +1,4 @@
-## Interface: 120100
+## Interface: 120100, 120105
 ## Author: fang2hou, XanaHopper
 ## Version: @project-version@
 ## X-Version: 0.2.6
