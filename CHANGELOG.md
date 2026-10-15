@@ -1,30 +1,40 @@
-# Version: 0.2.6
-2026/09/14 Released
-## ✳️ New
-- Added "Friendly Nameplate Outline" (Unit Frames page, ported from EUI_Kogotool): syncs the Ellesmere nameplate outline style to the system nameplate fonts, re-asserts it after font resets, and keeps friendly nameplates visible in follower dungeons.
+# Version: 0.2.7
+2026/10/15 Released
+## ❗ Important
+- EllesmereUI_WindTools now supports Patch 12.1.5 (interface 120105).
+## 💪 Improvement
+- Fixed the "L is nil" error when EllesmereUI fails to load: initialization problems now show one clear message instead of cascading Lua errors.
 
 ------
-# 版本: 0.2.6
-2026/09/14 发布
-## ✳️ 新增
-- 新增「友方姓名板描边」选项（单位框体页，移植自 EUI_Kogotool）：将 Ellesmere 姓名板的描边样式同步到系统姓名板字体，字体被重置后自动校正，并保持追随者地下城中友方姓名板的显示。
+# 版本: 0.2.7
+2026/10/15 发布
+## ❗ 重要
+- 现已支持《魔兽世界》12.1.5（接口版本 120105）。
+## 💪 改善
+- 修复 EllesmereUI 未完整加载时弹出 L 为 nil 的问题；现在仅显示一条明确提示，不再连锁报错。
 
 ------
-# 版本: 0.2.6
-2026/09/14 發布
-## ✳️ 新增
-- 新增「友方姓名板描邊」選項（單位框架頁，移植自 EUI_Kogotool）：將 Ellesmere 姓名板的描邊樣式同步到系統姓名板字體，字體被重置後自動校正，並保持追隨者地下城中友方姓名板的顯示。
+# 版本: 0.2.7
+2026/10/15 發布
+## ❗ 重要
+- 現已支援《魔獸世界》12.1.5（介面版本 120105）。
+## 💪 改善
+- 修復 EllesmereUI 未完整載入時彈出 L 為 nil 的問題；現在僅顯示一條明確提示，不再連鎖報錯。
 
 ------
-# 버전: 0.2.6
-2026/09/14 Released
-## ✳️ 신규 사항
-- "우방 이름표 외곽선" 옵션 추가(유닛프레임 페이지, EUI_Kogotool에서 이식): Ellesmere 이름표의 외곽선 스타일을 시스템 이름표 글꼴에 동기화하고 글꼴이 초기화되면 다시 적용하며, 추종자 던전에서 우방 이름표가 계속 표시되도록 유지합니다.
+# 버전: 0.2.7
+2026/10/15 Released
+## ❗ 중요 사항
+- 월드 오브 워크래프트 12.1.5(인터페이스 120105)를 지원합니다.
+## 💪 개선 사항
+- EllesmereUI가 완전히 로드되지 않을 때 L이 nil이라는 오류가 표시되던 문제를 수정했습니다. 이제 명확한 메시지가 한 번만 표시되며 연쇄 오류가 발생하지 않습니다.
 
 ------
-# Версия: 0.2.6
-2026/09/14 Релиз
-## ✳️ Новые
-- Добавлен «Контур дружественных табличек» (страница рамок юнитов, портировано из EUI_Kogotool): стиль контура табличек Ellesmere синхронизируется с системными шрифтами табличек, восстанавливается после их сброса и сохраняет видимость дружественных табличек в подземельях с последователями.
+# Версия: 0.2.7
+2026/10/15 Релиз
+## ❗ Важные
+- Теперь поддерживается патч 12.1.5 (interface 120105).
+## 💪 Улучшения
+- Исправлена ошибка «L is nil» при неполной загрузке EllesmereUI: вместо цепочки ошибок Lua теперь выводится одно понятное сообщение.
 
 ------
